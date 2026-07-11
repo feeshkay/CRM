@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Kept — People &amp; Memories</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EFEAE0;
+  --paper-alt:#F7F3EA;
+  --surface:#FCFAF6;
+  --ink:#2E2A3D;
+  --ink-soft:#5B5468;
+  --muted:#8A8399;
+  --line:#DBD3C3;
+  --accent:#A34A5C;
+  --accent-dark:#83394A;
+  --accent-soft:#EFD8DB;
+  --moss:#4F6D5A;
+  --moss-soft:#DCE6DD;
+  --thread:#C08434;
+  --thread-soft:#F1DFB8;
+  --danger:#B3432E;
+  --danger-soft:#F1D9D2;
+  --shadow:0 2px 14px rgba(46,42,61,.10);
+  --shadow-lg:0 8px 30px rgba(46,42,61,.18);
+  --radius:16px;
+  --radius-sm:10px;
+  --nav-h:62px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+  --font-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+  overscroll-behavior-y:none;
+}
+button,input,select,textarea{font-family:inherit;font-size:16px;color:inherit;}
+button{-webkit-appearance:none;appearance:none;background:none;border:none;cursor:pointer;}
+a{color:var(--accent);}
+h1,h2,h3{font-family:var(--font-display);margin:0;letter-spacing:.01em;}
+p{margin:0;}
+img{-webkit-user-drag:none;user-select:none;}
+
+#app{max-width:560px;margin:0 auto;min-height:100dvh;position:relative;background:var(--paper);}
+
+/* ---------- Topbar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  padding:calc(16px + var(--safe-t)) 20px 14px;
+  background:var(--paper);
+  border-bottom:1px solid var(--line);
+}
+.topbar h1{font-size:26px;font-weight:600;color:var(--ink);}
+.topbar .tagline{font-size:12.5px;color:var(--muted);margin-top:2px;}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.search-wrap{margin-top:12px;position:relative;}
+.search-wrap input{
+  width:100%;padding:10px 14px 10px 36px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);
+}
+.search-wrap::before{content:"⚲";position:absolute;left:13px;top:50%;transform:translateY(-50%) rotate(90deg);color:var(--muted);font-size:14px;}
+.icon-btn{width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto;}
+.icon-btn:active{background:var(--paper-alt);}
+
+/* ---------- Screens ---------- */
+main.screen{display:none;padding:16px 20px calc(var(--nav-h) + 32px + var(--safe-b));min-height:calc(100dvh - 90px);}
+main.screen.active{display:block;}
+.section-label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin:22px 0 10px;}
+.section-label:first-child{margin-top:4px;}
+.empty-state{text-align:center;padding:44px 18px;color:var(--muted);}
+.empty-state .big{font-size:34px;margin-bottom:10px;}
+.empty-state h3{color:var(--ink-soft);font-size:18px;margin-bottom:6px;}
+.empty-state p{font-size:14px;line-height:1.5;}
+.empty-state button{margin-top:16px;}
+
+/* ---------- Cards ---------- */
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px;margin-bottom:12px;box-shadow:var(--shadow);
+}
+.stitch-divider{
+  height:1px;margin:16px 0;
+  background-image:linear-gradient(to right, var(--thread) 0 6px, transparent 6px 12px);
+  background-size:12px 1px;background-repeat:repeat-x;opacity:.55;
+}
+
+/* People list */
+.person-row{
+  display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;
+}
+.person-row:active{background:var(--paper-alt);}
+.avatar{
+  width:50px;height:50px;border-radius:50%;background:var(--moss-soft);flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;
+  color:var(--moss);font-size:18px;overflow:hidden;border:1px solid var(--line);
+}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.avatar.lg{width:88px;height:88px;font-size:30px;}
+.person-info{flex:1;min-width:0;}
+.person-info .name{font-family:var(--font-display);font-size:17px;font-weight:600;}
+.person-info .meta{font-size:12.5px;color:var(--muted);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;}
+.pill{
+  display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:12px;
+  background:var(--accent-soft);color:var(--accent-dark);font-weight:600;white-space:nowrap;
+}
+.pill.moss{background:var(--moss-soft);color:var(--moss);}
+.pill.thread{background:var(--thread-soft);color:var(--thread);}
+.pill.muted{background:var(--paper-alt);color:var(--muted);}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.chip{
+  padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper-alt);
+  font-size:13px;color:var(--ink-soft);
+}
+.chip.tap{cursor:pointer;}
+.chip.tap:active{background:var(--accent-soft);}
+
+/* Timeline */
+.tl-entry{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow);}
+.tl-entry .tl-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.tl-entry .tl-date{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.tl-entry .tl-title{font-family:var(--font-display);font-size:18px;font-weight:600;margin-top:3px;}
+.tl-entry .tl-type{font-size:16px;flex:0 0 auto;}
+.tl-entry .tl-desc{font-size:14.5px;color:var(--ink-soft);line-height:1.5;margin-top:8px;white-space:pre-wrap;}
+.tl-entry .tl-loc{font-size:12.5px;color:var(--muted);margin-top:6px;}
+.tl-people{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.tl-photos{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:2px;}
+.tl-photos img{width:72px;height:72px;border-radius:10px;object-fit:cover;flex:0 0 auto;border:1px solid var(--line);}
+.tl-actions{display:flex;gap:14px;margin-top:10px;}
+.tl-actions button{font-size:12.5px;color:var(--muted);}
+.tl-actions button:active{color:var(--accent);}
+.undated-tag{font-size:11px;color:var(--muted);font-style:italic;}
+
+/* Reminders */
+.rem-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:10px;}
+.rem-days{font-size:12px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);padding:5px 10px;border-radius:999px;white-space:nowrap;}
+.rem-days.today{background:var(--thread);color:#fff;}
+.rem-check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:4px;}
+
+/* Buttons */
+.btn{padding:12px 18px;border-radius:999px;font-weight:600;font-size:15px;text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:active{background:var(--accent-dark);}
+.btn-secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line);}
+.btn-secondary:active{background:var(--paper-alt);}
+.btn-danger{background:var(--danger-soft);color:var(--danger);}
+.btn-danger:active{background:#e6c1b6;}
+.btn-block{width:100%;}
+.btn-sm{padding:8px 14px;font-size:13px;}
+.btn-row{display:flex;gap:10px;margin-top:14px;}
+.btn-row.wrap{flex-wrap:wrap;}
+.link-btn{color:var(--accent);font-weight:600;font-size:14px;}
+
+/* Detail header */
+.detail-header{display:flex;gap:14px;align-items:center;margin-bottom:6px;}
+.detail-header .who{flex:1;min-width:0;}
+.detail-header .who h2{font-size:24px;}
+.back-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.back-btn{font-size:14px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:4px;}
+.field-block{margin-bottom:14px;}
+.field-block .label{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:4px;}
+.field-block .value{font-size:15px;color:var(--ink);line-height:1.4;}
+.field-block .value.muted{color:var(--muted);font-style:italic;}
+.gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;}
+.gallery-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--line);}
+.gallery-add{aspect-ratio:1;border-radius:10px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:22px;background:var(--paper-alt);}
+
+/* Forms */
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
+.form-group input[type=text],.form-group input[type=date],.form-group input[type=number],.form-group textarea,.form-group select{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);
+}
+.form-group textarea{min-height:80px;resize:vertical;}
+.form-row{display:flex;gap:10px;}
+.form-row .form-group{flex:1;}
+.suggest-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.suggest-chip{padding:5px 11px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;color:var(--ink-soft);background:var(--paper-alt);}
+.suggest-chip:active{background:var(--accent-soft);}
+.checklist{display:flex;flex-direction:column;gap:2px;max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px;}
+.checklist label{display:flex;align-items:center;gap:10px;padding:8px 6px;font-size:14.5px;font-weight:400;color:var(--ink);border-radius:8px;}
+.checklist label:active{background:var(--paper-alt);}
+.checklist input{width:18px;height:18px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 2px;}
+.toggle-row .t-label{font-size:14.5px;}
+.switch{position:relative;width:44px;height:26px;border-radius:999px;background:var(--line);flex:0 0 auto;}
+.switch.on{background:var(--moss);}
+.switch::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .15s;}
+.switch.on::after{left:21px;}
+.type-toggle{display:flex;background:var(--paper-alt);border-radius:999px;padding:3px;margin-bottom:16px;}
+.type-toggle button{flex:1;padding:9px;border-radius:999px;font-size:13.5px;font-weight:600;color:var(--muted);}
+.type-toggle button.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);}
+.photo-input-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.photo-thumb{position:relative;width:64px;height:64px;border-radius:10px;overflow:hidden;border:1px solid var(--line);}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb .rm{position:absolute;top:2px;right:2px;width:18px;height:18px;background:rgba(46,42,61,.75);color:#fff;border-radius:50%;font-size:11px;display:flex;align-items:center;justify-content:center;}
+.add-photo-btn{width:64px;height:64px;border-radius:10px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:22px;background:var(--paper-alt);}
+
+/* Bottom nav */
+.bottomnav{
+  position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;height:calc(var(--nav-h) + var(--safe-b));
+  background:rgba(252,250,246,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  display:flex;align-items:stretch;padding-bottom:var(--safe-b);z-index:60;
+}
+.navbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:10.5px;font-weight:600;}
+.navbtn span{line-height:1;}
+.navbtn .ic{font-size:20px;}
+.navbtn.active{color:var(--accent);}
+.navbtn.fab{flex:0 0 58px;}
+.navbtn.fab .ic{
+  width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;font-size:24px;
+  display:flex;align-items:center;justify-content:center;margin-top:-18px;box-shadow:var(--shadow-lg);
+}
+.navbtn.fab span{display:none;}
+.badge-dot{position:absolute;top:6px;right:22%;width:8px;height:8px;border-radius:50%;background:var(--thread);}
+
+/* More screen */
+.more-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.more-card .mc-ic{font-size:22px;flex:0 0 auto;width:38px;text-align:center;}
+.more-card .mc-body{flex:1;}
+.more-card .mc-title{font-weight:600;font-size:15px;}
+.more-card .mc-sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+.more-card .mc-arrow{color:var(--muted);}
+
+/* Modals */
+.modal-overlay{position:fixed;inset:0;background:rgba(46,42,61,.48);display:none;align-items:flex-end;justify-content:center;z-index:1000;}
+.modal-overlay.open{display:flex;}
+.modal-sheet{
+  width:100%;max-width:560px;max-height:90vh;background:var(--surface);border-radius:20px 20px 0 0;
+  display:grid;grid-template-rows:auto 1fr auto;overflow:hidden;
+}
+.modal-sheet.center{border-radius:20px;max-width:400px;margin-bottom:auto;margin-top:auto;max-height:80vh;}
+.modal-sheet>form{display:contents;}
+.modal-header{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+.modal-header h3{font-size:18px;}
+.modal-close{width:32px;height:32px;border-radius:50%;background:var(--paper-alt);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--muted);}
+.modal-body{min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px;}
+.modal-footer{padding:14px 18px calc(14px + var(--safe-b));border-top:1px solid var(--line);display:flex;gap:10px;background:var(--surface);}
+.modal-footer .btn{flex:1;}
+.sheet-option{display:flex;align-items:center;gap:14px;padding:16px 8px;border-bottom:1px solid var(--line);}
+.sheet-option:last-child{border-bottom:none;}
+.sheet-option .so-ic{font-size:22px;width:32px;text-align:center;}
+.sheet-option .so-text{font-size:16px;font-weight:600;}
+.sheet-option .so-sub{font-size:12.5px;color:var(--muted);}
+
+.toast{position:fixed;bottom:calc(var(--nav-h) + 20px + var(--safe-b));left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:999px;font-size:13.5px;z-index:2000;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;max-width:80%;text-align:center;}
+.toast.show{opacity:1;}
+
+/* Tree */
+.tree-controls{display:flex;gap:8px;margin-bottom:12px;}
+.tree-controls select{flex:1;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface);}
+#treeSvgWrap{width:100%;overflow:hidden;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);touch-action:none;}
+.tree-node-label{font-family:var(--font-body);font-size:11px;fill:var(--ink);font-weight:600;}
+.tree-edge-label{font-family:var(--font-body);font-size:9.5px;fill:var(--ink-soft);}
+.tree-legend{margin-top:10px;font-size:12px;color:var(--muted);text-align:center;}
+.isolated-list{margin-top:14px;}
+.photo-viewer-img{width:100%;border-radius:12px;}
+
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ TOPBAR ============ -->
+  <div class="topbar" id="topbar">
+    <div class="topbar-row">
+      <div>
+        <h1 id="topbarTitle">Kept</h1>
+        <div class="tagline" id="topbarTagline">The people in your life, and the story of you and them</div>
+      </div>
+      <button class="icon-btn hidden" id="searchToggleBtn" data-action="toggle-search">⚲</button>
+    </div>
+    <div class="search-wrap hidden" id="searchWrap">
+      <input type="text" id="searchInput" placeholder="Search…">
+    </div>
+  </div>
+
+  <!-- ============ TIMELINE ============ -->
+  <main class="screen active" id="screen-timeline">
+    <div class="tree-controls">
+      <select id="timelinePersonFilter"><option value="">All people</option></select>
+    </div>
+    <div id="timelineList"></div>
+  </main>
+
+  <!-- ============ PEOPLE ============ -->
+  <main class="screen" id="screen-people">
+    <div class="btn-row" style="margin-top:0;margin-bottom:14px;">
+      <button class="btn btn-secondary btn-sm" data-action="goto-tree">🕸️ Relationship tree</button>
+    </div>
+    <div id="peopleList"></div>
+  </main>
+
+  <!-- ============ PERSON DETAIL ============ -->
+  <main class="screen" id="screen-person-detail">
+    <div id="personDetailContent"></div>
+  </main>
+
+  <!-- ============ REMINDERS ============ -->
+  <main class="screen" id="screen-reminders">
+    <div id="remindersList"></div>
+  </main>
+
+  <!-- ============ TREE ============ -->
+  <main class="screen" id="screen-tree">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-people">‹ Back</button>
+      <h2 style="font-size:19px;">Relationship tree</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="tree-controls">
+      <select id="treeFocusSelect"><option value="">Everyone</option></select>
+    </div>
+    <div id="treeSvgWrap"></div>
+    <div class="tree-legend">Drag people to untangle threads · Tap a person to open their profile</div>
+    <div id="treeIsolatedList" class="isolated-list"></div>
+  </main>
+
+  <!-- ============ MORE ============ -->
+  <main class="screen" id="screen-more">
+    <div id="moreContent"></div>
+  </main>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <nav class="bottomnav" id="bottomnav">
+    <button class="navbtn active" data-screen="timeline"><span class="ic">🕰️</span><span>Timeline</span></button>
+    <button class="navbtn" data-screen="people"><span class="ic">👥</span><span>People</span></button>
+    <button class="navbtn fab" id="fabAdd"><span class="ic">＋</span></button>
+    <button class="navbtn" data-screen="reminders" style="position:relative;"><span class="ic">🎂</span><span>Reminders</span><span class="badge-dot hidden" id="remindersBadge"></span></button>
+    <button class="navbtn" data-screen="more"><span class="ic">☰</span><span>More</span></button>
+  </nav>
+
+  <!-- ============ ADD ACTION SHEET ============ -->
+  <div class="modal-overlay" id="modal-addsheet">
+    <div class="modal-sheet">
+      <div class="modal-header"><h3>Add</h3><button class="modal-close" data-action="close-modal" data-modal="modal-addsheet">✕</button></div>
+      <div class="modal-body" style="padding:8px 18px;">
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-person">
+          <span class="so-ic">🙂</span><span><span class="so-text" style="display:block;">Add a person</span><span class="so-sub">Start a new profile</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-hangout">
+          <span class="so-ic">📍</span><span><span class="so-text" style="display:block;">Log a hangout</span><span class="so-sub">Something you did together</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-memory">
+          <span class="so-ic">💭</span><span><span class="so-text" style="display:block;">Add a memory</span><span class="so-sub">A moment worth keeping, dated or not</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-relationship">
+          <span class="so-ic">🧵</span><span><span class="so-text" style="display:block;">Add a relationship</span><span class="so-sub">How two people connect</span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PERSON FORM MODAL ============ -->
+  <div class="modal-overlay" id="modal-person">
+    <div class="modal-sheet">
+      <div class="modal-header"><h3 id="personFormTitle">Add person</h3><button class="modal-close" data-action="close-modal" data-modal="modal-person">✕</button></div>
+      <form id="personForm">
+        <div class="modal-body">
+          <input type="hidden" id="pf-id">
+          <div style="display:flex;justify-content:center;margin-bottom:16px;">
+            <div style="position:relative;">
+              <div class="avatar lg" id="pf-avatar-preview">🙂</div>
+              <input type="file" accept="image/*" id="pf-avatar-input" class="hidden">
+              <button type="button" class="btn btn-secondary btn-sm" style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);white-space:nowrap;" data-action="pick-avatar">Photo</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="pf-name" required placeholder="Full name">
+          </div>
+          <div class="form-group">
+            <label>Pronouns</label>
+            <input type="text" id="pf-pronouns" placeholder="e.g. she/her">
+            <div class="suggest-row">
+              <button type="button" class="suggest-chip" data-fill="she/her">she/her</button>
+              <button type="button" class="suggest-chip" data-fill="he/him">he/him</button>
+              <button type="button" class="suggest-chip" data-fill="they/them">they/them</button>
+              <button type="button" class="suggest-chip" data-fill="she/they">she/they</button>
+              <button type="button" class="suggest-chip" data-fill="he/they">he/they</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Birthday</label>
+            <div class="form-row">
+              <select id="pf-bmonth"><option value="">Month</option></select>
+              <select id="pf-bday"><option value="">Day</option></select>
+              <input type="number" id="pf-byear" placeholder="Year (optional)" min="1900" max="2100" style="flex:1;">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>How you met</label>
+            <textarea id="pf-met-text" placeholder="Tell the story…"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Date you met (optional)</label>
+            <input type="date" id="pf-met-date">
+          </div>
+          <div class="form-group">
+            <label>Tags</label>
+            <input type="text" id="pf-tags" placeholder="college friend, neighbor, work (comma separated)">
+          </div>
+          <div class="toggle-row">
+            <span class="t-label">Remind me about their birthday</span>
+            <button type="button" class="switch on" id="pf-cardtoggle"></button>
+          </div>
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="pf-notes" placeholder="Anything else worth remembering"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-person">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save person</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ TIMELINE ENTRY FORM MODAL ============ -->
+  <div class="modal-overlay" id="modal-entry">
+    <div class="modal-sheet">
+      <div class="modal-header"><h3 id="entryFormTitle">Log a hangout</h3><button class="modal-close" data-action="close-modal" data-modal="modal-entry">✕</button></div>
+      <form id="entryForm">
+        <div class="modal-body">
+          <input type="hidden" id="ef-id">
+          <div class="type-toggle">
+            <button type="button" data-type="hangout" class="active">📍 Hangout</button>
+            <button type="button" data-type="memory">💭 Memory</button>
+          </div>
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="ef-title" required placeholder="What happened?">
+          </div>
+          <div class="form-group">
+            <label id="ef-date-label">Date</label>
+            <input type="date" id="ef-date">
+          </div>
+          <div class="form-group hidden" id="ef-approx-wrap">
+            <label>Roughly when? (if no exact date)</label>
+            <input type="text" id="ef-approx" placeholder="e.g. Summer 2019">
+          </div>
+          <div class="form-group">
+            <label>Who was there</label>
+            <div class="checklist" id="ef-people-checklist"></div>
+          </div>
+          <div class="form-group">
+            <label>Location (optional)</label>
+            <input type="text" id="ef-location" placeholder="Where">
+          </div>
+          <div class="form-group">
+            <label>Details</label>
+            <textarea id="ef-desc" placeholder="The story…"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Photos</label>
+            <div class="photo-input-row" id="ef-photos-row">
+              <button type="button" class="add-photo-btn" data-action="add-entry-photo">＋</button>
+            </div>
+            <input type="file" accept="image/*" multiple id="ef-photo-input" class="hidden">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-entry">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ RELATIONSHIP FORM MODAL ============ -->
+  <div class="modal-overlay" id="modal-relationship">
+    <div class="modal-sheet">
+      <div class="modal-header"><h3>Add a relationship</h3><button class="modal-close" data-action="close-modal" data-modal="modal-relationship">✕</button></div>
+      <form id="relationshipForm">
+        <div class="modal-body">
+          <input type="hidden" id="rf-id">
+          <div class="form-group">
+            <label>Person A</label>
+            <select id="rf-personA" required></select>
+          </div>
+          <div class="form-group">
+            <label>Relationship type</label>
+            <select id="rf-type" required></select>
+          </div>
+          <div class="form-group">
+            <label>Person B</label>
+            <select id="rf-personB" required></select>
+          </div>
+          <div class="form-group">
+            <label>Note (optional)</label>
+            <input type="text" id="rf-note" placeholder="Any context">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-relationship">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save relationship</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ RELATIONSHIP TYPE FORM MODAL ============ -->
+  <div class="modal-overlay" id="modal-reltype">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3>New relationship type</h3><button class="modal-close" data-action="close-modal" data-modal="modal-reltype">✕</button></div>
+      <form id="reltypeForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Label (e.g. "Mentor of")</label>
+            <input type="text" id="rt-label" required placeholder="Label">
+          </div>
+          <div class="toggle-row">
+            <span class="t-label">Same in both directions</span>
+            <button type="button" class="switch on" id="rt-symmetric"></button>
+          </div>
+          <div class="form-group hidden" id="rt-inverse-wrap">
+            <label>Reverse label (e.g. "Mentee of")</label>
+            <input type="text" id="rt-inverse" placeholder="Reverse label">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-reltype">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save type</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ CONFIRM MODAL ============ -->
+  <div class="modal-overlay" id="modal-confirm">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3 id="confirmTitle">Are you sure?</h3><button class="modal-close" data-action="close-modal" data-modal="modal-confirm">✕</button></div>
+      <div class="modal-body"><p id="confirmMessage">This can't be undone.</p></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-confirm">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmActionBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHOTO VIEWER MODAL ============ -->
+  <div class="modal-overlay" id="modal-photoviewer">
+    <div class="modal-sheet center" style="max-width:520px;">
+      <div class="modal-header"><h3>Photo</h3><button class="modal-close" data-action="close-modal" data-modal="modal-photoviewer">✕</button></div>
+      <div class="modal-body"><img class="photo-viewer-img" id="photoViewerImg" src=""></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= CONSTANTS ================= */
+var DB_NAME='keptDB', DB_VERSION=1, STORE='media';
+var LS_KEY='kept_data_v1';
+var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ================= STATE ================= */
+var DB=null;
+var data=null;
+var currentScreen='timeline';
+var currentPersonId=null;
+var currentTreeFocus='';
+var urlCache=new Map();
+var entryPhotoStaging=[]; // {id?, blob, previewUrl} for the entry form in-progress
+var currentEntryType='hangout';
+var confirmCallback=null;
+
+/* ================= UTIL ================= */
+function uid(prefix){ return prefix+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function esc(str){
+  return (str===undefined||str===null?'':String(str)).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toast._h);
+  toast._h=setTimeout(function(){ t.classList.remove('show'); }, 1800);
+}
+function parseISODate(iso){
+  if(!iso) return null;
+  var parts=iso.split('-');
+  return new Date(Number(parts[0]), Number(parts[1])-1, Number(parts[2]));
+}
+function formatDateDisplay(iso){
+  var d=parseISODate(iso);
+  if(!d) return '';
+  return MONTHS_SHORT[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
+}
+function formatBirthday(b){
+  if(!b || !b.month || !b.day) return null;
+  return MONTHS_SHORT[b.month-1]+' '+b.day+(b.year? ', '+b.year : '');
+}
+function daysUntil(month, day){
+  var today=new Date(); today.setHours(0,0,0,0);
+  var next=new Date(today.getFullYear(), month-1, day);
+  if(next<today) next=new Date(today.getFullYear()+1, month-1, day);
+  return Math.round((next-today)/86400000);
+}
+function relevantBirthdayYear(month, day){
+  var today=new Date(); today.setHours(0,0,0,0);
+  var next=new Date(today.getFullYear(), month-1, day);
+  return next<today ? today.getFullYear()+1 : today.getFullYear();
+}
+function ageFromBirthday(b){
+  if(!b || !b.year || !b.month || !b.day) return null;
+  var today=new Date();
+  var age=today.getFullYear()-b.year;
+  var hadBday=(today.getMonth()+1>b.month)||((today.getMonth()+1===b.month)&&today.getDate()>=b.day);
+  if(!hadBday) age--;
+  return age;
+}
+function dateStr(){
+  var d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function personName(id){
+  var p=findPerson(id);
+  return p? p.name : '(removed person)';
+}
+function findPerson(id){ return data.people.find(function(p){ return p.id===id; }); }
+function activePeople(){ return data.people.filter(function(p){ return !p.archived; }); }
+
+/* ================= INDEXEDDB ================= */
+function openDB(){
+  return new Promise(function(resolve,reject){
+    if(!('indexedDB' in window)){ reject(new Error('no indexeddb')); return; }
+    var req=indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded=function(e){
+      var db=e.target.result;
+      if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE,{keyPath:'id'});
+    };
+    req.onsuccess=function(e){ resolve(e.target.result); };
+    req.onerror=function(e){ reject(e.target.error); };
+  });
+}
+function idbPut(record){
+  return new Promise(function(resolve,reject){
+    if(!DB){ reject(new Error('no db')); return; }
+    var tx=DB.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put(record);
+    tx.oncomplete=function(){ resolve(record.id); };
+    tx.onerror=function(e){ reject(e.target.error); };
+  });
+}
+function idbGet(id){
+  return new Promise(function(resolve,reject){
+    if(!id || !DB){ resolve(null); return; }
+    var tx=DB.transaction(STORE,'readonly');
+    var req=tx.objectStore(STORE).get(id);
+    req.onsuccess=function(){ resolve(req.result || null); };
+    req.onerror=function(e){ reject(e.target.error); };
+  });
+}
+function idbDelete(id){
+  return new Promise(function(resolve,reject){
+    if(!id || !DB){ resolve(); return; }
+    var tx=DB.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete=function(){ resolve(); };
+    tx.onerror=function(e){ reject(e.target.error); };
+  });
+}
+function storePhoto(file){
+  var id=uid('m');
+  return idbPut({id:id, blob:file, type:file.type, createdAt:Date.now()}).then(function(){ return id; });
+}
+function getPhotoURL(id){
+  if(!id) return Promise.resolve(null);
+  if(urlCache.has(id)) return Promise.resolve(urlCache.get(id));
+  return idbGet(id).then(function(rec){
+    if(!rec || !rec.blob) return null;
+    var url=URL.createObjectURL(rec.blob);
+    urlCache.set(id,url);
+    return url;
+  });
+}
+function hydrateImages(root){
+  root.querySelectorAll('img[data-photo-id],image[data-photo-id]').forEach(function(el){
+    var id=el.getAttribute('data-photo-id');
+    getPhotoURL(id).then(function(url){
+      if(url){
+        if(el.tagName.toLowerCase()==='image') el.setAttribute('href', url);
+        else el.src=url;
+      } else {
+        el.closest('.avatar')?.classList.add('empty');
+      }
+    });
+  });
+}
+
+/* ================= DATA ================= */
+function defaultRelationshipTypes(){
+  return [
+    {id:'friend', label:'Friend', inverse:'Friend', symmetric:true},
+    {id:'best_friend', label:'Best Friend', inverse:'Best Friend', symmetric:true},
+    {id:'spouse', label:'Spouse / Partner', inverse:'Spouse / Partner', symmetric:true},
+    {id:'sibling', label:'Sibling', inverse:'Sibling', symmetric:true},
+    {id:'parent', label:'Parent of', inverse:'Child of', symmetric:false},
+    {id:'coworker', label:'Coworker', inverse:'Coworker', symmetric:true},
+    {id:'roommate', label:'Roommate', inverse:'Roommate', symmetric:true},
+    {id:'mentor', label:'Mentor of', inverse:'Mentee of', symmetric:false},
+    {id:'introduced_by', label:'Introduced by', inverse:'Introduced', symmetric:false},
+    {id:'cousin', label:'Cousin', inverse:'Cousin', symmetric:true},
+    {id:'inlaw', label:'In-law', inverse:'In-law', symmetric:true},
+    {id:'ex', label:'Ex-partner', inverse:'Ex-partner', symmetric:true}
+  ];
+}
+function loadData(){
+  var raw=null;
+  try{ raw=localStorage.getItem(LS_KEY); }catch(e){}
+  try{ data = raw? JSON.parse(raw) : null; }catch(e){ data=null; }
+  if(!data) data={};
+  data.people = data.people || [];
+  data.timeline = data.timeline || [];
+  data.relationships = data.relationships || [];
+  data.relationshipTypes = data.relationshipTypes && data.relationshipTypes.length ? data.relationshipTypes : defaultRelationshipTypes();
+  saveData();
+}
+function saveData(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(data)); }
+  catch(e){ toast('Could not save — storage may be full'); }
+}
+function relType(id){ return data.relationshipTypes.find(function(t){ return t.id===id; }); }
+
+/* ================= NAV ================= */
+function showScreen(name, opts){
+  opts = opts || {};
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var el=document.getElementById('screen-'+name);
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.navbtn[data-screen]').forEach(function(b){
+    b.classList.toggle('active', b.dataset.screen===name);
+  });
+  document.getElementById('app').scrollTop=0;
+  window.scrollTo(0,0);
+  currentScreen=name;
+
+  var showSearch = (name==='timeline' || name==='people');
+  document.getElementById('searchToggleBtn').classList.toggle('hidden', !showSearch);
+  if(!showSearch){
+    document.getElementById('searchWrap').classList.add('hidden');
+    document.getElementById('searchInput').value='';
+  }
+  var titles={timeline:['Kept','The people in your life, and the story of you and them'],
+    people:['People','Everyone you\'re keeping up with'],
+    reminders:['Reminders','Birthdays and cards coming up'],
+    more:['More','Tree, settings, and backups'],
+    tree:['Kept','Kept'],
+    'person-detail':['Kept','Kept']};
+  if(titles[name] && name!=='tree' && name!=='person-detail'){
+    document.getElementById('topbarTitle').textContent=titles[name][0];
+    document.getElementById('topbarTagline').textContent=titles[name][1];
+  }
+
+  if(name==='timeline') renderTimeline();
+  else if(name==='people') renderPeopleList();
+  else if(name==='reminders') renderReminders();
+  else if(name==='more') renderMore();
+  else if(name==='tree') renderTree(opts.focusId || '');
+  else if(name==='person-detail') renderPersonDetail(opts.personId);
+}
+
+/* ================= RENDER: TIMELINE ================= */
+function populatePersonSelect(sel, includeAll, selectedId){
+  var html='';
+  if(includeAll) html+='<option value="">All people</option>';
+  activePeople().slice().sort(function(a,b){ return a.name.localeCompare(b.name); }).forEach(function(p){
+    html+='<option value="'+p.id+'"'+(p.id===selectedId?' selected':'')+'>'+esc(p.name)+'</option>';
+  });
+  sel.innerHTML=html;
+}
+function renderTimeline(){
+  var sel=document.getElementById('timelinePersonFilter');
+  var prevVal=sel.value;
+  populatePersonSelect(sel, true, prevVal);
+  var personFilter=sel.value;
+  var q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
+
+  var entries=data.timeline.filter(function(e){
+    if(personFilter && (e.people||[]).indexOf(personFilter)===-1) return false;
+    if(q){
+      var hay=(e.title+' '+(e.description||'')+' '+(e.location||'')).toLowerCase();
+      if(hay.indexOf(q)===-1) return false;
+    }
+    return true;
+  });
+
+  var dated=entries.filter(function(e){ return e.date; }).sort(function(a,b){ return b.date.localeCompare(a.date); });
+  var undated=entries.filter(function(e){ return !e.date; }).sort(function(a,b){ return b.createdAt-a.createdAt; });
+
+  var html='';
+  if(dated.length===0 && undated.length===0){
+    html='<div class="empty-state"><div class="big">🕰️</div><h3>No memories yet</h3><p>Tap the + button to log a hangout or save a memory.</p></div>';
+  } else {
+    dated.forEach(function(e){ html+=renderEntryCard(e); });
+    if(undated.length){
+      html+='<div class="section-label">Undated memories</div>';
+      undated.forEach(function(e){ html+=renderEntryCard(e); });
+    }
+  }
+  var list=document.getElementById('timelineList');
+  list.innerHTML=html;
+  hydrateImages(list);
+}
+function renderEntryCard(e){
+  var peopleChips=(e.people||[]).map(function(pid){
+    return '<button class="chip tap" data-action="open-person" data-id="'+pid+'">'+esc(personName(pid))+'</button>';
+  }).join('');
+  var photos=(e.photoIds||[]).map(function(pid){
+    return '<img data-photo-id="'+pid+'" data-action="view-photo" data-photo-full="'+pid+'">';
+  }).join('');
+  var dateLabel = e.date ? formatDateDisplay(e.date) : (e.approxDate ? esc(e.approxDate) : 'Undated');
+  return '' +
+  '<div class="tl-entry">' +
+    '<div class="tl-top">' +
+      '<div><div class="tl-date">'+dateLabel+'</div><div class="tl-title">'+esc(e.title)+'</div></div>' +
+      '<div class="tl-type">'+(e.type==='memory'?'💭':'📍')+'</div>' +
+    '</div>' +
+    (e.description? '<div class="tl-desc">'+esc(e.description)+'</div>':'') +
+    (e.location? '<div class="tl-loc">📍 '+esc(e.location)+'</div>':'') +
+    (peopleChips? '<div class="tl-people">'+peopleChips+'</div>':'') +
+    (photos? '<div class="tl-photos">'+photos+'</div>':'') +
+    '<div class="tl-actions">' +
+      '<button data-action="edit-entry" data-id="'+e.id+'">Edit</button>' +
+      '<button data-action="delete-entry" data-id="'+e.id+'">Delete</button>' +
+    '</div>' +
+  '</div>';
+}
+
+/* ================= RENDER: PEOPLE ================= */
+function renderPeopleList(){
+  var q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
+  var people=activePeople().filter(function(p){
+    if(!q) return true;
+    var hay=(p.name+' '+(p.pronouns||'')+' '+(p.tags||[]).join(' ')).toLowerCase();
+    return hay.indexOf(q)!==-1;
+  }).sort(function(a,b){ return a.name.localeCompare(b.name); });
+
+  var html='';
+  if(people.length===0){
+    html='<div class="empty-state"><div class="big">👥</div><h3>No one here yet</h3><p>Tap the + button to add your first person.</p></div>';
+  } else {
+    people.forEach(function(p){
+      var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+      var avatarInner = p.photoId ? '<img data-photo-id="'+p.photoId+'">' : initials;
+      var bday=formatBirthday(p.birthday);
+      var tagsHtml=(p.tags||[]).slice(0,2).map(function(t){ return '<span class="pill muted">'+esc(t)+'</span>'; }).join('');
+      html+='<button class="person-row" style="width:100%;text-align:left;" data-action="open-person" data-id="'+p.id+'">' +
+        '<div class="avatar">'+avatarInner+'</div>' +
+        '<div class="person-info">' +
+          '<div class="name">'+esc(p.name)+'</div>' +
+          '<div class="meta">'+(p.pronouns? '<span>'+esc(p.pronouns)+'</span>':'')+(bday? '<span>🎂 '+bday+'</span>':'')+tagsHtml+'</div>' +
+        '</div>' +
+      '</button>';
+    });
+  }
+  var list=document.getElementById('peopleList');
+  list.innerHTML=html;
+  hydrateImages(list);
+}
+
+/* ================= RENDER: PERSON DETAIL ================= */
+function renderPersonDetail(personId){
+  currentPersonId=personId;
+  var p=findPerson(personId);
+  var root=document.getElementById('personDetailContent');
+  if(!p){ root.innerHTML='<div class="empty-state"><p>Person not found.</p></div>'; return; }
+
+  var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+  var avatarInner = p.photoId ? '<img data-photo-id="'+p.photoId+'">' : initials;
+  var bday=formatBirthday(p.birthday);
+  var age=ageFromBirthday(p.birthday);
+  var daysB = p.birthday && p.birthday.month && p.birthday.day ? daysUntil(p.birthday.month,p.birthday.day) : null;
+
+  var rels=data.relationships.filter(function(r){ return r.personA===personId || r.personB===personId; });
+  var relChips=rels.map(function(r){
+    var t=relType(r.typeId);
+    if(!t) return '';
+    var otherId = r.personA===personId ? r.personB : r.personA;
+    var label = r.personA===personId ? t.label : (t.symmetric? t.label : t.inverse);
+    return '<button class="chip tap" data-action="open-person" data-id="'+otherId+'">'+esc(personName(otherId))+' · '+esc(label)+'</button>';
+  }).join('');
+
+  var galleryHtml=(p.galleryPhotoIds||[]).map(function(gid){
+    return '<img data-photo-id="'+gid+'" data-action="view-photo" data-photo-full="'+gid+'">';
+  }).join('') + '<button class="gallery-add" data-action="add-gallery-photo">＋</button>';
+
+  var personEntries=data.timeline.filter(function(e){ return (e.people||[]).indexOf(personId)!==-1; });
+  var dated=personEntries.filter(function(e){return e.date;}).sort(function(a,b){return b.date.localeCompare(a.date);});
+  var undated=personEntries.filter(function(e){return !e.date;}).sort(function(a,b){return b.createdAt-a.createdAt;});
+  var timelineHtml = personEntries.length ? (dated.map(renderEntryCard).join('') + undated.map(renderEntryCard).join('')) :
+    '<p style="color:var(--muted);font-size:14px;">No memories logged with '+esc(p.name)+' yet.</p>';
+
+  root.innerHTML =
+  '<div class="back-row">' +
+    '<button class="back-btn" data-action="goto-people">‹ Back</button>' +
+    '<button class="icon-btn" data-action="edit-person" data-id="'+p.id+'">✎</button>' +
+  '</div>' +
+  '<div class="detail-header">' +
+    '<button class="avatar lg" data-action="view-photo" data-photo-full="'+(p.photoId||'')+'">'+avatarInner+'</button>' +
+    '<div class="who"><h2>'+esc(p.name)+'</h2>' + (p.pronouns? '<span class="pill">'+esc(p.pronouns)+'</span>':'') + '</div>' +
+  '</div>' +
+
+  (p.tags && p.tags.length ? '<div class="chip-row">'+p.tags.map(function(t){return '<span class="chip">'+esc(t)+'</span>';}).join('')+'</div>' : '') +
+
+  '<div class="stitch-divider"></div>' +
+  '<div class="field-block"><div class="label">Birthday</div><div class="value'+(bday?'':' muted')+'">' +
+    (bday? bday + (age!==null? ' · turns '+ (age+1) +' in '+daysB+' day'+(daysB===1?'':'s') : (daysB!==null? ' · in '+daysB+' day'+(daysB===1?'':'s'):'')) : 'Not set') +
+  '</div></div>' +
+  '<div class="toggle-row"><span class="t-label">Remind me about their birthday</span>' +
+    '<button class="switch '+(p.cardReminder?'on':'')+'" data-action="toggle-card-reminder" data-id="'+p.id+'"></button></div>' +
+
+  '<div class="field-block"><div class="label">How you met</div><div class="value'+(p.howWeMet&&p.howWeMet.text?'':' muted')+'">' +
+    (p.howWeMet && p.howWeMet.text ? esc(p.howWeMet.text) : 'Not recorded') +
+    (p.howWeMet && p.howWeMet.date ? '<br><span style="color:var(--muted);font-size:12.5px;">'+formatDateDisplay(p.howWeMet.date)+'</span>' : '') +
+  '</div></div>' +
+
+  '<div class="section-label">Relationships</div>' +
+  (relChips? '<div class="chip-row">'+relChips+'</div>' : '<p style="color:var(--muted);font-size:14px;">No relationships added yet.</p>') +
+  '<div class="btn-row"><button class="btn btn-secondary btn-sm" data-action="add-relationship-for" data-id="'+p.id+'">＋ Add relationship</button>' +
+  '<button class="btn btn-secondary btn-sm" data-action="goto-tree-focus" data-id="'+p.id+'">🕸️ View in tree</button></div>' +
+
+  '<div class="section-label">Photos</div>' +
+  '<div class="gallery-grid">'+galleryHtml+'</div>' +
+
+  '<div class="section-label">Timeline together</div>' +
+  '<div class="btn-row wrap" style="margin-bottom:10px;">' +
+    '<button class="btn btn-secondary btn-sm" data-action="add-hangout-for" data-id="'+p.id+'">📍 Log hangout</button>' +
+    '<button class="btn btn-secondary btn-sm" data-action="add-memory-for" data-id="'+p.id+'">💭 Add memory</button>' +
+  '</div>' +
+  timelineHtml +
+
+  '<div class="section-label">Notes</div>' +
+  '<div class="form-group"><textarea id="pd-notes" placeholder="Anything else worth remembering">'+esc(p.notes||'')+'</textarea></div>' +
+  '<button class="btn btn-secondary btn-sm" data-action="save-notes" data-id="'+p.id+'">Save notes</button>' +
+
+  '<div class="stitch-divider"></div>' +
+  '<div class="btn-row">' +
+    '<button class="btn btn-secondary" data-action="archive-person" data-id="'+p.id+'">Archive</button>' +
+    '<button class="btn btn-danger" data-action="delete-person" data-id="'+p.id+'">Delete</button>' +
+  '</div>';
+
+  hydrateImages(root);
+}
+
+/* ================= RENDER: REMINDERS ================= */
+function renderReminders(){
+  var people=activePeople().filter(function(p){ return p.birthday && p.birthday.month && p.birthday.day; });
+  people.forEach(function(p){ p._days=daysUntil(p.birthday.month,p.birthday.day); });
+  people.sort(function(a,b){ return a._days-b._days; });
+
+  var withReminder=people.filter(function(p){ return p.cardReminder!==false; });
+  var withoutBday=activePeople().filter(function(p){ return !(p.birthday && p.birthday.month && p.birthday.day); });
+
+  var html='';
+  if(withReminder.length===0){
+    html='<div class="empty-state"><div class="big">🎂</div><h3>No upcoming reminders</h3><p>Add birthdays to people\'s profiles to see them here.</p></div>';
+  } else {
+    withReminder.forEach(function(p){
+      var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+      var avatarInner = p.photoId ? '<img data-photo-id="'+p.photoId+'">' : initials;
+      var relYear=relevantBirthdayYear(p.birthday.month,p.birthday.day);
+      var sent = p.lastCardSentYear===relYear;
+      html+='<div class="rem-row">' +
+        '<div class="avatar">'+avatarInner+'</div>' +
+        '<div class="person-info">' +
+          '<div class="name">'+esc(p.name)+'</div>' +
+          '<div class="meta">'+formatBirthday(p.birthday)+'</div>' +
+          '<label class="rem-check"><input type="checkbox" '+(sent?'checked':'')+' data-action="toggle-card-sent" data-id="'+p.id+'" data-year="'+relYear+'"> Card sent for '+relYear+'</label>' +
+        '</div>' +
+        '<div class="rem-days'+(p._days===0?' today':'')+'">'+(p._days===0?'Today!':'In '+p._days+'d')+'</div>' +
+      '</div>';
+    });
+  }
+  if(withoutBday.length){
+    html+='<div class="section-label">No birthday saved ('+withoutBday.length+')</div>';
+    withoutBday.forEach(function(p){
+      html+='<button class="person-row" style="width:100%;text-align:left;" data-action="open-person" data-id="'+p.id+'">' +
+        '<div class="avatar">'+esc(p.name[0]||'?')+'</div><div class="person-info"><div class="name">'+esc(p.name)+'</div></div></button>';
+    });
+  }
+  var list=document.getElementById('remindersList');
+  list.innerHTML=html;
+  hydrateImages(list);
+
+  var soon=withReminder.filter(function(p){ return p._days<=14; }).length;
+  document.getElementById('remindersBadge').classList.toggle('hidden', soon===0);
+}
+
+/* ================= RENDER: MORE ================= */
+function renderMore(){
+  var relTypesHtml=data.relationshipTypes.map(function(t){
+    return '<span class="chip">'+esc(t.label)+(t.symmetric?'':' / '+esc(t.inverse))+'</span>';
+  }).join('');
+  var root=document.getElementById('moreContent');
+  root.innerHTML =
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-tree">' +
+    '<span class="mc-ic">🕸️</span><span class="mc-body"><span class="mc-title">Relationship tree</span><span class="mc-sub">See how everyone connects</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
+  '<div class="section-label">Relationship types</div>' +
+  '<div class="card"><div class="chip-row">'+relTypesHtml+'</div>' +
+    '<div class="btn-row"><button class="btn btn-secondary btn-sm" data-action="add-reltype">＋ New type</button></div></div>' +
+  '<div class="section-label">Backup</div>' +
+  '<div class="card">' +
+    '<p style="font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px;">Everything lives only on this device. Export a backup now and then so you never lose it.</p>' +
+    '<div class="btn-row wrap">' +
+      '<button class="btn btn-secondary btn-sm" data-action="export-data">Export data</button>' +
+      '<button class="btn btn-secondary btn-sm" data-action="export-data-photos">Export with photos</button>' +
+      '<button class="btn btn-secondary btn-sm" data-action="import-data">Import backup</button>' +
+    '</div>' +
+    '<input type="file" accept="application/json" id="importFileInput" class="hidden">' +
+  '</div>' +
+  '<div class="section-label">Storage</div>' +
+  '<div class="card" id="storageInfoCard">' +
+    '<div class="field-block"><div class="label">People</div><div class="value">'+activePeople().length+'</div></div>' +
+    '<div class="field-block"><div class="label">Timeline entries</div><div class="value">'+data.timeline.length+'</div></div>' +
+    '<div class="field-block"><div class="label">Relationships</div><div class="value">'+data.relationships.length+'</div></div>' +
+    '<div class="field-block" id="storageEstimateBlock"></div>' +
+  '</div>' +
+  '<div class="section-label">About</div>' +
+  '<div class="card"><p style="font-size:13px;color:var(--muted);line-height:1.6;">Kept keeps everyone in your life — profiles, how you met, the moments you\'ve shared, and how you\'re all connected. Your data stays on this device; photos are stored using your browser\'s local storage, which typically has room for thousands of photos, though it isn\'t mathematically unlimited. Export a backup regularly to be safe.</p></div>';
+
+  if(navigator.storage && navigator.storage.estimate){
+    navigator.storage.estimate().then(function(est){
+      var usedMB=(est.usage/1048576).toFixed(1);
+      var quotaMB=(est.quota/1048576).toFixed(0);
+      var blk=document.getElementById('storageEstimateBlock');
+      if(blk) blk.innerHTML='<div class="label">Storage used</div><div class="value">'+usedMB+' MB of ~'+quotaMB+' MB available</div>';
+    }).catch(function(){});
+  }
+}
+
+/* ================= RENDER: TREE ================= */
+function renderTree(focusId){
+  currentTreeFocus=focusId||'';
+  var sel=document.getElementById('treeFocusSelect');
+  populatePersonSelect(sel, true, currentTreeFocus);
+
+  var people=activePeople();
+  var rels=data.relationships;
+
+  var nodeIds, edges;
+  if(currentTreeFocus){
+    var connected=new Set([currentTreeFocus]);
+    edges=rels.filter(function(r){ return r.personA===currentTreeFocus || r.personB===currentTreeFocus; });
+    edges.forEach(function(r){ connected.add(r.personA); connected.add(r.personB); });
+    nodeIds=Array.from(connected).filter(function(id){ return findPerson(id) && !findPerson(id).archived; });
+  } else {
+    nodeIds=people.map(function(p){ return p.id; });
+    edges=rels.filter(function(r){ return connectedBothActive(r); });
+  }
+
+  var wrap=document.getElementById('treeSvgWrap');
+  var isolatedWrap=document.getElementById('treeIsolatedList');
+
+  if(nodeIds.length===0){
+    wrap.innerHTML='<div class="empty-state"><div class="big">🕸️</div><h3>Nothing to show yet</h3><p>Add some people and relationships first.</p></div>';
+    isolatedWrap.innerHTML='';
+    return;
+  }
+
+  var W=760, H=Math.max(560, Math.min(1400, nodeIds.length*70));
+  var connectedIds=new Set();
+  edges.forEach(function(e){ connectedIds.add(e.personA); connectedIds.add(e.personB); });
+  var graphNodeIds = currentTreeFocus ? nodeIds : nodeIds.filter(function(id){ return connectedIds.has(id); });
+  var isolated = currentTreeFocus ? [] : nodeIds.filter(function(id){ return !connectedIds.has(id); });
+
+  if(graphNodeIds.length===0){
+    wrap.innerHTML='<div class="empty-state"><div class="big">🕸️</div><h3>No relationships yet</h3><p>Add a relationship to see the web take shape.</p></div>';
+  } else {
+    var edgeList=edges.map(function(r){ return {a:r.personA, b:r.personB, id:r.id, typeId:r.typeId}; });
+    var nodes=computeForceLayout(graphNodeIds, edgeList, W, H);
+    wrap.innerHTML=buildTreeSVG(nodes, edgeList, W, H);
+    hydrateImages(wrap);
+    wireTreeDrag(wrap.querySelector('svg'), nodes, edgeList);
+  }
+
+  if(isolated.length){
+    isolatedWrap.innerHTML='<div class="section-label">Not yet connected</div>' + isolated.map(function(id){
+      var p=findPerson(id);
+      return '<button class="chip tap" data-action="open-person" data-id="'+id+'" style="margin:0 6px 6px 0;">'+esc(p.name)+'</button>';
+    }).join('');
+  } else {
+    isolatedWrap.innerHTML='';
+  }
+}
+function connectedBothActive(r){
+  var a=findPerson(r.personA), b=findPerson(r.personB);
+  return a && b && !a.archived && !b.archived;
+}
+function computeForceLayout(nodeIds, edges, width, height){
+  var nodes=nodeIds.map(function(id,i){
+    var angle=(i/nodeIds.length)*Math.PI*2;
+    return {id:id, x:width/2+Math.cos(angle)*Math.min(width,height)/3, y:height/2+Math.sin(angle)*Math.min(width,height)/3, vx:0, vy:0};
+  });
+  var nodeMap={}; nodes.forEach(function(n){ nodeMap[n.id]=n; });
+  var k=Math.sqrt((width*height)/Math.max(nodes.length,1));
+  var iterations=220;
+  for(var iter=0; iter<iterations; iter++){
+    for(var i=0;i<nodes.length;i++){
+      for(var j=i+1;j<nodes.length;j++){
+        var dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
+        var dist=Math.sqrt(dx*dx+dy*dy)||0.01;
+        var force=(k*k)/dist*0.10;
+        var fx=dx/dist*force, fy=dy/dist*force;
+        nodes[i].vx+=fx; nodes[i].vy+=fy;
+        nodes[j].vx-=fx; nodes[j].vy-=fy;
+      }
+    }
+    edges.forEach(function(e){
+      var a=nodeMap[e.a], b=nodeMap[e.b];
+      if(!a||!b) return;
+      var dx=a.x-b.x, dy=a.y-b.y;
+      var dist=Math.sqrt(dx*dx+dy*dy)||0.01;
+      var force=(dist*dist)/k*0.018;
+      var fx=dx/dist*force, fy=dy/dist*force;
+      a.vx-=fx; a.vy-=fy;
+      b.vx+=fx; b.vy+=fy;
+    });
+    nodes.forEach(function(n){
+      n.vx += (width/2-n.x)*0.002;
+      n.vy += (height/2-n.y)*0.002;
+      n.vx*=0.82; n.vy*=0.82;
+      n.x+=n.vx; n.y+=n.vy;
+      n.x=Math.max(42,Math.min(width-42,n.x));
+      n.y=Math.max(42,Math.min(height-42,n.y));
+    });
+  }
+  return nodes;
+}
+function buildTreeSVG(nodes, edges, W, H){
+  var nodeMap={}; nodes.forEach(function(n){ nodeMap[n.id]=n; });
+  var edgesSvg=edges.map(function(e,idx){
+    var a=nodeMap[e.a], b=nodeMap[e.b];
+    if(!a||!b) return '';
+    var t=relType(e.typeId);
+    var label=t ? (t.symmetric? t.label : (t.label+' / '+t.inverse)) : '';
+    var mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+    return '<g class="tree-edge" data-edge-idx="'+idx+'">' +
+      '<line id="edge-'+idx+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'" stroke="#C08434" stroke-width="1.6" stroke-dasharray="1,7" stroke-linecap="round" opacity="0.75"/>' +
+      '<g id="edgelabel-'+idx+'" transform="translate('+mx+','+my+')">' +
+        '<rect x="-'+(label.length*3+6)+'" y="-8" width="'+(label.length*6+12)+'" height="16" rx="8" fill="#FCFAF6" stroke="#DBD3C3"/>' +
+        '<text class="tree-edge-label" text-anchor="middle" dy="4">'+esc(label)+'</text>' +
+      '</g>' +
+    '</g>';
+  }).join('');
+  var nodesSvg=nodes.map(function(n){
+    var p=findPerson(n.id);
+    var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var photoBit = p.photoId ?
+      '<clipPath id="clip-'+n.id+'"><circle cx="0" cy="0" r="26"/></clipPath><image data-photo-id="'+p.photoId+'" x="-26" y="-26" width="52" height="52" clip-path="url(#clip-'+n.id+')" preserveAspectRatio="xMidYMid slice"/>' :
+      '<circle r="26" fill="#DCE6DD"/><text text-anchor="middle" dy="6" font-family="Fraunces, serif" font-size="16" font-weight="600" fill="#4F6D5A">'+esc(initials)+'</text>';
+    return '<g class="tree-node" data-id="'+n.id+'" transform="translate('+n.x+','+n.y+')" style="cursor:grab;">' +
+      photoBit +
+      '<circle r="26" fill="none" stroke="#FCFAF6" stroke-width="2.5"/>' +
+      '<text class="tree-node-label" text-anchor="middle" y="42">'+esc(p.name.split(' ')[0])+'</text>' +
+    '</g>';
+  }).join('');
+  return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">' +
+    '<g id="edgesLayer">'+edgesSvg+'</g><g id="nodesLayer">'+nodesSvg+'</g></svg>';
+}
+function wireTreeDrag(svg, nodes, edges){
+  if(!svg) return;
+  var nodeMap={}; nodes.forEach(function(n){ nodeMap[n.id]=n; });
+  var dragging=null, moved=false;
+  function svgPoint(clientX, clientY){
+    var pt=svg.createSVGPoint();
+    pt.x=clientX; pt.y=clientY;
+    var ctm=svg.getScreenCTM();
+    if(!ctm) return {x:0,y:0};
+    var loc=pt.matrixTransform(ctm.inverse());
+    return {x:loc.x, y:loc.y};
+  }
+  function updateEdgesFor(nodeId){
+    edges.forEach(function(e, idx){
+      if(e.a!==nodeId && e.b!==nodeId) return;
+      var a=nodeMap[e.a], b=nodeMap[e.b];
+      if(!a||!b) return;
+      var line=document.getElementById('edge-'+idx);
+      if(line){ line.setAttribute('x1',a.x); line.setAttribute('y1',a.y); line.setAttribute('x2',b.x); line.setAttribute('y2',b.y); }
+      var lbl=document.getElementById('edgelabel-'+idx);
+      if(lbl){ lbl.setAttribute('transform','translate('+((a.x+b.x)/2)+','+((a.y+b.y)/2)+')'); }
+    });
+  }
+  svg.querySelectorAll('.tree-node').forEach(function(g){
+    g.addEventListener('pointerdown', function(e){
+      dragging=g.getAttribute('data-id'); moved=false;
+      g.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+  });
+  svg.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    moved=true;
+    var pt=svgPoint(e.clientX, e.clientY);
+    var n=nodeMap[dragging];
+    n.x=pt.x; n.y=pt.y;
+    var g=svg.querySelector('.tree-node[data-id="'+dragging+'"]');
+    if(g) g.setAttribute('transform','translate('+n.x+','+n.y+')');
+    updateEdgesFor(dragging);
+  });
+  function endDrag(e){
+    if(dragging && !moved){
+      openPersonScreen(dragging);
+    }
+    dragging=null;
+  }
+  svg.addEventListener('pointerup', endDrag);
+  svg.addEventListener('pointercancel', endDrag);
+}
+
+/* ================= MODALS ================= */
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function showConfirm(title, message, onConfirm){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMessage').textContent=message;
+  confirmCallback=onConfirm;
+  openModal('modal-confirm');
+}
+
+/* ---- Person form ---- */
+function openPersonForm(personId){
+  var form=document.getElementById('personForm');
+  form.reset();
+  document.getElementById('pf-id').value=personId||'';
+  document.getElementById('pf-avatar-preview').innerHTML='🙂';
+  document.getElementById('pf-avatar-preview').removeAttribute('data-photo-id');
+  document.getElementById('pf-avatar-preview').dataset.newPhotoId='';
+  var msel=document.getElementById('pf-bmonth'), dsel=document.getElementById('pf-bday');
+  if(!msel.dataset.built){
+    msel.innerHTML='<option value="">Month</option>'+MONTHS.map(function(m,i){return '<option value="'+(i+1)+'">'+m+'</option>';}).join('');
+    msel.dataset.built='1';
+  }
+  function buildDays(){
+    var v=dsel.value;
+    dsel.innerHTML='<option value="">Day</option>'+Array.from({length:31},function(_,i){return '<option value="'+(i+1)+'">'+(i+1)+'</option>';}).join('');
+    if(v) dsel.value=v;
+  }
+  buildDays();
+  document.getElementById('pf-cardtoggle').classList.add('on');
+
+  if(personId){
+    var p=findPerson(personId);
+    document.getElementById('personFormTitle').textContent='Edit person';
+    document.getElementById('pf-name').value=p.name||'';
+    document.getElementById('pf-pronouns').value=p.pronouns||'';
+    if(p.birthday){
+      msel.value=p.birthday.month||''; buildDays(); dsel.value=p.birthday.day||'';
+      document.getElementById('pf-byear').value=p.birthday.year||'';
+    }
+    document.getElementById('pf-met-text').value=(p.howWeMet&&p.howWeMet.text)||'';
+    document.getElementById('pf-met-date').value=(p.howWeMet&&p.howWeMet.date)||'';
+    document.getElementById('pf-tags').value=(p.tags||[]).join(', ');
+    document.getElementById('pf-notes').value=p.notes||'';
+    document.getElementById('pf-cardtoggle').classList.toggle('on', p.cardReminder!==false);
+    if(p.photoId){
+      document.getElementById('pf-avatar-preview').innerHTML='<img data-photo-id="'+p.photoId+'">';
+      hydrateImages(document.getElementById('pf-avatar-preview'));
+    }
+  } else {
+    document.getElementById('personFormTitle').textContent='Add person';
+  }
+  openModal('modal-person');
+}
+function submitPersonForm(e){
+  e.preventDefault();
+  var id=document.getElementById('pf-id').value;
+  var name=document.getElementById('pf-name').value.trim();
+  if(!name){ toast('Name is required'); return; }
+  var tagsRaw=document.getElementById('pf-tags').value;
+  var tags=tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean);
+  var month=document.getElementById('pf-bmonth').value, day=document.getElementById('pf-bday').value, year=document.getElementById('pf-byear').value;
+
+  function finish(photoId){
+    if(id){
+      var p=findPerson(id);
+      p.name=name; p.pronouns=document.getElementById('pf-pronouns').value.trim();
+      p.birthday={month:month?Number(month):null, day:day?Number(day):null, year:year?Number(year):null};
+      p.howWeMet={text:document.getElementById('pf-met-text').value.trim(), date:document.getElementById('pf-met-date').value||null};
+      p.tags=tags;
+      p.notes=document.getElementById('pf-notes').value.trim();
+      p.cardReminder=document.getElementById('pf-cardtoggle').classList.contains('on');
+      if(photoId) p.photoId=photoId;
+      p.updatedAt=Date.now();
+    } else {
+      data.people.push({
+        id:uid('p'), name:name, pronouns:document.getElementById('pf-pronouns').value.trim(),
+        birthday:{month:month?Number(month):null, day:day?Number(day):null, year:year?Number(year):null},
+        photoId:photoId||null, galleryPhotoIds:[],
+        howWeMet:{text:document.getElementById('pf-met-text').value.trim(), date:document.getElementById('pf-met-date').value||null},
+        tags:tags, notes:document.getElementById('pf-notes').value.trim(),
+        cardReminder:document.getElementById('pf-cardtoggle').classList.contains('on'),
+        lastCardSentYear:null, archived:false, createdAt:Date.now(), updatedAt:Date.now()
+      });
+    }
+    saveData();
+    closeModal('modal-person');
+    toast('Saved');
+    if(currentScreen==='person-detail' && currentPersonId) renderPersonDetail(currentPersonId);
+    else if(currentScreen==='people') renderPeopleList();
+    else if(currentScreen==='timeline') renderTimeline();
+  }
+
+  var fileInput=document.getElementById('pf-avatar-input');
+  if(fileInput.files && fileInput.files[0]){
+    storePhoto(fileInput.files[0]).then(finish);
+  } else {
+    finish(null);
+  }
+}
+
+/* ---- Entry (hangout/memory) form ---- */
+function setEntryType(type){
+  currentEntryType=type;
+  document.querySelectorAll('#entryForm .type-toggle button').forEach(function(b){
+    b.classList.toggle('active', b.dataset.type===type);
+  });
+  document.getElementById('ef-date-label').textContent = type==='hangout' ? 'Date' : 'Date (optional)';
+  document.getElementById('ef-approx-wrap').classList.toggle('hidden', type==='hangout');
+}
+function buildPeopleChecklist(preselect){
+  var wrap=document.getElementById('ef-people-checklist');
+  var people=activePeople().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  if(people.length===0){ wrap.innerHTML='<p style="color:var(--muted);font-size:13px;padding:6px;">Add some people first.</p>'; return; }
+  wrap.innerHTML=people.map(function(p){
+    var checked=preselect && preselect.indexOf(p.id)!==-1 ? 'checked' : '';
+    return '<label><input type="checkbox" value="'+p.id+'" '+checked+'> '+esc(p.name)+'</label>';
+  }).join('');
+}
+function renderEntryPhotoStaging(){
+  var row=document.getElementById('ef-photos-row');
+  var addBtn='<button type="button" class="add-photo-btn" data-action="add-entry-photo">＋</button>';
+  row.innerHTML = entryPhotoStaging.map(function(ph,idx){
+    return '<div class="photo-thumb"><img src="'+ph.previewUrl+'"><button type="button" class="rm" data-action="remove-entry-photo" data-idx="'+idx+'">✕</button></div>';
+  }).join('') + addBtn;
+}
+function openEntryForm(entryId, prefillPersonId, forcedType){
+  var form=document.getElementById('entryForm');
+  form.reset();
+  entryPhotoStaging=[];
+  document.getElementById('ef-id').value=entryId||'';
+  setEntryType(forcedType||'hangout');
+
+  if(entryId){
+    var e=data.timeline.find(function(x){return x.id===entryId;});
+    document.getElementById('entryFormTitle').textContent='Edit entry';
+    setEntryType(e.type);
+    document.getElementById('ef-title').value=e.title||'';
+    document.getElementById('ef-date').value=e.date||'';
+    document.getElementById('ef-approx').value=e.approxDate||'';
+    document.getElementById('ef-location').value=e.location||'';
+    document.getElementById('ef-desc').value=e.description||'';
+    buildPeopleChecklist(e.people||[]);
+    (e.photoIds||[]).forEach(function(pid){
+      getPhotoURL(pid).then(function(url){
+        entryPhotoStaging.push({id:pid, previewUrl:url});
+        renderEntryPhotoStaging();
+      });
+    });
+  } else {
+    document.getElementById('entryFormTitle').textContent = (forcedType==='memory') ? 'Add a memory' : 'Log a hangout';
+    buildPeopleChecklist(prefillPersonId? [prefillPersonId] : []);
+  }
+  renderEntryPhotoStaging();
+  openModal('modal-entry');
+}
+function submitEntryForm(e){
+  e.preventDefault();
+  var id=document.getElementById('ef-id').value;
+  var title=document.getElementById('ef-title').value.trim();
+  if(!title){ toast('Title is required'); return; }
+  var peopleIds=Array.from(document.querySelectorAll('#ef-people-checklist input:checked')).map(function(i){return i.value;});
+  var date=document.getElementById('ef-date').value || null;
+  var approx=document.getElementById('ef-approx').value.trim() || null;
+  var location=document.getElementById('ef-location').value.trim();
+  var desc=document.getElementById('ef-desc').value.trim();
+
+  var existingPhotoIds=entryPhotoStaging.filter(function(p){return p.id;}).map(function(p){return p.id;});
+  var newFiles=entryPhotoStaging.filter(function(p){return !p.id && p.file;});
+
+  Promise.all(newFiles.map(function(p){ return storePhoto(p.file); })).then(function(newIds){
+    var allPhotoIds=existingPhotoIds.concat(newIds);
+    if(id){
+      var entry=data.timeline.find(function(x){return x.id===id;});
+      entry.type=currentEntryType; entry.title=title; entry.date=date; entry.approxDate=approx;
+      entry.people=peopleIds; entry.location=location; entry.description=desc; entry.photoIds=allPhotoIds;
+      entry.updatedAt=Date.now();
+    } else {
+      data.timeline.push({
+        id:uid('t'), type:currentEntryType, title:title, date:date, approxDate:approx,
+        people:peopleIds, location:location, description:desc, photoIds:allPhotoIds,
+        createdAt:Date.now(), updatedAt:Date.now()
+      });
+    }
+    saveData();
+    closeModal('modal-entry');
+    toast('Saved');
+    refreshCurrentScreen();
+  });
+}
+function refreshCurrentScreen(){
+  if(currentScreen==='timeline') renderTimeline();
+  else if(currentScreen==='people') renderPeopleList();
+  else if(currentScreen==='person-detail' && currentPersonId) renderPersonDetail(currentPersonId);
+  else if(currentScreen==='reminders') renderReminders();
+  else if(currentScreen==='tree') renderTree(currentTreeFocus);
+  else if(currentScreen==='more') renderMore();
+}
+
+/* ---- Relationship form ---- */
+function populateRelTypeSelect(sel, selectedId){
+  sel.innerHTML=data.relationshipTypes.map(function(t){
+    return '<option value="'+t.id+'"'+(t.id===selectedId?' selected':'')+'>'+esc(t.label)+(t.symmetric?'':' / '+esc(t.inverse))+'</option>';
+  }).join('');
+}
+function openRelationshipForm(relId, prefillA){
+  var form=document.getElementById('relationshipForm');
+  form.reset();
+  document.getElementById('rf-id').value=relId||'';
+  populatePersonSelect(document.getElementById('rf-personA'), false, prefillA||'');
+  populatePersonSelect(document.getElementById('rf-personB'), false, '');
+  populateRelTypeSelect(document.getElementById('rf-type'), '');
+  if(relId){
+    var r=data.relationships.find(function(x){return x.id===relId;});
+    document.getElementById('rf-personA').value=r.personA;
+    document.getElementById('rf-personB').value=r.personB;
+    document.getElementById('rf-type').value=r.typeId;
+    document.getElementById('rf-note').value=r.note||'';
+  }
+  openModal('modal-relationship');
+}
+function submitRelationshipForm(e){
+  e.preventDefault();
+  var id=document.getElementById('rf-id').value;
+  var a=document.getElementById('rf-personA').value;
+  var b=document.getElementById('rf-personB').value;
+  var typeId=document.getElementById('rf-type').value;
+  var note=document.getElementById('rf-note').value.trim();
+  if(!a || !b || a===b){ toast('Choose two different people'); return; }
+  if(id){
+    var r=data.relationships.find(function(x){return x.id===id;});
+    r.personA=a; r.personB=b; r.typeId=typeId; r.note=note;
+  } else {
+    data.relationships.push({id:uid('r'), personA:a, personB:b, typeId:typeId, note:note, createdAt:Date.now()});
+  }
+  saveData();
+  closeModal('modal-relationship');
+  toast('Saved');
+  refreshCurrentScreen();
+}
+
+/* ---- Relationship type form ---- */
+function openRelTypeForm(){
+  document.getElementById('reltypeForm').reset();
+  document.getElementById('rt-symmetric').classList.add('on');
+  document.getElementById('rt-inverse-wrap').classList.add('hidden');
+  openModal('modal-reltype');
+}
+function submitRelTypeForm(e){
+  e.preventDefault();
+  var label=document.getElementById('rt-label').value.trim();
+  if(!label){ toast('Label is required'); return; }
+  var symmetric=document.getElementById('rt-symmetric').classList.contains('on');
+  var inverse=symmetric? label : (document.getElementById('rt-inverse').value.trim() || label);
+  data.relationshipTypes.push({id:uid('rt'), label:label, inverse:inverse, symmetric:symmetric});
+  saveData();
+  closeModal('modal-reltype');
+  toast('Type added');
+  renderMore();
+}
+
+/* ---- Photo viewer ---- */
+function openPhotoViewer(photoId){
+  if(!photoId) return;
+  getPhotoURL(photoId).then(function(url){
+    if(!url) return;
+    document.getElementById('photoViewerImg').src=url;
+    openModal('modal-photoviewer');
+  });
+}
+
+/* ---- Export / Import ---- */
+function downloadJSON(obj, filename){
+  var blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+function exportDataOnly(){
+  downloadJSON({version:1, exportedAt:new Date().toISOString(), people:data.people, timeline:data.timeline,
+    relationships:data.relationships, relationshipTypes:data.relationshipTypes}, 'kept-backup-'+dateStr()+'.json');
+  toast('Backup downloaded');
+}
+function blobToBase64(blob){
+  return new Promise(function(resolve,reject){
+    var reader=new FileReader();
+    reader.onloadend=function(){ resolve(reader.result); };
+    reader.onerror=reject;
+    reader.readAsDataURL(blob);
+  });
+}
+function exportDataWithPhotos(){
+  toast('Preparing backup…');
+  var ids=new Set();
+  data.people.forEach(function(p){ if(p.photoId) ids.add(p.photoId); (p.galleryPhotoIds||[]).forEach(function(g){ids.add(g);}); });
+  data.timeline.forEach(function(t){ (t.photoIds||[]).forEach(function(g){ids.add(g);}); });
+  var media={};
+  var idArr=Array.from(ids);
+  Promise.all(idArr.map(function(id){
+    return idbGet(id).then(function(rec){
+      if(rec && rec.blob) return blobToBase64(rec.blob).then(function(b64){ media[id]={type:rec.type,data:b64}; });
+    });
+  })).then(function(){
+    downloadJSON({version:1, exportedAt:new Date().toISOString(), people:data.people, timeline:data.timeline,
+      relationships:data.relationships, relationshipTypes:data.relationshipTypes, media:media}, 'kept-backup-with-photos-'+dateStr()+'.json');
+    toast('Backup downloaded');
+  });
+}
+function importDataFile(file){
+  var reader=new FileReader();
+  reader.onload=function(){
+    var payload;
+    try{ payload=JSON.parse(reader.result); }catch(e){ toast('That file could not be read'); return; }
+    if(!payload || !Array.isArray(payload.people)){ toast('That file doesn\'t look like a Kept backup'); return; }
+    showConfirm('Replace all data?', 'Importing will replace everyone and everything currently in Kept on this device. Make sure you have exported a backup first if needed.', function(){
+      var media=payload.media || {};
+      var mediaIds=Object.keys(media);
+      Promise.all(mediaIds.map(function(id){
+        return fetch(media[id].data).then(function(r){return r.blob();}).then(function(blob){
+          return idbPut({id:id, blob:blob, type:media[id].type, createdAt:Date.now()});
+        });
+      })).then(function(){
+        data={people:payload.people||[], timeline:payload.timeline||[], relationships:payload.relationships||[],
+          relationshipTypes:(payload.relationshipTypes&&payload.relationshipTypes.length)?payload.relationshipTypes:defaultRelationshipTypes()};
+        saveData();
+        urlCache.clear();
+        toast('Backup imported');
+        showScreen('timeline');
+      }).catch(function(){ toast('Import finished with some photo errors'); });
+    });
+  };
+  reader.readAsText(file);
+}
+
+/* ================= DELEGATED ACTIONS ================= */
+function handleAction(action, target){
+  var id=target.getAttribute('data-id');
+  switch(action){
+    case 'toggle-search':
+      document.getElementById('searchWrap').classList.toggle('hidden');
+      if(!document.getElementById('searchWrap').classList.contains('hidden')) document.getElementById('searchInput').focus();
+      break;
+    case 'open-person': closeAllModals(); openPersonScreen(id); break;
+    case 'goto-people': showScreen('people'); break;
+    case 'goto-tree': showScreen('tree'); break;
+    case 'goto-tree-focus': showScreen('tree', {focusId:id}); break;
+    case 'view-photo':
+      var pid=target.getAttribute('data-photo-full');
+      if(pid) openPhotoViewer(pid);
+      break;
+    case 'edit-person': openPersonForm(id); break;
+    case 'toggle-card-reminder': {
+      var p=findPerson(id); p.cardReminder = !(p.cardReminder!==false); saveData(); refreshCurrentScreen();
+      break;
+    }
+    case 'toggle-card-sent': {
+      var p2=findPerson(id); var yr=Number(target.getAttribute('data-year'));
+      p2.lastCardSentYear = target.checked ? yr : null;
+      saveData();
+      break;
+    }
+    case 'add-relationship-for': openRelationshipForm(null, id); break;
+    case 'add-hangout-for': openEntryForm(null, id, 'hangout'); break;
+    case 'add-memory-for': openEntryForm(null, id, 'memory'); break;
+    case 'add-gallery-photo': {
+      var inp=document.createElement('input');
+      inp.type='file'; inp.accept='image/*';
+      inp.onchange=function(){
+        if(inp.files && inp.files[0]){
+          storePhoto(inp.files[0]).then(function(newId){
+            var p=findPerson(currentPersonId);
+            p.galleryPhotoIds=p.galleryPhotoIds||[];
+            p.galleryPhotoIds.push(newId);
+            saveData();
+            renderPersonDetail(currentPersonId);
+          });
+        }
+      };
+      inp.click();
+      break;
+    }
+    case 'save-notes': {
+      var p3=findPerson(id);
+      p3.notes=document.getElementById('pd-notes').value.trim();
+      saveData(); toast('Notes saved');
+      break;
+    }
+    case 'archive-person':
+      showConfirm('Archive '+personName(id)+'?', 'They\'ll be hidden from your lists but their memories will stay. You can\'t undo this from the app yet — export a backup if you want to keep a record.', function(){
+        var p4=findPerson(id); p4.archived=true; saveData(); showScreen('people'); toast('Archived');
+      });
+      break;
+    case 'delete-person':
+      showConfirm('Delete '+personName(id)+'?', 'This removes their profile and any relationships permanently. Shared memories will stay, just without them tagged. This can\'t be undone.', function(){
+        deletePerson(id); showScreen('people'); toast('Deleted');
+      });
+      break;
+    case 'edit-entry': openEntryForm(id); break;
+    case 'delete-entry':
+      showConfirm('Delete this entry?', 'This memory will be permanently removed.', function(){
+        data.timeline = data.timeline.filter(function(e){return e.id!==id;});
+        saveData(); refreshCurrentScreen(); toast('Deleted');
+      });
+      break;
+    case 'add-reltype': openRelTypeForm(); break;
+    case 'export-data': exportDataOnly(); break;
+    case 'export-data-photos': exportDataWithPhotos(); break;
+    case 'import-data': document.getElementById('importFileInput').click(); break;
+    case 'pick-avatar': document.getElementById('pf-avatar-input').click(); break;
+    case 'add-entry-photo': document.getElementById('ef-photo-input').click(); break;
+    case 'remove-entry-photo': {
+      var idx=Number(target.getAttribute('data-idx'));
+      entryPhotoStaging.splice(idx,1);
+      renderEntryPhotoStaging();
+      break;
+    }
+    case 'add-sheet-person': closeModal('modal-addsheet'); openPersonForm(null); break;
+    case 'add-sheet-hangout': closeModal('modal-addsheet'); openEntryForm(null, null, 'hangout'); break;
+    case 'add-sheet-memory': closeModal('modal-addsheet'); openEntryForm(null, null, 'memory'); break;
+    case 'add-sheet-relationship': closeModal('modal-addsheet'); openRelationshipForm(null); break;
+    case 'close-modal': closeModal(target.getAttribute('data-modal')); break;
+  }
+}
+function openPersonScreen(id){
+  showScreen('person-detail', {personId:id});
+}
+function deletePerson(id){
+  var p=findPerson(id);
+  if(p){
+    if(p.photoId) idbDelete(p.photoId);
+    (p.galleryPhotoIds||[]).forEach(function(g){ idbDelete(g); });
+  }
+  data.people = data.people.filter(function(x){return x.id!==id;});
+  data.relationships = data.relationships.filter(function(r){return r.personA!==id && r.personB!==id;});
+  data.timeline.forEach(function(e){ e.people=(e.people||[]).filter(function(pid){return pid!==id;}); });
+  saveData();
+}
+function closeAllModals(){
+  document.querySelectorAll('.modal-overlay.open').forEach(function(m){ m.classList.remove('open'); });
+}
+
+/* ================= WIRE UP ================= */
+function wireGlobalEvents(){
+  document.body.addEventListener('click', function(e){
+    var t=e.target.closest('[data-action]');
+    if(t) handleAction(t.getAttribute('data-action'), t);
+  });
+
+  document.querySelectorAll('.modal-overlay').forEach(function(overlay){
+    overlay.addEventListener('click', function(e){
+      if(e.target===overlay) overlay.classList.remove('open');
+    });
+  });
+
+  document.getElementById('bottomnav').addEventListener('click', function(e){
+    var btn=e.target.closest('.navbtn[data-screen]');
+    if(btn) showScreen(btn.dataset.screen);
+  });
+  document.getElementById('fabAdd').addEventListener('click', function(){ openModal('modal-addsheet'); });
+
+  document.getElementById('searchInput').addEventListener('input', function(){
+    if(currentScreen==='timeline') renderTimeline();
+    else if(currentScreen==='people') renderPeopleList();
+  });
+
+  document.getElementById('personForm').addEventListener('submit', submitPersonForm);
+  document.querySelectorAll('#personForm .suggest-chip').forEach(function(c){
+    c.addEventListener('click', function(){ document.getElementById('pf-pronouns').value=c.dataset.fill; });
+  });
+  document.getElementById('pf-avatar-input').addEventListener('change', function(){
+    var f=this.files[0];
+    if(f){
+      var url=URL.createObjectURL(f);
+      document.getElementById('pf-avatar-preview').innerHTML='<img src="'+url+'">';
+    }
+  });
+  document.getElementById('pf-cardtoggle').addEventListener('click', function(){ this.classList.toggle('on'); });
+  document.getElementById('pf-bmonth').addEventListener('change', function(){});
+
+  document.getElementById('entryForm').addEventListener('submit', submitEntryForm);
+  document.querySelectorAll('#entryForm .type-toggle button').forEach(function(b){
+    b.addEventListener('click', function(){ setEntryType(b.dataset.type); });
+  });
+  document.getElementById('ef-photo-input').addEventListener('change', function(){
+    Array.from(this.files||[]).forEach(function(file){
+      entryPhotoStaging.push({file:file, previewUrl:URL.createObjectURL(file)});
+    });
+    renderEntryPhotoStaging();
+    this.value='';
+  });
+
+  document.getElementById('relationshipForm').addEventListener('submit', submitRelationshipForm);
+
+  document.getElementById('reltypeForm').addEventListener('submit', submitRelTypeForm);
+  document.getElementById('rt-symmetric').addEventListener('click', function(){
+    this.classList.toggle('on');
+    document.getElementById('rt-inverse-wrap').classList.toggle('hidden', this.classList.contains('on'));
+  });
+
+  document.getElementById('confirmActionBtn').addEventListener('click', function(){
+    var cb=confirmCallback;
+    confirmCallback=null;
+    closeModal('modal-confirm');
+    if(cb) cb();
+  });
+
+  document.getElementById('timelinePersonFilter').addEventListener('change', function(){ renderTimeline(); });
+  document.getElementById('treeFocusSelect').addEventListener('change', function(){ renderTree(this.value); });
+
+  document.body.addEventListener('change', function(e){
+    if(e.target && e.target.id==='importFileInput'){
+      var f=e.target.files[0];
+      if(f) importDataFile(f);
+      e.target.value='';
+    }
+  });
+}
+
+/* ================= INIT ================= */
+document.addEventListener('DOMContentLoaded', function(){
+  openDB().then(function(db){ DB=db; }).catch(function(){
+    toast('Photo storage isn\'t available in this browser');
+  }).finally(function(){
+    loadData();
+    wireGlobalEvents();
+    showScreen('timeline');
+  });
+});
+
+})();
+</script>
+</body>
+</html>
