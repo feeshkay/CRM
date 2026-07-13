@@ -176,6 +176,20 @@ main.screen.active{display:block;}
 .gallery-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;border:1px solid var(--line);}
 .gallery-add{aspect-ratio:1;border-radius:10px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:22px;background:var(--paper-alt);}
 
+/* Quotes & gift ideas */
+.quote-card{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--thread);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;position:relative;}
+.quote-card .q-text{font-family:var(--font-display);font-style:italic;font-size:15.5px;color:var(--ink);line-height:1.4;}
+.quote-card .q-date{font-size:11.5px;color:var(--muted);margin-top:6px;}
+.quote-card .q-actions{position:absolute;top:10px;right:10px;display:flex;gap:12px;}
+.quote-card .q-actions button{color:var(--muted);font-size:13px;}
+.gift-row{display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 14px;margin-bottom:8px;}
+.gift-row input[type=checkbox]{width:19px;height:19px;margin-top:2px;flex:0 0 auto;}
+.gift-row .g-body{flex:1;min-width:0;}
+.gift-row .g-text{font-size:14.5px;color:var(--ink);}
+.gift-row.given .g-text{text-decoration:line-through;color:var(--muted);}
+.gift-row .g-note{font-size:12.5px;color:var(--muted);margin-top:2px;}
+.gift-row .g-del{color:var(--muted);font-size:13px;flex:0 0 auto;}
+
 /* Forms */
 .form-group{margin-bottom:16px;}
 .form-group label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
@@ -323,6 +337,7 @@ main.screen.active{display:block;}
     <div class="tree-controls">
       <select id="treeFocusSelect"><option value="">Everyone</option></select>
     </div>
+    <div id="treeMeRow" style="margin-bottom:10px;"></div>
     <div id="treeSvgWrap"></div>
     <div class="tree-legend">Drag people to untangle threads · Tap a person to open their profile</div>
     <div id="treeIsolatedList" class="isolated-list"></div>
@@ -331,6 +346,46 @@ main.screen.active{display:block;}
   <!-- ============ MORE ============ -->
   <main class="screen" id="screen-more">
     <div id="moreContent"></div>
+  </main>
+
+  <!-- ============ ARCHIVED ============ -->
+  <main class="screen" id="screen-archived">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">Archived people</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div id="archivedList"></div>
+  </main>
+
+  <!-- ============ TRASH ============ -->
+  <main class="screen" id="screen-trash">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">Trash</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div id="trashContent"></div>
+  </main>
+
+  <!-- ============ DUPLICATES ============ -->
+  <main class="screen" id="screen-duplicates">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">Find duplicates</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div id="duplicatesContent"></div>
+  </main>
+
+  <!-- ============ SYNC ============ -->
+  <main class="screen" id="screen-sync">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">Sync</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div id="syncContent"></div>
   </main>
 
   <!-- ============ BOTTOM NAV ============ -->
@@ -359,6 +414,9 @@ main.screen.active{display:block;}
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-relationship">
           <span class="so-ic">🧵</span><span><span class="so-text" style="display:block;">Add a relationship</span><span class="so-sub">How two people connect</span></span>
         </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-event">
+          <span class="so-ic">📅</span><span><span class="so-text" style="display:block;">Plan an event</span><span class="so-sub">Something coming up, with invitees</span></span>
+        </button>
       </div>
     </div>
   </div>
@@ -381,6 +439,20 @@ main.screen.active{display:block;}
             <label>Name</label>
             <input type="text" id="pf-name" required placeholder="Full name">
           </div>
+          <div class="toggle-row">
+            <span class="t-label">This is you</span>
+            <button type="button" class="switch" id="pf-ismetoggle"></button>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="pf-phone" placeholder="Phone number">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="pf-email" placeholder="Email">
+            </div>
+          </div>
           <div class="form-group">
             <label>Pronouns</label>
             <input type="text" id="pf-pronouns" placeholder="e.g. she/her">
@@ -397,8 +469,8 @@ main.screen.active{display:block;}
             <div class="form-row">
               <select id="pf-bmonth"><option value="">Month</option></select>
               <select id="pf-bday"><option value="">Day</option></select>
-              <input type="number" id="pf-byear" placeholder="Year (optional)" min="1900" max="2100" style="flex:1;">
             </div>
+            <input type="number" id="pf-byear" placeholder="Year (optional)" min="1900" max="2100" style="margin-top:8px;" inputmode="numeric" pattern="[0-9]*">
           </div>
           <div class="form-group">
             <label>How you met</label>
@@ -411,6 +483,10 @@ main.screen.active{display:block;}
           <div class="form-group">
             <label>Tags</label>
             <input type="text" id="pf-tags" placeholder="college friend, neighbor, work (comma separated)">
+          </div>
+          <div class="form-group">
+            <label>Likes &amp; interests</label>
+            <input type="text" id="pf-likes" placeholder="coffee, hiking, true crime podcasts (comma separated)">
           </div>
           <div class="toggle-row">
             <span class="t-label">Remind me about their birthday</span>
@@ -480,6 +556,48 @@ main.screen.active{display:block;}
     </div>
   </div>
 
+  <!-- ============ EVENT FORM MODAL ============ -->
+  <div class="modal-overlay" id="modal-event">
+    <div class="modal-sheet">
+      <div class="modal-header"><h3 id="eventFormTitle">Plan an event</h3><button class="modal-close" data-action="close-modal" data-modal="modal-event">✕</button></div>
+      <form id="eventForm">
+        <div class="modal-body">
+          <input type="hidden" id="ev-id">
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="ev-title" required placeholder="What's happening?">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="ev-date" required>
+            </div>
+            <div class="form-group">
+              <label>Time (optional)</label>
+              <input type="time" id="ev-time">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Location (optional)</label>
+            <input type="text" id="ev-location" placeholder="Where">
+          </div>
+          <div class="form-group">
+            <label>Details (optional)</label>
+            <textarea id="ev-desc" placeholder="Anything worth noting"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Invite</label>
+            <div class="checklist" id="ev-people-checklist"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-event">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ============ RELATIONSHIP FORM MODAL ============ -->
   <div class="modal-overlay" id="modal-relationship">
     <div class="modal-sheet">
@@ -539,6 +657,56 @@ main.screen.active{display:block;}
     </div>
   </div>
 
+  <!-- ============ QUOTE FORM MODAL ============ -->
+  <div class="modal-overlay" id="modal-quote">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3 id="quoteFormTitle">Add a quote</h3><button class="modal-close" data-action="close-modal" data-modal="modal-quote">✕</button></div>
+      <form id="quoteForm">
+        <div class="modal-body">
+          <input type="hidden" id="qf-id">
+          <input type="hidden" id="qf-personid">
+          <div class="form-group">
+            <label>What they said</label>
+            <textarea id="qf-text" required placeholder="The quote"></textarea>
+          </div>
+          <div class="form-group">
+            <label>When (optional)</label>
+            <input type="date" id="qf-date">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-quote">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save quote</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ GIFT IDEA FORM MODAL ============ -->
+  <div class="modal-overlay" id="modal-gift">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3 id="giftFormTitle">Add a gift idea</h3><button class="modal-close" data-action="close-modal" data-modal="modal-gift">✕</button></div>
+      <form id="giftForm">
+        <div class="modal-body">
+          <input type="hidden" id="gf-id">
+          <input type="hidden" id="gf-personid">
+          <div class="form-group">
+            <label>Idea</label>
+            <input type="text" id="gf-text" required placeholder="What to get them">
+          </div>
+          <div class="form-group">
+            <label>Note (optional)</label>
+            <input type="text" id="gf-note" placeholder="Where to find it, size, etc.">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-gift">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save idea</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ============ CONFIRM MODAL ============ -->
   <div class="modal-overlay" id="modal-confirm">
     <div class="modal-sheet center">
@@ -569,6 +737,8 @@ main.screen.active{display:block;}
 /* ================= CONSTANTS ================= */
 var DB_NAME='keptDB', DB_VERSION=1, STORE='media';
 var LS_KEY='kept_data_v1';
+var SYNC_TOKEN_KEY='kept_sync_token_v1', SYNC_GIST_KEY='kept_sync_gistid_v1', SYNC_LAST_KEY='kept_sync_last_v1';
+var SYNC_CHUNK_SIZE=400000;
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -617,6 +787,18 @@ function daysUntil(month, day){
   if(next<today) next=new Date(today.getFullYear()+1, month-1, day);
   return Math.round((next-today)/86400000);
 }
+function daysUntilDate(iso){
+  var d=parseISODate(iso);
+  if(!d) return null;
+  var today=new Date(); today.setHours(0,0,0,0);
+  return Math.round((d-today)/86400000);
+}
+function formatTimeDisplay(t){
+  if(!t) return '';
+  var parts=t.split(':'); var h=Number(parts[0]), m=parts[1];
+  var h12=h%12||12;
+  return h12+':'+m+(h<12?'am':'pm');
+}
 function relevantBirthdayYear(month, day){
   var today=new Date(); today.setHours(0,0,0,0);
   var next=new Date(today.getFullYear(), month-1, day);
@@ -639,7 +821,13 @@ function personName(id){
   return p? p.name : '(removed person)';
 }
 function findPerson(id){ return data.people.find(function(p){ return p.id===id; }); }
-function activePeople(){ return data.people.filter(function(p){ return !p.archived; }); }
+function activePeople(){ return data.people.filter(function(p){ return !p.archived && !p.deletedAt; }); }
+function formatDateTimeDisplay(ms){
+  if(!ms) return '';
+  var d=new Date(ms);
+  var h=d.getHours(); var h12=h%12||12;
+  return MONTHS_SHORT[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear()+' · '+h12+':'+String(d.getMinutes()).padStart(2,'0')+(h<12?'am':'pm');
+}
 
 /* ================= INDEXEDDB ================= */
 function openDB(){
@@ -731,11 +919,36 @@ function loadData(){
   try{ raw=localStorage.getItem(LS_KEY); }catch(e){}
   try{ data = raw? JSON.parse(raw) : null; }catch(e){ data=null; }
   if(!data) data={};
+  migrateData();
+  saveData();
+}
+function migrateData(){
   data.people = data.people || [];
   data.timeline = data.timeline || [];
   data.relationships = data.relationships || [];
   data.relationshipTypes = data.relationshipTypes && data.relationshipTypes.length ? data.relationshipTypes : defaultRelationshipTypes();
-  saveData();
+  data.events = data.events || [];
+  data.dismissedDuplicatePairs = data.dismissedDuplicatePairs || [];
+  data.people.forEach(function(p){
+    p.galleryPhotoIds = p.galleryPhotoIds || [];
+    p.likes = p.likes || [];
+    p.quotes = p.quotes || [];
+    p.giftIdeas = p.giftIdeas || [];
+    p.quotes.forEach(function(q){ if(q.deletedAt===undefined) q.deletedAt=null; });
+    p.giftIdeas.forEach(function(g){ if(g.deletedAt===undefined) g.deletedAt=null; });
+    if(p.archived===undefined) p.archived=false;
+    if(p.deletedAt===undefined) p.deletedAt=null;
+    if(p.isMe===undefined) p.isMe=false;
+    if(p.phone===undefined) p.phone='';
+    if(p.email===undefined) p.email='';
+  });
+  data.timeline.forEach(function(e){
+    if(e.deletedAt===undefined) e.deletedAt=null;
+  });
+  data.events.forEach(function(ev){
+    if(ev.deletedAt===undefined) ev.deletedAt=null;
+    ev.invitees = ev.invitees || [];
+  });
 }
 function saveData(){
   try{ localStorage.setItem(LS_KEY, JSON.stringify(data)); }
@@ -764,11 +977,15 @@ function showScreen(name, opts){
   }
   var titles={timeline:['Kept','The people in your life, and the story of you and them'],
     people:['People','Everyone you\'re keeping up with'],
-    reminders:['Reminders','Birthdays and cards coming up'],
+    reminders:['Reminders','Birthdays, cards, and events coming up'],
     more:['More','Tree, settings, and backups'],
     tree:['Kept','Kept'],
-    'person-detail':['Kept','Kept']};
-  if(titles[name] && name!=='tree' && name!=='person-detail'){
+    'person-detail':['Kept','Kept'],
+    archived:['Kept','Kept'],
+    trash:['Kept','Kept'],
+    duplicates:['Kept','Kept'],
+    sync:['Kept','Kept']};
+  if(titles[name] && ['tree','person-detail','archived','trash','duplicates','sync'].indexOf(name)===-1){
     document.getElementById('topbarTitle').textContent=titles[name][0];
     document.getElementById('topbarTagline').textContent=titles[name][1];
   }
@@ -779,6 +996,10 @@ function showScreen(name, opts){
   else if(name==='more') renderMore();
   else if(name==='tree') renderTree(opts.focusId || '');
   else if(name==='person-detail') renderPersonDetail(opts.personId);
+  else if(name==='archived') renderArchived();
+  else if(name==='trash') renderTrash();
+  else if(name==='duplicates') renderDuplicates();
+  else if(name==='sync') renderSync();
 }
 
 /* ================= RENDER: TIMELINE ================= */
@@ -790,6 +1011,17 @@ function populatePersonSelect(sel, includeAll, selectedId){
   });
   sel.innerHTML=html;
 }
+function metEntryForPerson(p){
+  if(!p.howWeMet || !p.howWeMet.date) return null;
+  return {
+    id:'met_'+p.id, type:'met', title:'Met '+p.name, date:p.howWeMet.date, approxDate:null,
+    people:[p.id], location:null, description:p.howWeMet.text||'', photoIds:[],
+    createdAt:0, updatedAt:0, synthetic:true
+  };
+}
+function allSyntheticMetEntries(){
+  return activePeople().map(metEntryForPerson).filter(Boolean);
+}
 function renderTimeline(){
   var sel=document.getElementById('timelinePersonFilter');
   var prevVal=sel.value;
@@ -797,7 +1029,8 @@ function renderTimeline(){
   var personFilter=sel.value;
   var q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
 
-  var entries=data.timeline.filter(function(e){
+  var entries=data.timeline.concat(allSyntheticMetEntries()).filter(function(e){
+    if(e.deletedAt) return false;
     if(personFilter && (e.people||[]).indexOf(personFilter)===-1) return false;
     if(q){
       var hay=(e.title+' '+(e.description||'')+' '+(e.location||'')).toLowerCase();
@@ -831,19 +1064,42 @@ function renderEntryCard(e){
     return '<img data-photo-id="'+pid+'" data-action="view-photo" data-photo-full="'+pid+'">';
   }).join('');
   var dateLabel = e.date ? formatDateDisplay(e.date) : (e.approxDate ? esc(e.approxDate) : 'Undated');
+  var icon = e.type==='met' ? '🌱' : (e.type==='memory'?'💭':'📍');
+  var actions = e.synthetic ?
+    '<button data-action="open-person" data-id="'+e.people[0]+'">Edit on their profile</button>' :
+    '<button data-action="edit-entry" data-id="'+e.id+'">Edit</button><button data-action="delete-entry" data-id="'+e.id+'">Delete</button>';
   return '' +
   '<div class="tl-entry">' +
     '<div class="tl-top">' +
       '<div><div class="tl-date">'+dateLabel+'</div><div class="tl-title">'+esc(e.title)+'</div></div>' +
-      '<div class="tl-type">'+(e.type==='memory'?'💭':'📍')+'</div>' +
+      '<div class="tl-type">'+icon+'</div>' +
     '</div>' +
     (e.description? '<div class="tl-desc">'+esc(e.description)+'</div>':'') +
     (e.location? '<div class="tl-loc">📍 '+esc(e.location)+'</div>':'') +
     (peopleChips? '<div class="tl-people">'+peopleChips+'</div>':'') +
     (photos? '<div class="tl-photos">'+photos+'</div>':'') +
     '<div class="tl-actions">' +
-      '<button data-action="edit-entry" data-id="'+e.id+'">Edit</button>' +
-      '<button data-action="delete-entry" data-id="'+e.id+'">Delete</button>' +
+      actions +
+    '</div>' +
+  '</div>';
+}
+function renderEventCard(ev){
+  var dateLabel=formatDateDisplay(ev.date) + (ev.time? ' · '+formatTimeDisplay(ev.time):'');
+  var inviteeChips=(ev.invitees||[]).map(function(pid){
+    return '<button class="chip tap" data-action="open-person" data-id="'+pid+'">'+esc(personName(pid))+'</button>';
+  }).join('');
+  return '<div class="tl-entry">' +
+    '<div class="tl-top">' +
+      '<div><div class="tl-date">'+dateLabel+'</div><div class="tl-title">'+esc(ev.title)+'</div></div>' +
+      '<div class="tl-type">📅</div>' +
+    '</div>' +
+    (ev.location? '<div class="tl-loc">📍 '+esc(ev.location)+'</div>':'') +
+    (ev.description? '<div class="tl-desc">'+esc(ev.description)+'</div>':'') +
+    (inviteeChips? '<div class="tl-people">'+inviteeChips+'</div>':'') +
+    '<div class="tl-actions">' +
+      '<button data-action="ics-event" data-id="'+ev.id+'">Add to calendar</button>' +
+      '<button data-action="edit-event" data-id="'+ev.id+'">Edit</button>' +
+      '<button data-action="delete-event" data-id="'+ev.id+'">Delete</button>' +
     '</div>' +
   '</div>';
 }
@@ -869,7 +1125,7 @@ function renderPeopleList(){
       html+='<button class="person-row" style="width:100%;text-align:left;" data-action="open-person" data-id="'+p.id+'">' +
         '<div class="avatar">'+avatarInner+'</div>' +
         '<div class="person-info">' +
-          '<div class="name">'+esc(p.name)+'</div>' +
+          '<div class="name">'+esc(p.name)+(p.isMe?' <span class="pill thread">You</span>':'')+'</div>' +
           '<div class="meta">'+(p.pronouns? '<span>'+esc(p.pronouns)+'</span>':'')+(bday? '<span>🎂 '+bday+'</span>':'')+tagsHtml+'</div>' +
         '</div>' +
       '</button>';
@@ -906,11 +1162,53 @@ function renderPersonDetail(personId){
     return '<img data-photo-id="'+gid+'" data-action="view-photo" data-photo-full="'+gid+'">';
   }).join('') + '<button class="gallery-add" data-action="add-gallery-photo">＋</button>';
 
-  var personEntries=data.timeline.filter(function(e){ return (e.people||[]).indexOf(personId)!==-1; });
+  var metEntry=metEntryForPerson(p);
+  var personEntries=data.timeline.filter(function(e){ return !e.deletedAt && (e.people||[]).indexOf(personId)!==-1; });
+  if(metEntry) personEntries=personEntries.concat([metEntry]);
   var dated=personEntries.filter(function(e){return e.date;}).sort(function(a,b){return b.date.localeCompare(a.date);});
   var undated=personEntries.filter(function(e){return !e.date;}).sort(function(a,b){return b.createdAt-a.createdAt;});
   var timelineHtml = personEntries.length ? (dated.map(renderEntryCard).join('') + undated.map(renderEntryCard).join('')) :
     '<p style="color:var(--muted);font-size:14px;">No memories logged with '+esc(p.name)+' yet.</p>';
+
+  var quotesHtml=(p.quotes||[]).filter(function(q){return !q.deletedAt;}).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');}).map(function(q){
+    return '<div class="quote-card">' +
+      '<div class="q-actions">' +
+        '<button data-action="edit-quote" data-id="'+p.id+'" data-qid="'+q.id+'">✎</button>' +
+        '<button data-action="delete-quote" data-id="'+p.id+'" data-qid="'+q.id+'">✕</button>' +
+      '</div>' +
+      '<div class="q-text">\u201c'+esc(q.text)+'\u201d</div>' +
+      (q.date? '<div class="q-date">'+formatDateDisplay(q.date)+'</div>':'') +
+    '</div>';
+  }).join('') || '<p style="color:var(--muted);font-size:14px;">No quotes saved yet.</p>';
+
+  var giftsHtml=(p.giftIdeas||[]).filter(function(g){return !g.deletedAt;}).map(function(g){
+    return '<div class="gift-row'+(g.given?' given':'')+'">' +
+      '<input type="checkbox" '+(g.given?'checked':'')+' data-action="toggle-gift-given" data-id="'+p.id+'" data-gid="'+g.id+'">' +
+      '<div class="g-body"><div class="g-text">'+esc(g.text)+'</div>'+(g.note? '<div class="g-note">'+esc(g.note)+'</div>':'')+'</div>' +
+      '<button class="g-del" data-action="edit-gift" data-id="'+p.id+'" data-gid="'+g.id+'">✎</button>' +
+      '<button class="g-del" data-action="delete-gift" data-id="'+p.id+'" data-gid="'+g.id+'">✕</button>' +
+    '</div>';
+  }).join('') || '<p style="color:var(--muted);font-size:14px;">No gift ideas saved yet.</p>';
+
+  var bottomActions;
+  if(p.deletedAt){
+    bottomActions = '<p style="color:var(--muted);font-size:13.5px;margin-bottom:10px;">This person is in Trash.</p>' +
+      '<div class="btn-row">' +
+        '<button class="btn btn-secondary" data-action="restore-person" data-id="'+p.id+'">Restore</button>' +
+        '<button class="btn btn-danger" data-action="delete-person-forever" data-id="'+p.id+'">Delete forever</button>' +
+      '</div>';
+  } else if(p.archived){
+    bottomActions = '<p style="color:var(--muted);font-size:13.5px;margin-bottom:10px;">This person is archived.</p>' +
+      '<div class="btn-row">' +
+        '<button class="btn btn-secondary" data-action="unarchive-person" data-id="'+p.id+'">Unarchive</button>' +
+        '<button class="btn btn-danger" data-action="delete-person" data-id="'+p.id+'">Delete</button>' +
+      '</div>';
+  } else {
+    bottomActions = '<div class="btn-row">' +
+      '<button class="btn btn-secondary" data-action="archive-person" data-id="'+p.id+'">Archive</button>' +
+      '<button class="btn btn-danger" data-action="delete-person" data-id="'+p.id+'">Delete</button>' +
+    '</div>';
+  }
 
   root.innerHTML =
   '<div class="back-row">' +
@@ -919,7 +1217,7 @@ function renderPersonDetail(personId){
   '</div>' +
   '<div class="detail-header">' +
     '<button class="avatar lg" data-action="view-photo" data-photo-full="'+(p.photoId||'')+'">'+avatarInner+'</button>' +
-    '<div class="who"><h2>'+esc(p.name)+'</h2>' + (p.pronouns? '<span class="pill">'+esc(p.pronouns)+'</span>':'') + '</div>' +
+    '<div class="who"><h2>'+esc(p.name)+'</h2>' + (p.isMe? '<span class="pill thread">You</span>':'') + (p.pronouns? '<span class="pill">'+esc(p.pronouns)+'</span>':'') + '</div>' +
   '</div>' +
 
   (p.tags && p.tags.length ? '<div class="chip-row">'+p.tags.map(function(t){return '<span class="chip">'+esc(t)+'</span>';}).join('')+'</div>' : '') +
@@ -931,10 +1229,18 @@ function renderPersonDetail(personId){
   '<div class="toggle-row"><span class="t-label">Remind me about their birthday</span>' +
     '<button class="switch '+(p.cardReminder?'on':'')+'" data-action="toggle-card-reminder" data-id="'+p.id+'"></button></div>' +
 
+  (p.phone||p.email ? '<div class="field-block"><div class="label">Contact</div><div class="value">' +
+    (p.phone? esc(p.phone):'') + (p.phone && p.email? ' · ':'') + (p.email? esc(p.email):'') +
+  '</div></div>' : '') +
+
   '<div class="field-block"><div class="label">How you met</div><div class="value'+(p.howWeMet&&p.howWeMet.text?'':' muted')+'">' +
     (p.howWeMet && p.howWeMet.text ? esc(p.howWeMet.text) : 'Not recorded') +
     (p.howWeMet && p.howWeMet.date ? '<br><span style="color:var(--muted);font-size:12.5px;">'+formatDateDisplay(p.howWeMet.date)+'</span>' : '') +
   '</div></div>' +
+
+  '<div class="field-block"><div class="label">Likes &amp; interests</div>' +
+    (p.likes && p.likes.length ? '<div class="chip-row">'+p.likes.map(function(t){return '<span class="chip">'+esc(t)+'</span>';}).join('')+'</div>' : '<div class="value muted">Not recorded</div>') +
+  '</div>' +
 
   '<div class="section-label">Relationships</div>' +
   (relChips? '<div class="chip-row">'+relChips+'</div>' : '<p style="color:var(--muted);font-size:14px;">No relationships added yet.</p>') +
@@ -951,21 +1257,30 @@ function renderPersonDetail(personId){
   '</div>' +
   timelineHtml +
 
+  '<div class="section-label">Quotes</div>' +
+  quotesHtml +
+  '<div class="btn-row" style="margin-top:2px;"><button class="btn btn-secondary btn-sm" data-action="add-quote-for" data-id="'+p.id+'">＋ Add quote</button></div>' +
+
+  '<div class="section-label">Gift ideas</div>' +
+  giftsHtml +
+  '<div class="btn-row" style="margin-top:2px;"><button class="btn btn-secondary btn-sm" data-action="add-gift-for" data-id="'+p.id+'">＋ Add gift idea</button></div>' +
+
   '<div class="section-label">Notes</div>' +
   '<div class="form-group"><textarea id="pd-notes" placeholder="Anything else worth remembering">'+esc(p.notes||'')+'</textarea></div>' +
   '<button class="btn btn-secondary btn-sm" data-action="save-notes" data-id="'+p.id+'">Save notes</button>' +
 
   '<div class="stitch-divider"></div>' +
-  '<div class="btn-row">' +
-    '<button class="btn btn-secondary" data-action="archive-person" data-id="'+p.id+'">Archive</button>' +
-    '<button class="btn btn-danger" data-action="delete-person" data-id="'+p.id+'">Delete</button>' +
-  '</div>';
+  bottomActions;
 
   hydrateImages(root);
 }
 
 /* ================= RENDER: REMINDERS ================= */
 function renderReminders(){
+  var todayStr=dateStr();
+  var events=data.events.filter(function(ev){ return !ev.deletedAt && ev.date>=todayStr; })
+    .sort(function(a,b){ return a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''); });
+
   var people=activePeople().filter(function(p){ return p.birthday && p.birthday.month && p.birthday.day; });
   people.forEach(function(p){ p._days=daysUntil(p.birthday.month,p.birthday.day); });
   people.sort(function(a,b){ return a._days-b._days; });
@@ -973,9 +1288,17 @@ function renderReminders(){
   var withReminder=people.filter(function(p){ return p.cardReminder!==false; });
   var withoutBday=activePeople().filter(function(p){ return !(p.birthday && p.birthday.month && p.birthday.day); });
 
-  var html='';
+  var html='<div class="section-label">Upcoming events</div>' +
+    '<div class="btn-row" style="margin-top:0;margin-bottom:12px;"><button class="btn btn-secondary btn-sm" data-action="plan-event">＋ Plan an event</button></div>';
+  if(events.length===0){
+    html+='<p style="color:var(--muted);font-size:14px;margin-bottom:20px;">Nothing planned yet.</p>';
+  } else {
+    html+=events.map(renderEventCard).join('');
+  }
+
+  html+='<div class="section-label">Birthdays</div>';
   if(withReminder.length===0){
-    html='<div class="empty-state"><div class="big">🎂</div><h3>No upcoming reminders</h3><p>Add birthdays to people\'s profiles to see them here.</p></div>';
+    html+='<div class="empty-state"><div class="big">🎂</div><h3>No upcoming reminders</h3><p>Add birthdays to people\'s profiles to see them here.</p></div>';
   } else {
     withReminder.forEach(function(p){
       var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
@@ -1005,7 +1328,8 @@ function renderReminders(){
   hydrateImages(list);
 
   var soon=withReminder.filter(function(p){ return p._days<=14; }).length;
-  document.getElementById('remindersBadge').classList.toggle('hidden', soon===0);
+  var soonEvents=events.filter(function(ev){ var du=daysUntilDate(ev.date); return du!==null && du<=14; }).length;
+  document.getElementById('remindersBadge').classList.toggle('hidden', (soon+soonEvents)===0);
 }
 
 /* ================= RENDER: MORE ================= */
@@ -1013,14 +1337,64 @@ function renderMore(){
   var relTypesHtml=data.relationshipTypes.map(function(t){
     return '<span class="chip">'+esc(t.label)+(t.symmetric?'':' / '+esc(t.inverse))+'</span>';
   }).join('');
+  var meP=data.people.find(function(x){return x.isMe && !x.archived && !x.deletedAt;});
+  var archivedCount=data.people.filter(function(p){return p.archived && !p.deletedAt;}).length;
+  var trashedPeopleCount=data.people.filter(function(p){return p.deletedAt;}).length;
+  var trashedEntriesCount=data.timeline.filter(function(e){return e.deletedAt;}).length;
+  var trashedEventsCount=data.events.filter(function(ev){return ev.deletedAt;}).length;
+  var trashedQuoteCount=0, trashedGiftCount=0;
+  data.people.forEach(function(p){
+    trashedQuoteCount += (p.quotes||[]).filter(function(q){return q.deletedAt;}).length;
+    trashedGiftCount += (p.giftIdeas||[]).filter(function(g){return g.deletedAt;}).length;
+  });
+  var trashCount=trashedPeopleCount+trashedEntriesCount+trashedEventsCount+trashedQuoteCount+trashedGiftCount;
+  var dupCount=findDuplicateCandidates().length;
+
+  var meAvatarHtml='';
+  if(meP){
+    var initials=meP.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var avatarInner=meP.photoId?'<img data-photo-id="'+meP.photoId+'">':initials;
+    meAvatarHtml='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;"><div class="avatar">'+avatarInner+'</div><div class="person-info"><div class="name">'+esc(meP.name)+'</div></div></div>';
+  }
+
   var root=document.getElementById('moreContent');
   root.innerHTML =
   '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-tree">' +
     '<span class="mc-ic">🕸️</span><span class="mc-body"><span class="mc-title">Relationship tree</span><span class="mc-sub">See how everyone connects</span></span><span class="mc-arrow">›</span>' +
   '</button>' +
+  '<div class="section-label">You</div>' +
+  '<div class="card">' +
+    (meP ?
+      meAvatarHtml +
+      '<div class="btn-row wrap"><button class="btn btn-secondary btn-sm" data-action="edit-person" data-id="'+meP.id+'">Edit</button>' +
+      '<button class="btn btn-secondary btn-sm" data-action="goto-my-connections" data-id="'+meP.id+'">🫵 My connections</button></div>'
+      :
+      '<p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:10px;">Add yourself so you can see your own connections in the relationship tree.</p>' +
+      '<button class="btn btn-secondary btn-sm" data-action="add-yourself">＋ Add yourself</button>'
+    ) +
+  '</div>' +
+  '<div class="section-label">Manage people</div>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-archived">' +
+    '<span class="mc-ic">🗃️</span><span class="mc-body"><span class="mc-title">Archived people</span><span class="mc-sub">'+archivedCount+' archived</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-trash">' +
+    '<span class="mc-ic">🗑️</span><span class="mc-body"><span class="mc-title">Trash</span><span class="mc-sub">'+trashCount+' item'+(trashCount===1?'':'s')+'</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-duplicates">' +
+    '<span class="mc-ic">🔍</span><span class="mc-body"><span class="mc-title">Find duplicates</span><span class="mc-sub">'+(dupCount? dupCount+' possible match'+(dupCount===1?'':'es') : 'None found')+'</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
   '<div class="section-label">Relationship types</div>' +
   '<div class="card"><div class="chip-row">'+relTypesHtml+'</div>' +
     '<div class="btn-row"><button class="btn btn-secondary btn-sm" data-action="add-reltype">＋ New type</button></div></div>' +
+  '<div class="section-label">Contacts</div>' +
+  '<div class="card">' +
+    '<p style="font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px;">Bring people in from your phone\'s Contacts app, or send your Kept people back out as contacts.</p>' +
+    '<div class="btn-row wrap">' +
+      '<button class="btn btn-secondary btn-sm" data-action="import-contacts">Import from Contacts (.vcf)</button>' +
+      '<button class="btn btn-secondary btn-sm" data-action="export-contacts">Export to Contacts (.vcf)</button>' +
+    '</div>' +
+    '<input type="file" accept=".vcf,text/vcard" id="importContactsInput" class="hidden">' +
+  '</div>' +
   '<div class="section-label">Backup</div>' +
   '<div class="card">' +
     '<p style="font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px;">Everything lives only on this device. Export a backup now and then so you never lose it.</p>' +
@@ -1031,15 +1405,23 @@ function renderMore(){
     '</div>' +
     '<input type="file" accept="application/json" id="importFileInput" class="hidden">' +
   '</div>' +
+  '<div class="section-label">Sync</div>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-sync">' +
+    '<span class="mc-ic">🔄</span><span class="mc-body"><span class="mc-title">Sync (Gist)</span><span class="mc-sub">'+(getSyncGistId()?'Connected':'Not connected')+'</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
   '<div class="section-label">Storage</div>' +
   '<div class="card" id="storageInfoCard">' +
     '<div class="field-block"><div class="label">People</div><div class="value">'+activePeople().length+'</div></div>' +
     '<div class="field-block"><div class="label">Timeline entries</div><div class="value">'+data.timeline.length+'</div></div>' +
     '<div class="field-block"><div class="label">Relationships</div><div class="value">'+data.relationships.length+'</div></div>' +
+    '<div class="field-block"><div class="label">Archived</div><div class="value">'+archivedCount+'</div></div>' +
+    '<div class="field-block"><div class="label">In trash</div><div class="value">'+trashCount+'</div></div>' +
     '<div class="field-block" id="storageEstimateBlock"></div>' +
   '</div>' +
   '<div class="section-label">About</div>' +
   '<div class="card"><p style="font-size:13px;color:var(--muted);line-height:1.6;">Kept keeps everyone in your life — profiles, how you met, the moments you\'ve shared, and how you\'re all connected. Your data stays on this device; photos are stored using your browser\'s local storage, which typically has room for thousands of photos, though it isn\'t mathematically unlimited. Export a backup regularly to be safe.</p></div>';
+
+  hydrateImages(root);
 
   if(navigator.storage && navigator.storage.estimate){
     navigator.storage.estimate().then(function(est){
@@ -1057,6 +1439,16 @@ function renderTree(focusId){
   var sel=document.getElementById('treeFocusSelect');
   populatePersonSelect(sel, true, currentTreeFocus);
 
+  var meRow=document.getElementById('treeMeRow');
+  if(meRow){
+    var meP=data.people.find(function(x){return x.isMe && !x.archived && !x.deletedAt;});
+    if(meP){
+      meRow.innerHTML='<button class="btn btn-secondary btn-sm" data-action="goto-my-connections" data-id="'+meP.id+'">🫵 My connections</button>';
+    } else {
+      meRow.innerHTML='<button class="btn btn-secondary btn-sm" data-action="add-yourself">＋ Add yourself to the tree</button>';
+    }
+  }
+
   var people=activePeople();
   var rels=data.relationships;
 
@@ -1065,7 +1457,7 @@ function renderTree(focusId){
     var connected=new Set([currentTreeFocus]);
     edges=rels.filter(function(r){ return r.personA===currentTreeFocus || r.personB===currentTreeFocus; });
     edges.forEach(function(r){ connected.add(r.personA); connected.add(r.personB); });
-    nodeIds=Array.from(connected).filter(function(id){ return findPerson(id) && !findPerson(id).archived; });
+    nodeIds=Array.from(connected).filter(function(id){ var pp=findPerson(id); return pp && !pp.archived && !pp.deletedAt; });
   } else {
     nodeIds=people.map(function(p){ return p.id; });
     edges=rels.filter(function(r){ return connectedBothActive(r); });
@@ -1107,7 +1499,7 @@ function renderTree(focusId){
 }
 function connectedBothActive(r){
   var a=findPerson(r.personA), b=findPerson(r.personB);
-  return a && b && !a.archived && !b.archived;
+  return a && b && !a.archived && !a.deletedAt && !b.archived && !b.deletedAt;
 }
 function computeForceLayout(nodeIds, edges, width, height){
   var nodes=nodeIds.map(function(id,i){
@@ -1171,10 +1563,12 @@ function buildTreeSVG(nodes, edges, W, H){
     var photoBit = p.photoId ?
       '<clipPath id="clip-'+n.id+'"><circle cx="0" cy="0" r="26"/></clipPath><image data-photo-id="'+p.photoId+'" x="-26" y="-26" width="52" height="52" clip-path="url(#clip-'+n.id+')" preserveAspectRatio="xMidYMid slice"/>' :
       '<circle r="26" fill="#DCE6DD"/><text text-anchor="middle" dy="6" font-family="Fraunces, serif" font-size="16" font-weight="600" fill="#4F6D5A">'+esc(initials)+'</text>';
+    var ringStroke = p.isMe ? '#C08434' : '#FCFAF6';
+    var ringWidth = p.isMe ? '3.5' : '2.5';
     return '<g class="tree-node" data-id="'+n.id+'" transform="translate('+n.x+','+n.y+')" style="cursor:grab;">' +
       photoBit +
-      '<circle r="26" fill="none" stroke="#FCFAF6" stroke-width="2.5"/>' +
-      '<text class="tree-node-label" text-anchor="middle" y="42">'+esc(p.name.split(' ')[0])+'</text>' +
+      '<circle r="26" fill="none" stroke="'+ringStroke+'" stroke-width="'+ringWidth+'"/>' +
+      '<text class="tree-node-label" text-anchor="middle" y="42">'+esc(p.name.split(' ')[0])+(p.isMe?' (You)':'')+'</text>' +
     '</g>';
   }).join('');
   return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">' +
@@ -1241,13 +1635,14 @@ function showConfirm(title, message, onConfirm){
 }
 
 /* ---- Person form ---- */
-function openPersonForm(personId){
+function openPersonForm(personId, presetIsMe){
   var form=document.getElementById('personForm');
   form.reset();
   document.getElementById('pf-id').value=personId||'';
   document.getElementById('pf-avatar-preview').innerHTML='🙂';
   document.getElementById('pf-avatar-preview').removeAttribute('data-photo-id');
   document.getElementById('pf-avatar-preview').dataset.newPhotoId='';
+  document.getElementById('pf-ismetoggle').classList.remove('on');
   var msel=document.getElementById('pf-bmonth'), dsel=document.getElementById('pf-bday');
   if(!msel.dataset.built){
     msel.innerHTML='<option value="">Month</option>'+MONTHS.map(function(m,i){return '<option value="'+(i+1)+'">'+m+'</option>';}).join('');
@@ -1266,6 +1661,9 @@ function openPersonForm(personId){
     document.getElementById('personFormTitle').textContent='Edit person';
     document.getElementById('pf-name').value=p.name||'';
     document.getElementById('pf-pronouns').value=p.pronouns||'';
+    document.getElementById('pf-phone').value=p.phone||'';
+    document.getElementById('pf-email').value=p.email||'';
+    document.getElementById('pf-ismetoggle').classList.toggle('on', !!p.isMe);
     if(p.birthday){
       msel.value=p.birthday.month||''; buildDays(); dsel.value=p.birthday.day||'';
       document.getElementById('pf-byear').value=p.birthday.year||'';
@@ -1273,6 +1671,7 @@ function openPersonForm(personId){
     document.getElementById('pf-met-text').value=(p.howWeMet&&p.howWeMet.text)||'';
     document.getElementById('pf-met-date').value=(p.howWeMet&&p.howWeMet.date)||'';
     document.getElementById('pf-tags').value=(p.tags||[]).join(', ');
+    document.getElementById('pf-likes').value=(p.likes||[]).join(', ');
     document.getElementById('pf-notes').value=p.notes||'';
     document.getElementById('pf-cardtoggle').classList.toggle('on', p.cardReminder!==false);
     if(p.photoId){
@@ -1281,6 +1680,7 @@ function openPersonForm(personId){
     }
   } else {
     document.getElementById('personFormTitle').textContent='Add person';
+    if(presetIsMe) document.getElementById('pf-ismetoggle').classList.add('on');
   }
   openModal('modal-person');
 }
@@ -1291,15 +1691,25 @@ function submitPersonForm(e){
   if(!name){ toast('Name is required'); return; }
   var tagsRaw=document.getElementById('pf-tags').value;
   var tags=tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean);
+  var likesRaw=document.getElementById('pf-likes').value;
+  var likes=likesRaw.split(',').map(function(t){return t.trim();}).filter(Boolean);
   var month=document.getElementById('pf-bmonth').value, day=document.getElementById('pf-bday').value, year=document.getElementById('pf-byear').value;
+  var phone=document.getElementById('pf-phone').value.trim();
+  var email=document.getElementById('pf-email').value.trim();
+  var isMe=document.getElementById('pf-ismetoggle').classList.contains('on');
 
   function finish(photoId){
+    if(isMe){
+      data.people.forEach(function(x){ if(x.id!==id) x.isMe=false; });
+    }
     if(id){
       var p=findPerson(id);
       p.name=name; p.pronouns=document.getElementById('pf-pronouns').value.trim();
+      p.phone=phone; p.email=email; p.isMe=isMe;
       p.birthday={month:month?Number(month):null, day:day?Number(day):null, year:year?Number(year):null};
       p.howWeMet={text:document.getElementById('pf-met-text').value.trim(), date:document.getElementById('pf-met-date').value||null};
       p.tags=tags;
+      p.likes=likes;
       p.notes=document.getElementById('pf-notes').value.trim();
       p.cardReminder=document.getElementById('pf-cardtoggle').classList.contains('on');
       if(photoId) p.photoId=photoId;
@@ -1307,12 +1717,13 @@ function submitPersonForm(e){
     } else {
       data.people.push({
         id:uid('p'), name:name, pronouns:document.getElementById('pf-pronouns').value.trim(),
+        phone:phone, email:email, isMe:isMe,
         birthday:{month:month?Number(month):null, day:day?Number(day):null, year:year?Number(year):null},
         photoId:photoId||null, galleryPhotoIds:[],
         howWeMet:{text:document.getElementById('pf-met-text').value.trim(), date:document.getElementById('pf-met-date').value||null},
-        tags:tags, notes:document.getElementById('pf-notes').value.trim(),
+        tags:tags, likes:likes, quotes:[], giftIdeas:[], notes:document.getElementById('pf-notes').value.trim(),
         cardReminder:document.getElementById('pf-cardtoggle').classList.contains('on'),
-        lastCardSentYear:null, archived:false, createdAt:Date.now(), updatedAt:Date.now()
+        lastCardSentYear:null, archived:false, deletedAt:null, createdAt:Date.now(), updatedAt:Date.now()
       });
     }
     saveData();
@@ -1321,6 +1732,7 @@ function submitPersonForm(e){
     if(currentScreen==='person-detail' && currentPersonId) renderPersonDetail(currentPersonId);
     else if(currentScreen==='people') renderPeopleList();
     else if(currentScreen==='timeline') renderTimeline();
+    else if(currentScreen==='more') renderMore();
   }
 
   var fileInput=document.getElementById('pf-avatar-input');
@@ -1340,8 +1752,8 @@ function setEntryType(type){
   document.getElementById('ef-date-label').textContent = type==='hangout' ? 'Date' : 'Date (optional)';
   document.getElementById('ef-approx-wrap').classList.toggle('hidden', type==='hangout');
 }
-function buildPeopleChecklist(preselect){
-  var wrap=document.getElementById('ef-people-checklist');
+function buildPeopleChecklistInto(elId, preselect){
+  var wrap=document.getElementById(elId);
   var people=activePeople().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
   if(people.length===0){ wrap.innerHTML='<p style="color:var(--muted);font-size:13px;padding:6px;">Add some people first.</p>'; return; }
   wrap.innerHTML=people.map(function(p){
@@ -1349,6 +1761,7 @@ function buildPeopleChecklist(preselect){
     return '<label><input type="checkbox" value="'+p.id+'" '+checked+'> '+esc(p.name)+'</label>';
   }).join('');
 }
+function buildPeopleChecklist(preselect){ buildPeopleChecklistInto('ef-people-checklist', preselect); }
 function renderEntryPhotoStaging(){
   var row=document.getElementById('ef-photos-row');
   var addBtn='<button type="button" class="add-photo-btn" data-action="add-entry-photo">＋</button>';
@@ -1427,6 +1840,59 @@ function refreshCurrentScreen(){
   else if(currentScreen==='reminders') renderReminders();
   else if(currentScreen==='tree') renderTree(currentTreeFocus);
   else if(currentScreen==='more') renderMore();
+  else if(currentScreen==='archived') renderArchived();
+  else if(currentScreen==='trash') renderTrash();
+  else if(currentScreen==='duplicates') renderDuplicates();
+  else if(currentScreen==='sync') renderSync();
+}
+
+/* ---- Event form ---- */
+function openEventForm(eventId){
+  var form=document.getElementById('eventForm');
+  form.reset();
+  document.getElementById('ev-id').value=eventId||'';
+  if(eventId){
+    var ev=data.events.find(function(x){return x.id===eventId;});
+    document.getElementById('eventFormTitle').textContent='Edit event';
+    document.getElementById('ev-title').value=ev.title||'';
+    document.getElementById('ev-date').value=ev.date||'';
+    document.getElementById('ev-time').value=ev.time||'';
+    document.getElementById('ev-location').value=ev.location||'';
+    document.getElementById('ev-desc').value=ev.description||'';
+    buildPeopleChecklistInto('ev-people-checklist', ev.invitees||[]);
+  } else {
+    document.getElementById('eventFormTitle').textContent='Plan an event';
+    document.getElementById('ev-date').value=dateStr();
+    buildPeopleChecklistInto('ev-people-checklist', []);
+  }
+  openModal('modal-event');
+}
+function submitEventForm(e){
+  e.preventDefault();
+  var id=document.getElementById('ev-id').value;
+  var title=document.getElementById('ev-title').value.trim();
+  if(!title){ toast('Title is required'); return; }
+  var date=document.getElementById('ev-date').value;
+  if(!date){ toast('Date is required'); return; }
+  var time=document.getElementById('ev-time').value||null;
+  var location=document.getElementById('ev-location').value.trim();
+  var desc=document.getElementById('ev-desc').value.trim();
+  var invitees=Array.from(document.querySelectorAll('#ev-people-checklist input:checked')).map(function(i){return i.value;});
+
+  if(id){
+    var ev=data.events.find(function(x){return x.id===id;});
+    ev.title=title; ev.date=date; ev.time=time; ev.location=location; ev.description=desc; ev.invitees=invitees;
+    ev.updatedAt=Date.now();
+  } else {
+    data.events.push({
+      id:uid('ev'), title:title, date:date, time:time, location:location, description:desc,
+      invitees:invitees, deletedAt:null, createdAt:Date.now(), updatedAt:Date.now()
+    });
+  }
+  saveData();
+  closeModal('modal-event');
+  toast('Saved');
+  refreshCurrentScreen();
 }
 
 /* ---- Relationship form ---- */
@@ -1491,6 +1957,80 @@ function submitRelTypeForm(e){
   renderMore();
 }
 
+/* ---- Quote form ---- */
+function openQuoteForm(personId, quoteId){
+  document.getElementById('quoteForm').reset();
+  document.getElementById('qf-id').value=quoteId||'';
+  document.getElementById('qf-personid').value=personId;
+  if(quoteId){
+    var p0=findPerson(personId);
+    var q0=p0 && (p0.quotes||[]).find(function(x){return x.id===quoteId;});
+    document.getElementById('quoteFormTitle').textContent='Edit quote';
+    if(q0){ document.getElementById('qf-text').value=q0.text||''; document.getElementById('qf-date').value=q0.date||''; }
+  } else {
+    document.getElementById('quoteFormTitle').textContent='Add a quote';
+  }
+  openModal('modal-quote');
+}
+function submitQuoteForm(e){
+  e.preventDefault();
+  var personId=document.getElementById('qf-personid').value;
+  var quoteId=document.getElementById('qf-id').value;
+  var text=document.getElementById('qf-text').value.trim();
+  if(!text){ toast('Quote text is required'); return; }
+  var p=findPerson(personId);
+  if(!p) return;
+  p.quotes=p.quotes||[];
+  var date=document.getElementById('qf-date').value||null;
+  if(quoteId){
+    var q=p.quotes.find(function(x){return x.id===quoteId;});
+    if(q){ q.text=text; q.date=date; }
+  } else {
+    p.quotes.push({id:uid('q'), text:text, date:date, deletedAt:null, createdAt:Date.now()});
+  }
+  saveData();
+  closeModal('modal-quote');
+  toast('Quote saved');
+  if(currentScreen==='person-detail') renderPersonDetail(personId);
+}
+
+/* ---- Gift idea form ---- */
+function openGiftForm(personId, giftId){
+  document.getElementById('giftForm').reset();
+  document.getElementById('gf-id').value=giftId||'';
+  document.getElementById('gf-personid').value=personId;
+  if(giftId){
+    var p1=findPerson(personId);
+    var g1=p1 && (p1.giftIdeas||[]).find(function(x){return x.id===giftId;});
+    document.getElementById('giftFormTitle').textContent='Edit gift idea';
+    if(g1){ document.getElementById('gf-text').value=g1.text||''; document.getElementById('gf-note').value=g1.note||''; }
+  } else {
+    document.getElementById('giftFormTitle').textContent='Add a gift idea';
+  }
+  openModal('modal-gift');
+}
+function submitGiftForm(e){
+  e.preventDefault();
+  var personId=document.getElementById('gf-personid').value;
+  var giftId=document.getElementById('gf-id').value;
+  var text=document.getElementById('gf-text').value.trim();
+  if(!text){ toast('Gift idea is required'); return; }
+  var p=findPerson(personId);
+  if(!p) return;
+  p.giftIdeas=p.giftIdeas||[];
+  var note=document.getElementById('gf-note').value.trim();
+  if(giftId){
+    var g=p.giftIdeas.find(function(x){return x.id===giftId;});
+    if(g){ g.text=text; g.note=note; }
+  } else {
+    p.giftIdeas.push({id:uid('g'), text:text, note:note, given:false, deletedAt:null, createdAt:Date.now()});
+  }
+  saveData();
+  closeModal('modal-gift');
+  toast('Gift idea saved');
+  if(currentScreen==='person-detail') renderPersonDetail(personId);
+}
+
 /* ---- Photo viewer ---- */
 function openPhotoViewer(photoId){
   if(!photoId) return;
@@ -1512,7 +2052,8 @@ function downloadJSON(obj, filename){
 }
 function exportDataOnly(){
   downloadJSON({version:1, exportedAt:new Date().toISOString(), people:data.people, timeline:data.timeline,
-    relationships:data.relationships, relationshipTypes:data.relationshipTypes}, 'kept-backup-'+dateStr()+'.json');
+    relationships:data.relationships, relationshipTypes:data.relationshipTypes, events:data.events,
+    dismissedDuplicatePairs:data.dismissedDuplicatePairs}, 'kept-backup-'+dateStr()+'.json');
   toast('Backup downloaded');
 }
 function blobToBase64(blob){
@@ -1536,7 +2077,8 @@ function exportDataWithPhotos(){
     });
   })).then(function(){
     downloadJSON({version:1, exportedAt:new Date().toISOString(), people:data.people, timeline:data.timeline,
-      relationships:data.relationships, relationshipTypes:data.relationshipTypes, media:media}, 'kept-backup-with-photos-'+dateStr()+'.json');
+      relationships:data.relationships, relationshipTypes:data.relationshipTypes, events:data.events,
+      dismissedDuplicatePairs:data.dismissedDuplicatePairs, media:media}, 'kept-backup-with-photos-'+dateStr()+'.json');
     toast('Backup downloaded');
   });
 }
@@ -1555,7 +2097,9 @@ function importDataFile(file){
         });
       })).then(function(){
         data={people:payload.people||[], timeline:payload.timeline||[], relationships:payload.relationships||[],
-          relationshipTypes:(payload.relationshipTypes&&payload.relationshipTypes.length)?payload.relationshipTypes:defaultRelationshipTypes()};
+          relationshipTypes:(payload.relationshipTypes&&payload.relationshipTypes.length)?payload.relationshipTypes:defaultRelationshipTypes(),
+          events:payload.events||[], dismissedDuplicatePairs:payload.dismissedDuplicatePairs||[]};
+        migrateData();
         saveData();
         urlCache.clear();
         toast('Backup imported');
@@ -1564,6 +2108,531 @@ function importDataFile(file){
     });
   };
   reader.readAsText(file);
+}
+
+/* ---- Hard delete (used from Trash) ---- */
+function deleteEntryForever(entryId){
+  var e=data.timeline.find(function(x){return x.id===entryId;});
+  if(e){ (e.photoIds||[]).forEach(function(pid){ idbDelete(pid); }); }
+  data.timeline=data.timeline.filter(function(x){return x.id!==entryId;});
+  saveData();
+}
+function deleteEventForever(eventId){
+  data.events=data.events.filter(function(x){return x.id!==eventId;});
+  saveData();
+}
+
+/* ---- Duplicate detection & merge ---- */
+function normalizeName(name){
+  return (name||'').toLowerCase().replace(/[.,'’‘\-]/g,'').replace(/\s+/g,' ').trim();
+}
+function levenshtein(a,b){
+  var m=a.length,n=b.length;
+  var dp=[]; var i,j;
+  for(i=0;i<=m;i++){ dp.push([i]); }
+  for(j=0;j<=n;j++){ dp[0][j]=j; }
+  for(i=1;i<=m;i++){
+    for(j=1;j<=n;j++){
+      dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+    }
+  }
+  return dp[m][n];
+}
+function pairKey(a,b){ return [a,b].sort().join('|'); }
+function findDuplicateCandidates(){
+  if(!data || !data.people) return [];
+  var people=activePeople();
+  var dismissed={};
+  (data.dismissedDuplicatePairs||[]).forEach(function(k){ dismissed[k]=true; });
+  var results=[];
+  for(var i=0;i<people.length;i++){
+    for(var j=i+1;j<people.length;j++){
+      var a=people[i], b=people[j];
+      var key=pairKey(a.id,b.id);
+      if(dismissed[key]) continue;
+      var na=normalizeName(a.name), nb=normalizeName(b.name);
+      var reason=null;
+      if(na && na===nb){ reason='Same name'; }
+      else if(na.length>=4 && nb.length>=4 && levenshtein(na,nb)<=2){ reason='Similar name'; }
+      else if(a.birthday && b.birthday && a.birthday.month && a.birthday.day &&
+        a.birthday.month===b.birthday.month && a.birthday.day===b.birthday.day &&
+        na.split(' ')[0] && na.split(' ')[0]===nb.split(' ')[0]){ reason='Same first name & birthday'; }
+      if(reason) results.push({a:a, b:b, reason:reason, key:key});
+    }
+  }
+  return results;
+}
+function unionArrays(a,b){
+  var out=(a||[]).slice();
+  (b||[]).forEach(function(x){ if(out.indexOf(x)===-1) out.push(x); });
+  return out;
+}
+function mergeInto(sourceId, targetId){
+  var s=findPerson(sourceId), t=findPerson(targetId);
+  if(!s || !t || s.id===t.id) return;
+  t.tags=unionArrays(t.tags, s.tags);
+  t.likes=unionArrays(t.likes, s.likes);
+  t.quotes=(t.quotes||[]).concat(s.quotes||[]);
+  t.giftIdeas=(t.giftIdeas||[]).concat(s.giftIdeas||[]);
+  if(!t.photoId && s.photoId){ t.photoId=s.photoId; s.photoId=null; }
+  t.galleryPhotoIds=(t.galleryPhotoIds||[]).concat(s.galleryPhotoIds||[]);
+  s.galleryPhotoIds=[];
+  if((!t.howWeMet || !t.howWeMet.text) && s.howWeMet && s.howWeMet.text) t.howWeMet=s.howWeMet;
+  if((!t.birthday || !t.birthday.month) && s.birthday && s.birthday.month) t.birthday=s.birthday;
+  if(!t.pronouns && s.pronouns) t.pronouns=s.pronouns;
+  if(!t.phone && s.phone) t.phone=s.phone;
+  if(!t.email && s.email) t.email=s.email;
+  if(s.notes){ t.notes = t.notes ? (t.notes+'\n\n'+s.notes) : s.notes; }
+  data.timeline.forEach(function(e){
+    if(!e.people) return;
+    var idx=e.people.indexOf(sourceId);
+    if(idx!==-1){
+      e.people.splice(idx,1);
+      if(e.people.indexOf(targetId)===-1) e.people.push(targetId);
+    }
+  });
+  data.events.forEach(function(ev){
+    if(!ev.invitees) return;
+    var idx=ev.invitees.indexOf(sourceId);
+    if(idx!==-1){
+      ev.invitees.splice(idx,1);
+      if(ev.invitees.indexOf(targetId)===-1) ev.invitees.push(targetId);
+    }
+  });
+  data.relationships.forEach(function(r){
+    if(r.personA===sourceId) r.personA=targetId;
+    if(r.personB===sourceId) r.personB=targetId;
+  });
+  var seen={};
+  data.relationships = data.relationships.filter(function(r){
+    if(r.personA===r.personB) return false;
+    var k=[r.personA,r.personB,r.typeId].join('|');
+    var kRev=[r.personB,r.personA,r.typeId].join('|');
+    if(seen[k] || seen[kRev]) return false;
+    seen[k]=true;
+    return true;
+  });
+  s.deletedAt=Date.now();
+  t.updatedAt=Date.now();
+  saveData();
+}
+
+/* ---- Gist sync ---- */
+function getSyncToken(){ try{ return localStorage.getItem(SYNC_TOKEN_KEY)||''; }catch(e){ return ''; } }
+function setSyncToken(t){ try{ localStorage.setItem(SYNC_TOKEN_KEY,t); }catch(e){} }
+function clearSyncToken(){ try{ localStorage.removeItem(SYNC_TOKEN_KEY); }catch(e){} }
+function getSyncGistId(){ try{ return localStorage.getItem(SYNC_GIST_KEY)||''; }catch(e){ return ''; } }
+function setSyncGistId(v){ try{ localStorage.setItem(SYNC_GIST_KEY,v); }catch(e){} }
+function clearSyncGistId(){ try{ localStorage.removeItem(SYNC_GIST_KEY); }catch(e){} }
+function getSyncLast(){ try{ var v=localStorage.getItem(SYNC_LAST_KEY); return v?Number(v):null; }catch(e){ return null; } }
+function setSyncLast(ms){ try{ localStorage.setItem(SYNC_LAST_KEY,String(ms)); }catch(e){} }
+function clearSyncLast(){ try{ localStorage.removeItem(SYNC_LAST_KEY); }catch(e){} }
+function chunkString(str, size){
+  var out=[];
+  for(var i=0;i<str.length;i+=size) out.push(str.slice(i,i+size));
+  return out.length? out : [''];
+}
+function syncHeaders(token){
+  return {'Authorization':'token '+token, 'Accept':'application/vnd.github+json', 'Content-Type':'application/json'};
+}
+function gistPush(){
+  var token=getSyncToken();
+  if(!token){ toast('Add your GitHub token first'); return; }
+  var gistId=getSyncGistId();
+  var payload=JSON.stringify(data);
+  var chunks=chunkString(payload, SYNC_CHUNK_SIZE);
+  var files={};
+  chunks.forEach(function(c,i){ files['kept_data_part'+i+'.json']={content:c}; });
+  files['kept_data_meta.json']={content:JSON.stringify({parts:chunks.length, updatedAt:Date.now(), app:'Kept', version:1})};
+  var headers=syncHeaders(token);
+
+  toast('Syncing…');
+
+  function doCreate(){
+    return fetch('https://api.github.com/gists',{method:'POST',headers:headers,
+      body:JSON.stringify({description:'Kept app data (do not edit)', public:false, files:files})})
+      .then(function(r){ if(!r.ok) throw new Error('create-failed-'+r.status); return r.json(); })
+      .then(function(json){
+        setSyncGistId(json.id);
+        setSyncLast(Date.now());
+        toast('Synced — Gist created');
+        renderSync();
+      });
+  }
+  function doUpdate(existingFilenames){
+    var keep={}; Object.keys(files).forEach(function(k){ keep[k]=true; });
+    existingFilenames.forEach(function(fn){
+      if(/^kept_data_part\d+\.json$/.test(fn) && !keep[fn]) files[fn]=null;
+    });
+    return fetch('https://api.github.com/gists/'+gistId,{method:'PATCH',headers:headers, body:JSON.stringify({files:files})})
+      .then(function(r){ if(!r.ok) throw new Error('update-failed-'+r.status); return r.json(); })
+      .then(function(){
+        setSyncLast(Date.now());
+        toast('Synced');
+        renderSync();
+      });
+  }
+
+  if(gistId){
+    fetch('https://api.github.com/gists/'+gistId,{headers:headers})
+      .then(function(r){ if(!r.ok) throw new Error('fetch-failed-'+r.status); return r.json(); })
+      .then(function(json){ return doUpdate(Object.keys(json.files||{})); })
+      .catch(function(err){ toast('Sync failed — check your token and Gist ID'); console.error(err); });
+  } else {
+    doCreate().catch(function(err){ toast('Sync failed — check your token'); console.error(err); });
+  }
+}
+function gistPull(){
+  var token=getSyncToken(), gistId=getSyncGistId();
+  if(!token || !gistId){ toast('Add a token and Gist ID first'); return; }
+  showConfirm('Pull from Gist?', 'This replaces everything on this device with the data from the Gist. Anything not yet synced from this device will be lost. Photos are not included in sync.', function(){
+    var headers=syncHeaders(token);
+    fetch('https://api.github.com/gists/'+gistId,{headers:headers})
+      .then(function(r){ if(!r.ok) throw new Error('fetch-failed-'+r.status); return r.json(); })
+      .then(function(json){
+        var meta=json.files && json.files['kept_data_meta.json'];
+        if(!meta) throw new Error('no-meta');
+        var metaObj=JSON.parse(meta.content);
+        var parts=[];
+        for(var i=0;i<metaObj.parts;i++){
+          var f=json.files['kept_data_part'+i+'.json'];
+          if(!f) throw new Error('missing-part');
+          parts.push(f.content);
+        }
+        var payload=JSON.parse(parts.join(''));
+        data.people=payload.people||[];
+        data.timeline=payload.timeline||[];
+        data.relationships=payload.relationships||[];
+        data.relationshipTypes=(payload.relationshipTypes && payload.relationshipTypes.length)?payload.relationshipTypes:defaultRelationshipTypes();
+        data.events=payload.events||[];
+        data.dismissedDuplicatePairs=payload.dismissedDuplicatePairs||[];
+        migrateData();
+        saveData();
+        urlCache.clear();
+        setSyncLast(Date.now());
+        toast('Pulled from Gist');
+        showScreen('timeline');
+      })
+      .catch(function(err){ toast('Pull failed — check your token and Gist ID'); console.error(err); });
+  });
+}
+
+/* ---- Add to Calendar (.ics) ---- */
+function icsEscape(s){
+  return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+}
+function icsDateStamp(){
+  return new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+}
+function pad2(n){ return (n<10?'0':'')+n; }
+function downloadICS(ev){
+  var invitees=(ev.invitees||[]).map(personName).join(', ');
+  var descLines=[];
+  if(ev.description) descLines.push(ev.description);
+  if(invitees) descLines.push('Invited: '+invitees);
+  var datePart=(ev.date||'').replace(/-/g,'');
+  var isAllDay=!ev.time;
+  var dtLine;
+  if(isAllDay){
+    dtLine='DTSTART;VALUE=DATE:'+datePart;
+  } else {
+    var timePart=ev.time.replace(':','')+'00';
+    dtLine='DTSTART:'+datePart+'T'+timePart;
+  }
+  var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Kept//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT',
+    'UID:'+ev.id+'@kept.local', 'DTSTAMP:'+icsDateStamp(), dtLine, 'SUMMARY:'+icsEscape(ev.title)];
+  if(ev.location) lines.push('LOCATION:'+icsEscape(ev.location));
+  if(descLines.length) lines.push('DESCRIPTION:'+icsEscape(descLines.join('\n')));
+  lines.push('END:VEVENT','END:VCALENDAR');
+  var blob=new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  window.location.href=url;
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+}
+
+/* ---- Contacts (.vcf) import/export ---- */
+function vcardEscape(s){
+  return String(s||'').replace(/\\/g,'\\\\').replace(/,/g,'\\,').replace(/;/g,'\\;').replace(/\n/g,'\\n');
+}
+function vcardUnescape(s){
+  return String(s||'').replace(/\\n/gi,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\');
+}
+function personToVCard(p){
+  var lines=['BEGIN:VCARD','VERSION:3.0'];
+  lines.push('FN:'+vcardEscape(p.name));
+  lines.push('N:'+vcardEscape(p.name)+';;;;');
+  if(p.birthday && p.birthday.year && p.birthday.month && p.birthday.day){
+    lines.push('BDAY:'+p.birthday.year+'-'+pad2(p.birthday.month)+'-'+pad2(p.birthday.day));
+  }
+  if(p.phone) lines.push('TEL:'+vcardEscape(p.phone));
+  if(p.email) lines.push('EMAIL:'+vcardEscape(p.email));
+  var noteParts=[];
+  if(p.pronouns) noteParts.push('Pronouns: '+p.pronouns);
+  if(p.tags && p.tags.length) noteParts.push('Tags: '+p.tags.join(', '));
+  if(p.notes) noteParts.push(p.notes);
+  if(noteParts.length) lines.push('NOTE:'+vcardEscape(noteParts.join(' | ')));
+  lines.push('END:VCARD');
+  return lines.join('\r\n');
+}
+function exportContacts(){
+  var people=activePeople();
+  if(!people.length){ toast('No people to export'); return; }
+  var vcf=people.map(personToVCard).join('\r\n');
+  var blob=new Blob([vcf],{type:'text/vcard'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='kept-contacts-'+dateStr()+'.vcf';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  toast('Contacts exported');
+}
+function unfoldVCardLines(text){
+  var rawLines=text.split(/\r\n|\n|\r/);
+  var lines=[];
+  rawLines.forEach(function(line){
+    if(/^[ \t]/.test(line) && lines.length){
+      lines[lines.length-1]+=line.slice(1);
+    } else {
+      lines.push(line);
+    }
+  });
+  return lines;
+}
+function parseVCardBlock(lines){
+  var card={name:'', birthday:null, phone:'', email:''};
+  lines.forEach(function(line){
+    var idx=line.indexOf(':');
+    if(idx===-1) return;
+    var keyPart=line.slice(0,idx);
+    var value=line.slice(idx+1);
+    var key=keyPart.split(';')[0].toUpperCase();
+    if(key==='FN'){ card.name=vcardUnescape(value); }
+    else if(key==='N' && !card.name){
+      var parts=value.split(';');
+      var joined=[parts[1],parts[0]].filter(Boolean).join(' ');
+      card.name=vcardUnescape(joined) || vcardUnescape(value.replace(/;/g,' ').trim());
+    }
+    else if(key==='BDAY'){
+      var m=value.match(/(\d{4})-?(\d{2})-?(\d{2})/);
+      if(m) card.birthday={year:Number(m[1]), month:Number(m[2]), day:Number(m[3])};
+    }
+    else if(key==='TEL' && !card.phone){ card.phone=vcardUnescape(value); }
+    else if(key==='EMAIL' && !card.email){ card.email=vcardUnescape(value); }
+  });
+  return card;
+}
+function parseVCardFile(text){
+  var lines=unfoldVCardLines(text);
+  var cards=[]; var current=null;
+  lines.forEach(function(line){
+    var t=line.trim();
+    if(/^BEGIN:VCARD$/i.test(t)){ current=[]; }
+    else if(/^END:VCARD$/i.test(t)){ if(current){ cards.push(parseVCardBlock(current)); current=null; } }
+    else if(current){ current.push(line); }
+  });
+  return cards.filter(function(c){ return c.name; });
+}
+function importContactsFile(file){
+  var reader=new FileReader();
+  reader.onload=function(){
+    var cards=parseVCardFile(reader.result);
+    if(!cards.length){ toast('No contacts found in that file'); return; }
+    showConfirm('Import '+cards.length+' contact'+(cards.length===1?'':'s')+'?',
+      'New people will be added for each contact. Existing people won\'t be matched automatically — check Find Duplicates afterward if you\'re re-importing.', function(){
+      cards.forEach(function(c){
+        data.people.push({
+          id:uid('p'), name:c.name, pronouns:'', phone:c.phone||'', email:c.email||'', isMe:false,
+          birthday:c.birthday||{month:null,day:null,year:null},
+          photoId:null, galleryPhotoIds:[],
+          howWeMet:{text:'',date:null},
+          tags:[], likes:[], quotes:[], giftIdeas:[],
+          notes:'', cardReminder:true, lastCardSentYear:null,
+          archived:false, deletedAt:null, createdAt:Date.now(), updatedAt:Date.now()
+        });
+      });
+      saveData();
+      toast(cards.length+' contact'+(cards.length===1?'':'s')+' imported');
+      refreshCurrentScreen();
+    });
+  };
+  reader.readAsText(file);
+}
+
+/* ================= RENDER: ARCHIVED / TRASH / DUPLICATES / SYNC ================= */
+function miniPersonRow(p){
+  var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+  var avatarInner=p.photoId?'<img data-photo-id="'+p.photoId+'">':initials;
+  return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><div class="avatar">'+avatarInner+'</div><div class="person-info"><div class="name">'+esc(p.name)+'</div></div></div>';
+}
+function renderArchived(){
+  var people=data.people.filter(function(p){return p.archived && !p.deletedAt;}).sort(function(a,b){return a.name.localeCompare(b.name);});
+  var root=document.getElementById('archivedList');
+  if(people.length===0){
+    root.innerHTML='<div class="empty-state"><div class="big">🗃️</div><h3>No archived people</h3><p>People you archive will show up here.</p></div>';
+    return;
+  }
+  root.innerHTML=people.map(function(p){
+    var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var avatarInner=p.photoId?'<img data-photo-id="'+p.photoId+'">':initials;
+    return '<div class="person-row">' +
+      '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;cursor:pointer;" data-action="open-person" data-id="'+p.id+'">' +
+        '<div class="avatar">'+avatarInner+'</div><div class="person-info"><div class="name">'+esc(p.name)+'</div></div>' +
+      '</div>' +
+      '<button class="btn btn-secondary btn-sm" data-action="unarchive-person" data-id="'+p.id+'">Restore</button>' +
+    '</div>';
+  }).join('');
+  hydrateImages(root);
+}
+function renderTrash(){
+  var people=data.people.filter(function(p){return p.deletedAt;}).sort(function(a,b){return b.deletedAt-a.deletedAt;});
+  var entries=data.timeline.filter(function(e){return e.deletedAt;}).sort(function(a,b){return b.deletedAt-a.deletedAt;});
+  var events=data.events.filter(function(ev){return ev.deletedAt;}).sort(function(a,b){return b.deletedAt-a.deletedAt;});
+  var quotes=[], gifts=[];
+  data.people.forEach(function(p){
+    (p.quotes||[]).forEach(function(q){ if(q.deletedAt) quotes.push({p:p,q:q}); });
+    (p.giftIdeas||[]).forEach(function(g){ if(g.deletedAt) gifts.push({p:p,g:g}); });
+  });
+  var root=document.getElementById('trashContent');
+  var total=people.length+entries.length+events.length+quotes.length+gifts.length;
+  var html='';
+  if(total===0){
+    html='<div class="empty-state"><div class="big">🗑️</div><h3>Trash is empty</h3><p>Anything you delete will show up here first, so you can bring it back.</p></div>';
+  } else {
+    html+='<div class="btn-row"><button class="btn btn-danger btn-sm" data-action="empty-trash">Empty trash</button></div>';
+    if(people.length){
+      html+='<div class="section-label">People</div>';
+      people.forEach(function(p){
+        var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+        var avatarInner=p.photoId?'<img data-photo-id="'+p.photoId+'">':initials;
+        html+='<div class="person-row">' +
+          '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;cursor:pointer;" data-action="open-person" data-id="'+p.id+'">' +
+            '<div class="avatar">'+avatarInner+'</div><div class="person-info"><div class="name">'+esc(p.name)+'</div></div>' +
+          '</div>' +
+          '<div class="btn-row" style="margin:0;">' +
+            '<button class="btn btn-secondary btn-sm" data-action="restore-person" data-id="'+p.id+'">Restore</button>' +
+            '<button class="btn btn-danger btn-sm" data-action="delete-person-forever" data-id="'+p.id+'">Delete forever</button>' +
+          '</div>' +
+        '</div>';
+      });
+    }
+    if(entries.length){
+      html+='<div class="section-label">Memories</div>';
+      entries.forEach(function(e){
+        html+='<div class="tl-entry">' +
+          '<div class="tl-top"><div><div class="tl-date">'+(e.date?formatDateDisplay(e.date):(e.approxDate||'Undated'))+'</div>' +
+          '<div class="tl-title">'+esc(e.title)+'</div></div><div class="tl-type">'+(e.type==='memory'?'💭':'📍')+'</div></div>' +
+          '<div class="tl-actions">' +
+            '<button data-action="restore-entry" data-id="'+e.id+'">Restore</button>' +
+            '<button data-action="delete-entry-forever" data-id="'+e.id+'">Delete forever</button>' +
+          '</div>' +
+        '</div>';
+      });
+    }
+    if(events.length){
+      html+='<div class="section-label">Events</div>';
+      events.forEach(function(ev){
+        html+='<div class="tl-entry">' +
+          '<div class="tl-top"><div><div class="tl-date">'+formatDateDisplay(ev.date)+'</div>' +
+          '<div class="tl-title">'+esc(ev.title)+'</div></div><div class="tl-type">📅</div></div>' +
+          '<div class="tl-actions">' +
+            '<button data-action="restore-event" data-id="'+ev.id+'">Restore</button>' +
+            '<button data-action="delete-event-forever" data-id="'+ev.id+'">Delete forever</button>' +
+          '</div>' +
+        '</div>';
+      });
+    }
+    if(quotes.length){
+      html+='<div class="section-label">Quotes</div>';
+      quotes.forEach(function(item){
+        html+='<div class="quote-card" style="padding-right:16px;">' +
+          '<div class="q-text">\u201c'+esc(item.q.text)+'\u201d</div>' +
+          '<div class="q-date">From '+esc(item.p.name)+'</div>' +
+          '<div class="btn-row" style="margin-top:10px;">' +
+            '<button class="btn btn-secondary btn-sm" data-action="restore-quote" data-id="'+item.p.id+'" data-qid="'+item.q.id+'">Restore</button>' +
+            '<button class="btn btn-danger btn-sm" data-action="delete-quote-forever" data-id="'+item.p.id+'" data-qid="'+item.q.id+'">Delete forever</button>' +
+          '</div>' +
+        '</div>';
+      });
+    }
+    if(gifts.length){
+      html+='<div class="section-label">Gift ideas</div>';
+      gifts.forEach(function(item){
+        html+='<div class="card">' +
+          '<div class="g-text">'+esc(item.g.text)+'</div>' +
+          '<div class="q-date">For '+esc(item.p.name)+'</div>' +
+          '<div class="btn-row" style="margin-top:10px;">' +
+            '<button class="btn btn-secondary btn-sm" data-action="restore-gift" data-id="'+item.p.id+'" data-gid="'+item.g.id+'">Restore</button>' +
+            '<button class="btn btn-danger btn-sm" data-action="delete-gift-forever" data-id="'+item.p.id+'" data-gid="'+item.g.id+'">Delete forever</button>' +
+          '</div>' +
+        '</div>';
+      });
+    }
+  }
+  root.innerHTML=html;
+  hydrateImages(root);
+}
+function renderDuplicates(){
+  var candidates=findDuplicateCandidates();
+  var root=document.getElementById('duplicatesContent');
+  if(candidates.length===0){
+    root.innerHTML='<div class="empty-state"><div class="big">🔍</div><h3>No duplicates found</h3><p>Everyone in your list looks unique. Check back after adding more people.</p></div>';
+    return;
+  }
+  root.innerHTML=candidates.map(function(c){
+    return '<div class="card">' +
+      miniPersonRow(c.a) + miniPersonRow(c.b) +
+      '<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">'+esc(c.reason)+'</div>' +
+      '<div class="btn-row wrap">' +
+        '<button class="btn btn-secondary btn-sm" data-action="merge-duplicate" data-source="'+c.b.id+'" data-target="'+c.a.id+'">Merge into '+esc(c.a.name)+'</button>' +
+        '<button class="btn btn-secondary btn-sm" data-action="merge-duplicate" data-source="'+c.a.id+'" data-target="'+c.b.id+'">Merge into '+esc(c.b.name)+'</button>' +
+        '<button class="btn btn-secondary btn-sm" data-action="dismiss-duplicate" data-key="'+esc(c.key)+'">Not a duplicate</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  hydrateImages(root);
+}
+function renderSync(){
+  var root=document.getElementById('syncContent');
+  var token=getSyncToken();
+  var gistId=getSyncGistId();
+  var last=getSyncLast();
+  root.innerHTML =
+    '<div class="card">' +
+      '<p style="font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px;">Sync your people, timeline, and relationships between your devices using a private GitHub Gist. Photos stay on this device only — they are not synced.</p>' +
+      '<p style="font-size:12.5px;color:var(--muted);line-height:1.5;">You\'ll need a GitHub personal access token with the "gist" scope. Create one at github.com → Settings → Developer settings → Personal access tokens.</p>' +
+    '</div>' +
+    '<div class="section-label">GitHub token</div>' +
+    '<div class="card">' +
+      (token ?
+        '<p style="font-size:14px;margin-bottom:10px;">Token saved (ending •••'+esc(token.slice(-4))+')</p>' +
+        '<div class="btn-row"><button class="btn btn-secondary btn-sm" data-action="clear-sync-token">Remove token</button></div>'
+        :
+        '<div class="form-group"><input type="password" id="syncTokenInput" placeholder="ghp_..."></div>' +
+        '<button class="btn btn-secondary btn-sm" data-action="save-sync-token">Save token</button>'
+      ) +
+    '</div>' +
+    '<div class="section-label">Gist</div>' +
+    '<div class="card">' +
+      (gistId ?
+        '<div class="field-block"><div class="label">Gist ID</div><div class="value">'+esc(gistId)+'</div></div>' +
+        '<div class="btn-row wrap">' +
+          '<button class="btn btn-secondary btn-sm" data-action="copy-gist-id">Copy Gist ID</button>' +
+          '<button class="btn btn-danger btn-sm" data-action="disconnect-sync">Disconnect</button>' +
+        '</div>'
+        :
+        '<p style="font-size:13px;color:var(--ink-soft);margin-bottom:10px;">Pushing for the first time creates a new private Gist. Setting up a second device? Paste the Gist ID from your first device instead.</p>' +
+        '<div class="form-group"><input type="text" id="syncGistIdInput" placeholder="Paste an existing Gist ID (optional)"></div>' +
+        '<button class="btn btn-secondary btn-sm" data-action="save-gist-id">Use this Gist ID</button>'
+      ) +
+    '</div>' +
+    '<div class="section-label">Sync now</div>' +
+    '<div class="card">' +
+      '<div class="field-block"><div class="label">Last synced</div><div class="value'+(last?'':' muted')+'">'+(last?formatDateTimeDisplay(last):'Never')+'</div></div>' +
+      '<div class="btn-row wrap">' +
+        '<button class="btn btn-secondary btn-sm" data-action="gist-push">⬆ Push to Gist</button>' +
+        '<button class="btn btn-secondary btn-sm" data-action="gist-pull">⬇ Pull from Gist</button>' +
+      '</div>' +
+    '</div>';
 }
 
 /* ================= DELEGATED ACTIONS ================= */
@@ -1578,6 +2647,12 @@ function handleAction(action, target){
     case 'goto-people': showScreen('people'); break;
     case 'goto-tree': showScreen('tree'); break;
     case 'goto-tree-focus': showScreen('tree', {focusId:id}); break;
+    case 'goto-my-connections': showScreen('tree', {focusId:id}); break;
+    case 'goto-more': showScreen('more'); break;
+    case 'goto-archived': showScreen('archived'); break;
+    case 'goto-trash': showScreen('trash'); break;
+    case 'goto-duplicates': showScreen('duplicates'); break;
+    case 'goto-sync': showScreen('sync'); break;
     case 'view-photo':
       var pid=target.getAttribute('data-photo-full');
       if(pid) openPhotoViewer(pid);
@@ -1620,23 +2695,127 @@ function handleAction(action, target){
       break;
     }
     case 'archive-person':
-      showConfirm('Archive '+personName(id)+'?', 'They\'ll be hidden from your lists but their memories will stay. You can\'t undo this from the app yet — export a backup if you want to keep a record.', function(){
+      showConfirm('Archive '+personName(id)+'?', 'They\'ll be hidden from your lists but their memories will stay. Restore them anytime from Archived people in More.', function(){
         var p4=findPerson(id); p4.archived=true; saveData(); showScreen('people'); toast('Archived');
       });
       break;
+    case 'unarchive-person': {
+      var up=findPerson(id); if(up) up.archived=false;
+      saveData(); refreshCurrentScreen(); toast('Restored');
+      break;
+    }
     case 'delete-person':
-      showConfirm('Delete '+personName(id)+'?', 'This removes their profile and any relationships permanently. Shared memories will stay, just without them tagged. This can\'t be undone.', function(){
-        deletePerson(id); showScreen('people'); toast('Deleted');
+      showConfirm('Move '+personName(id)+' to Trash?', 'They\'ll be hidden from your lists. You can restore them, or delete them for good, from Trash in More.', function(){
+        var pT=findPerson(id); if(pT) pT.deletedAt=Date.now();
+        saveData();
+        if(currentScreen==='person-detail') renderPersonDetail(id); else refreshCurrentScreen();
+        toast('Moved to Trash');
+      });
+      break;
+    case 'restore-person': {
+      var rp=findPerson(id); if(rp) rp.deletedAt=null;
+      saveData(); refreshCurrentScreen(); toast('Restored');
+      break;
+    }
+    case 'delete-person-forever':
+      showConfirm('Delete '+personName(id)+' forever?', 'This permanently removes their profile, photos, and relationships. This can\'t be undone.', function(){
+        deletePerson(id);
+        if(currentScreen==='person-detail') showScreen('people'); else refreshCurrentScreen();
+        toast('Deleted forever');
       });
       break;
     case 'edit-entry': openEntryForm(id); break;
     case 'delete-entry':
-      showConfirm('Delete this entry?', 'This memory will be permanently removed.', function(){
-        data.timeline = data.timeline.filter(function(e){return e.id!==id;});
-        saveData(); refreshCurrentScreen(); toast('Deleted');
+      showConfirm('Move this memory to Trash?', 'You can restore it, or delete it for good, from Trash in More.', function(){
+        var eT=data.timeline.find(function(x){return x.id===id;});
+        if(eT) eT.deletedAt=Date.now();
+        saveData(); refreshCurrentScreen(); toast('Moved to Trash');
+      });
+      break;
+    case 'restore-entry': {
+      var re=data.timeline.find(function(x){return x.id===id;}); if(re) re.deletedAt=null;
+      saveData(); refreshCurrentScreen(); toast('Restored');
+      break;
+    }
+    case 'delete-entry-forever':
+      showConfirm('Delete this memory forever?', 'This permanently removes it and its photos. This can\'t be undone.', function(){
+        deleteEntryForever(id); refreshCurrentScreen(); toast('Deleted forever');
       });
       break;
     case 'add-reltype': openRelTypeForm(); break;
+    case 'add-quote-for': openQuoteForm(id); break;
+    case 'edit-quote': {
+      var eqpid=id, eqqid=target.getAttribute('data-qid');
+      openQuoteForm(eqpid, eqqid);
+      break;
+    }
+    case 'delete-quote': {
+      var qpid=id, qid=target.getAttribute('data-qid');
+      showConfirm('Move this quote to Trash?', 'You can restore it, or delete it for good, from Trash in More.', function(){
+        var qp=findPerson(qpid);
+        var q=(qp.quotes||[]).find(function(x){return x.id===qid;});
+        if(q) q.deletedAt=Date.now();
+        saveData(); renderPersonDetail(qpid); toast('Moved to Trash');
+      });
+      break;
+    }
+    case 'restore-quote': {
+      var rqpid=id, rqid=target.getAttribute('data-qid');
+      var rqp=findPerson(rqpid);
+      var rq=rqp && (rqp.quotes||[]).find(function(x){return x.id===rqid;});
+      if(rq) rq.deletedAt=null;
+      saveData(); refreshCurrentScreen(); toast('Restored');
+      break;
+    }
+    case 'delete-quote-forever': {
+      var dqpid=id, dqid=target.getAttribute('data-qid');
+      showConfirm('Delete this quote forever?', 'This can\'t be undone.', function(){
+        var dqp=findPerson(dqpid);
+        if(dqp) dqp.quotes=(dqp.quotes||[]).filter(function(x){return x.id!==dqid;});
+        saveData(); refreshCurrentScreen(); toast('Deleted forever');
+      });
+      break;
+    }
+    case 'add-gift-for': openGiftForm(id); break;
+    case 'edit-gift': {
+      var egpid=id, eggid=target.getAttribute('data-gid');
+      openGiftForm(egpid, eggid);
+      break;
+    }
+    case 'toggle-gift-given': {
+      var gpid=id, ggid=target.getAttribute('data-gid');
+      var gp=findPerson(gpid);
+      var gift=(gp.giftIdeas||[]).find(function(g){return g.id===ggid;});
+      if(gift){ gift.given=target.checked; saveData(); renderPersonDetail(gpid); }
+      break;
+    }
+    case 'delete-gift': {
+      var gpid2=id, ggid2=target.getAttribute('data-gid');
+      showConfirm('Move this gift idea to Trash?', 'You can restore it, or delete it for good, from Trash in More.', function(){
+        var gp2=findPerson(gpid2);
+        var g=(gp2.giftIdeas||[]).find(function(x){return x.id===ggid2;});
+        if(g) g.deletedAt=Date.now();
+        saveData(); renderPersonDetail(gpid2); toast('Moved to Trash');
+      });
+      break;
+    }
+    case 'restore-gift': {
+      var rgpid=id, rggid=target.getAttribute('data-gid');
+      var rgp=findPerson(rgpid);
+      var rg=rgp && (rgp.giftIdeas||[]).find(function(x){return x.id===rggid;});
+      if(rg) rg.deletedAt=null;
+      saveData(); refreshCurrentScreen(); toast('Restored');
+      break;
+    }
+    case 'delete-gift-forever': {
+      var dgpid=id, dggid=target.getAttribute('data-gid');
+      showConfirm('Delete this gift idea forever?', 'This can\'t be undone.', function(){
+        var dgp=findPerson(dgpid);
+        if(dgp) dgp.giftIdeas=(dgp.giftIdeas||[]).filter(function(x){return x.id!==dggid;});
+        saveData(); refreshCurrentScreen(); toast('Deleted forever');
+      });
+      break;
+    }
     case 'export-data': exportDataOnly(); break;
     case 'export-data-photos': exportDataWithPhotos(); break;
     case 'import-data': document.getElementById('importFileInput').click(); break;
@@ -1652,6 +2831,96 @@ function handleAction(action, target){
     case 'add-sheet-hangout': closeModal('modal-addsheet'); openEntryForm(null, null, 'hangout'); break;
     case 'add-sheet-memory': closeModal('modal-addsheet'); openEntryForm(null, null, 'memory'); break;
     case 'add-sheet-relationship': closeModal('modal-addsheet'); openRelationshipForm(null); break;
+    case 'add-sheet-event': closeModal('modal-addsheet'); openEventForm(null); break;
+    case 'plan-event': closeAllModals(); openEventForm(null); break;
+    case 'edit-event': closeAllModals(); openEventForm(id); break;
+    case 'delete-event':
+      showConfirm('Move this event to Trash?', 'You can restore it, or delete it for good, from Trash in More.', function(){
+        var evT=data.events.find(function(x){return x.id===id;});
+        if(evT) evT.deletedAt=Date.now();
+        saveData(); refreshCurrentScreen(); toast('Moved to Trash');
+      });
+      break;
+    case 'restore-event': {
+      var rev=data.events.find(function(x){return x.id===id;}); if(rev) rev.deletedAt=null;
+      saveData(); refreshCurrentScreen(); toast('Restored');
+      break;
+    }
+    case 'delete-event-forever':
+      showConfirm('Delete this event forever?', 'This can\'t be undone.', function(){
+        deleteEventForever(id); refreshCurrentScreen(); toast('Deleted forever');
+      });
+      break;
+    case 'ics-event': {
+      var icsEv=data.events.find(function(x){return x.id===id;});
+      if(icsEv) downloadICS(icsEv);
+      break;
+    }
+    case 'empty-trash':
+      showConfirm('Empty trash?', 'Everyone and everything in Trash will be permanently deleted. This can\'t be undone.', function(){
+        data.people.filter(function(p){return p.deletedAt;}).forEach(function(p){ deletePerson(p.id); });
+        data.timeline.filter(function(e){return e.deletedAt;}).forEach(function(e){ deleteEntryForever(e.id); });
+        data.events.filter(function(ev){return ev.deletedAt;}).forEach(function(ev){ deleteEventForever(ev.id); });
+        data.people.forEach(function(p){
+          p.quotes=(p.quotes||[]).filter(function(q){return !q.deletedAt;});
+          p.giftIdeas=(p.giftIdeas||[]).filter(function(g){return !g.deletedAt;});
+        });
+        saveData();
+        refreshCurrentScreen();
+        toast('Trash emptied');
+      });
+      break;
+    case 'add-yourself': closeAllModals(); openPersonForm(null, true); break;
+    case 'merge-duplicate': {
+      var msrc=target.getAttribute('data-source'), mtgt=target.getAttribute('data-target');
+      var msp=findPerson(msrc), mtp=findPerson(mtgt);
+      if(msp && mtp){
+        showConfirm('Merge '+msp.name+' into '+mtp.name+'?', 'Their quotes, gift ideas, likes, photos, memories, and relationships will move to '+mtp.name+'. '+msp.name+' will be moved to Trash.', function(){
+          mergeInto(msrc, mtgt); renderDuplicates(); toast('Merged');
+        });
+      }
+      break;
+    }
+    case 'dismiss-duplicate': {
+      var dkey=target.getAttribute('data-key');
+      data.dismissedDuplicatePairs=data.dismissedDuplicatePairs||[];
+      data.dismissedDuplicatePairs.push(dkey);
+      saveData(); renderDuplicates();
+      break;
+    }
+    case 'save-sync-token': {
+      var tokVal=document.getElementById('syncTokenInput').value.trim();
+      if(!tokVal){ toast('Enter a token'); break; }
+      setSyncToken(tokVal); renderSync(); toast('Token saved');
+      break;
+    }
+    case 'clear-sync-token':
+      showConfirm('Remove saved token?', 'You can add it again anytime.', function(){
+        clearSyncToken(); renderSync(); toast('Token removed');
+      });
+      break;
+    case 'save-gist-id': {
+      var gidVal=document.getElementById('syncGistIdInput').value.trim();
+      if(!gidVal){ toast('Enter a Gist ID'); break; }
+      setSyncGistId(gidVal); renderSync(); toast('Gist ID saved');
+      break;
+    }
+    case 'copy-gist-id': {
+      var gidCopy=getSyncGistId();
+      if(gidCopy && navigator.clipboard){
+        navigator.clipboard.writeText(gidCopy).then(function(){ toast('Copied'); }).catch(function(){ toast('Could not copy'); });
+      } else { toast('Nothing to copy'); }
+      break;
+    }
+    case 'disconnect-sync':
+      showConfirm('Disconnect sync?', 'This removes the token and Gist ID from this device only. Your Gist on GitHub will not be deleted.', function(){
+        clearSyncToken(); clearSyncGistId(); clearSyncLast(); renderSync(); toast('Disconnected');
+      });
+      break;
+    case 'gist-push': gistPush(); break;
+    case 'gist-pull': gistPull(); break;
+    case 'import-contacts': document.getElementById('importContactsInput').click(); break;
+    case 'export-contacts': exportContacts(); break;
     case 'close-modal': closeModal(target.getAttribute('data-modal')); break;
   }
 }
@@ -1667,6 +2936,8 @@ function deletePerson(id){
   data.people = data.people.filter(function(x){return x.id!==id;});
   data.relationships = data.relationships.filter(function(r){return r.personA!==id && r.personB!==id;});
   data.timeline.forEach(function(e){ e.people=(e.people||[]).filter(function(pid){return pid!==id;}); });
+  data.events.forEach(function(ev){ ev.invitees=(ev.invitees||[]).filter(function(pid){return pid!==id;}); });
+  data.dismissedDuplicatePairs = (data.dismissedDuplicatePairs||[]).filter(function(k){ return k.indexOf(id)===-1; });
   saveData();
 }
 function closeAllModals(){
@@ -1709,6 +2980,7 @@ function wireGlobalEvents(){
     }
   });
   document.getElementById('pf-cardtoggle').addEventListener('click', function(){ this.classList.toggle('on'); });
+  document.getElementById('pf-ismetoggle').addEventListener('click', function(){ this.classList.toggle('on'); });
   document.getElementById('pf-bmonth').addEventListener('change', function(){});
 
   document.getElementById('entryForm').addEventListener('submit', submitEntryForm);
@@ -1731,6 +3003,10 @@ function wireGlobalEvents(){
     document.getElementById('rt-inverse-wrap').classList.toggle('hidden', this.classList.contains('on'));
   });
 
+  document.getElementById('quoteForm').addEventListener('submit', submitQuoteForm);
+  document.getElementById('giftForm').addEventListener('submit', submitGiftForm);
+  document.getElementById('eventForm').addEventListener('submit', submitEventForm);
+
   document.getElementById('confirmActionBtn').addEventListener('click', function(){
     var cb=confirmCallback;
     confirmCallback=null;
@@ -1745,6 +3021,11 @@ function wireGlobalEvents(){
     if(e.target && e.target.id==='importFileInput'){
       var f=e.target.files[0];
       if(f) importDataFile(f);
+      e.target.value='';
+    }
+    if(e.target && e.target.id==='importContactsInput'){
+      var cf=e.target.files[0];
+      if(cf) importContactsFile(cf);
       e.target.value='';
     }
   });
