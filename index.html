@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --paper:#EFEAE0;
@@ -143,7 +144,7 @@ main.screen.active{display:block;}
 .undated-tag{font-size:11px;color:var(--muted);font-style:italic;}
 
 /* Reminders */
-.rem-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:10px;}
+.rem-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:10px;cursor:pointer;}
 .rem-days{font-size:12px;font-weight:700;color:var(--accent-dark);background:var(--accent-soft);padding:5px 10px;border-radius:999px;white-space:nowrap;}
 .rem-days.today{background:var(--thread);color:#fff;}
 .rem-check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:4px;}
@@ -193,8 +194,9 @@ main.screen.active{display:block;}
 /* Forms */
 .form-group{margin-bottom:16px;}
 .form-group label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
-.form-group input[type=text],.form-group input[type=date],.form-group input[type=number],.form-group textarea,.form-group select{
+.form-group input[type=text],.form-group input[type=date],.form-group input[type=time],.form-group input[type=datetime-local],.form-group input[type=tel],.form-group input[type=email],.form-group input[type=number],.form-group textarea,.form-group select{
   width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);
+  box-sizing:border-box;display:block;
 }
 .form-group textarea{min-height:80px;resize:vertical;}
 .form-row{display:flex;gap:10px;}
@@ -242,9 +244,9 @@ main.screen.active{display:block;}
 /* More screen */
 .more-card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
 .more-card .mc-ic{font-size:22px;flex:0 0 auto;width:38px;text-align:center;}
-.more-card .mc-body{flex:1;}
-.more-card .mc-title{font-weight:600;font-size:15px;}
-.more-card .mc-sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+.more-card .mc-body{flex:1;display:flex;flex-direction:column;min-width:0;}
+.more-card .mc-title{font-weight:600;font-size:15px;display:block;}
+.more-card .mc-sub{font-size:12.5px;color:var(--muted);margin-top:3px;display:block;}
 .more-card .mc-arrow{color:var(--muted);}
 
 /* Modals */
@@ -278,8 +280,111 @@ main.screen.active{display:block;}
 .tree-node-label{font-family:var(--font-body);font-size:11px;fill:var(--ink);font-weight:600;}
 .tree-edge-label{font-family:var(--font-body);font-size:9.5px;fill:var(--ink-soft);}
 .tree-legend{margin-top:10px;font-size:12px;color:var(--muted);text-align:center;}
+/* ---------- Journal ---------- */
+.journal-card{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--ink-soft);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.journal-card.locked{background:var(--paper-alt);}
+.journal-card .jc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.journal-card .jc-date{font-size:12.5px;color:var(--muted);font-weight:600;}
+.journal-card .jc-lock-label{font-size:14px;color:var(--ink-soft);margin-top:4px;display:flex;align-items:center;gap:6px;}
+.journal-card .jc-text{font-size:14.5px;color:var(--ink);line-height:1.55;margin-top:8px;white-space:pre-wrap;}
+.journal-card .jc-loc{font-size:12.5px;color:var(--muted);margin-top:4px;}
+.journal-card.retro{border-left-color:var(--thread);}
+.mention-chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.mention-chip{background:var(--accent-soft);color:var(--accent-dark);border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:600;}
+.date-suggest-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.date-suggest-chip{background:var(--paper-alt);border:1px dashed var(--line);border-radius:999px;padding:5px 11px;font-size:12px;color:var(--ink-soft);}
+.retro-row{background:var(--paper-alt);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;}
+.retro-row .rr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.retro-row .rr-top button{color:var(--danger);font-size:12.5px;}
+.retro-row input,.retro-row textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-bottom:6px;box-sizing:border-box;font-size:13.5px;}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin:18px 0;}
+.pin-dots input{width:52px;height:60px;text-align:center;font-size:26px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);}
+.jc-lock-btn{color:var(--accent-dark);font-weight:600;font-size:13px;}
+
 .isolated-list{margin-top:14px;}
 .photo-viewer-img{width:100%;border-radius:12px;}
+
+/* ---------- Searchable people picker ---------- */
+.search-select{position:relative;}
+.search-select input.ss-input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);box-sizing:border-box;}
+.search-select .ss-dropdown{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);max-height:220px;overflow-y:auto;z-index:50;display:none;}
+.search-select.open .ss-dropdown{display:block;}
+.ss-row{padding:11px 14px;font-size:14.5px;color:var(--ink);border-bottom:1px solid var(--line);}
+.ss-row:last-child{border-bottom:none;}
+.ss-row:active{background:var(--paper-alt);}
+.ss-row.ss-empty{color:var(--muted);font-style:italic;}
+.ss-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;padding:4px;}
+
+.checklist-search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--paper-alt);margin-bottom:8px;font-size:14px;box-sizing:border-box;}
+.checklist-add-new{display:flex;align-items:center;gap:8px;padding:9px 6px;font-size:14px;color:var(--accent-dark);font-weight:600;border-top:1px solid var(--line);margin-top:2px;}
+
+/* ---------- Field meta / last updated ---------- */
+.field-updated{font-size:11px;color:var(--muted);margin-top:3px;}
+.field-block .label-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+
+/* ---------- Missing info dashboard ---------- */
+.missing-row{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.missing-row .mr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.missing-row .mr-title{font-family:var(--font-display);font-size:16px;font-weight:600;}
+.missing-row .mr-count{font-size:12px;color:var(--muted);}
+.missing-chip-row{display:flex;gap:6px;flex-wrap:wrap;}
+.missing-filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.missing-filter-row button{padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper-alt);font-size:12.5px;color:var(--ink-soft);}
+.missing-filter-row button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ---------- Custom fields manager ---------- */
+.cfield-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 14px;margin-bottom:8px;}
+.cfield-row .cf-body{flex:1;min-width:0;}
+.cfield-row .cf-name{font-size:14.5px;font-weight:600;}
+.cfield-row .cf-type{font-size:12px;color:var(--muted);margin-top:1px;}
+.cfield-row button{color:var(--muted);font-size:13px;flex:0 0 auto;}
+
+/* ---------- Backlog ---------- */
+.backlog-item{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--thread);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;}
+.backlog-item.done{border-left-color:var(--moss);opacity:.65;}
+.backlog-item .bi-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+.backlog-item .bi-text{font-size:14.5px;color:var(--ink);flex:1;}
+.backlog-item.done .bi-text{text-decoration:line-through;}
+.backlog-item .bi-meta{font-size:11.5px;color:var(--muted);margin-top:5px;}
+.backlog-item .bi-actions{display:flex;gap:10px;flex:0 0 auto;}
+.backlog-item .bi-actions button{font-size:13px;color:var(--muted);}
+
+/* ---------- Segmented control (reuse type-toggle look, 2-wide) ---------- */
+.seg-row{display:flex;background:var(--paper-alt);border-radius:999px;padding:3px;margin-top:8px;}
+.seg-row button{flex:1;padding:8px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);}
+.seg-row button.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);}
+
+/* ---------- Event status / RSVP ---------- */
+.status-pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.status-pill.planned{background:var(--paper-alt);color:var(--muted);}
+.status-pill.confirmed{background:var(--moss-soft);color:var(--moss);}
+.status-pill.declined{background:var(--danger-soft);color:var(--danger);}
+.status-pill.attended{background:var(--thread-soft);color:var(--thread);}
+.status-pill.unplanned{background:var(--accent-soft);color:var(--accent-dark);}
+.event-status-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.event-status-row button{padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--ink-soft);background:var(--paper-alt);}
+.event-status-row button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.invitee-chip{position:relative;padding-right:8px;}
+.avail-box{background:var(--paper-alt);border-radius:var(--radius-sm);padding:12px;margin-top:6px;}
+.avail-summary{font-size:13px;color:var(--ink-soft);margin-top:8px;line-height:1.5;}
+.avail-summary b{color:var(--moss);}
+.quick-add-row{border-top:1px solid var(--line);margin-top:4px;padding-top:8px;}
+.quick-add-row input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface);margin-bottom:6px;box-sizing:border-box;font-size:14px;}
+
+/* ---------- Reminders time buckets ---------- */
+.time-bucket-label{font-size:13px;font-weight:700;color:var(--ink-soft);margin:16px 0 8px;}
+.time-bucket-label:first-child{margin-top:0;}
+
+/* ---------- Gallery view ---------- */
+.gallery-filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.gallery-filter-bar select{flex:1;min-width:90px;padding:9px 10px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface);font-size:13.5px;}
+.gallery-wall{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.gallery-wall .gw-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:1px solid var(--line);}
+.gallery-wall .gw-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.gallery-wall .gw-cap{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(46,42,61,.75));color:#fff;font-size:9.5px;padding:10px 6px 4px;line-height:1.3;}
+.view-toggle{display:flex;background:var(--paper-alt);border-radius:999px;padding:3px;margin-bottom:12px;}
+.view-toggle button{flex:1;padding:8px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);}
+.view-toggle button.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);}
 
 .hidden{display:none !important;}
 </style>
@@ -303,10 +408,23 @@ main.screen.active{display:block;}
 
   <!-- ============ TIMELINE ============ -->
   <main class="screen active" id="screen-timeline">
+    <div class="view-toggle">
+      <button type="button" data-tlview="list" class="active">📜 List</button>
+      <button type="button" data-tlview="gallery">🖼️ Gallery</button>
+    </div>
     <div class="tree-controls">
-      <select id="timelinePersonFilter"><option value="">All people</option></select>
+      <div class="search-select" id="timelinePersonFilter-wrap" style="flex:1;">
+        <input type="text" class="ss-input" id="timelinePersonFilter-input" placeholder="All people" autocomplete="off">
+        <input type="hidden" id="timelinePersonFilter">
+        <div class="ss-dropdown" id="timelinePersonFilter-dropdown"></div>
+      </div>
+    </div>
+    <div class="gallery-filter-bar hidden" id="galleryFilterBar">
+      <select id="galleryFilterMonth"><option value="">Any month</option></select>
+      <select id="galleryFilterYear"><option value="">Any year</option></select>
     </div>
     <div id="timelineList"></div>
+    <div class="gallery-wall hidden" id="timelineGallery"></div>
   </main>
 
   <!-- ============ PEOPLE ============ -->
@@ -335,7 +453,11 @@ main.screen.active{display:block;}
       <span style="width:40px;"></span>
     </div>
     <div class="tree-controls">
-      <select id="treeFocusSelect"><option value="">Everyone</option></select>
+      <div class="search-select" id="treeFocusSelect-wrap" style="flex:1;">
+        <input type="text" class="ss-input" id="treeFocusSelect-input" placeholder="Everyone" autocomplete="off">
+        <input type="hidden" id="treeFocusSelect">
+        <div class="ss-dropdown" id="treeFocusSelect-dropdown"></div>
+      </div>
     </div>
     <div id="treeMeRow" style="margin-bottom:10px;"></div>
     <div id="treeSvgWrap"></div>
@@ -388,6 +510,36 @@ main.screen.active{display:block;}
     <div id="syncContent"></div>
   </main>
 
+  <!-- ============ MISSING INFO ============ -->
+  <main class="screen" id="screen-missinginfo">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">What's missing</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div id="missingInfoContent"></div>
+  </main>
+
+  <!-- ============ CUSTOM FIELDS ============ -->
+  <main class="screen" id="screen-customfields">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">Custom fields</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div id="customFieldsContent"></div>
+  </main>
+
+  <!-- ============ BACKLOG ============ -->
+  <main class="screen" id="screen-backlog">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">Bugs &amp; ideas</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div id="backlogContent"></div>
+  </main>
+
   <!-- ============ BOTTOM NAV ============ -->
   <nav class="bottomnav" id="bottomnav">
     <button class="navbtn active" data-screen="timeline"><span class="ic">🕰️</span><span>Timeline</span></button>
@@ -402,7 +554,7 @@ main.screen.active{display:block;}
     <div class="modal-sheet">
       <div class="modal-header"><h3>Add</h3><button class="modal-close" data-action="close-modal" data-modal="modal-addsheet">✕</button></div>
       <div class="modal-body" style="padding:8px 18px;">
-        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-person">
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-person-choice">
           <span class="so-ic">🙂</span><span><span class="so-text" style="display:block;">Add a person</span><span class="so-sub">Start a new profile</span></span>
         </button>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-hangout">
@@ -416,6 +568,27 @@ main.screen.active{display:block;}
         </button>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-event">
           <span class="so-ic">📅</span><span><span class="so-text" style="display:block;">Plan an event</span><span class="so-sub">Something coming up, with invitees</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-journal">
+          <span class="so-ic">🔒</span><span><span class="so-text" style="display:block;">Write in journal</span><span class="so-sub">Private entry, locked behind a code</span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ADD PERSON CHOICE SHEET ============ -->
+  <div class="modal-overlay" id="modal-addpersonsheet">
+    <div class="modal-sheet">
+      <div class="modal-header"><h3>Add a person</h3><button class="modal-close" data-action="close-modal" data-modal="modal-addpersonsheet">✕</button></div>
+      <div class="modal-body" style="padding:8px 18px;">
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-person">
+          <span class="so-ic">✍️</span><span><span class="so-text" style="display:block;">From scratch</span><span class="so-sub">Fill in a blank profile</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-fromcontacts">
+          <span class="so-ic">📇</span><span><span class="so-text" style="display:block;">From your contacts</span><span class="so-sub">Import a .vcf shared from Contacts</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-fromcsv">
+          <span class="so-ic">📄</span><span><span class="so-text" style="display:block;">From a spreadsheet</span><span class="so-sub">Bulk import from CSV or Excel</span></span>
         </button>
       </div>
     </div>
@@ -435,9 +608,29 @@ main.screen.active{display:block;}
               <button type="button" class="btn btn-secondary btn-sm" style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);white-space:nowrap;" data-action="pick-avatar">Photo</button>
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>First name</label>
+              <input type="text" id="pf-first" required placeholder="First">
+            </div>
+            <div class="form-group">
+              <label>Middle name</label>
+              <input type="text" id="pf-middle" placeholder="Middle (optional)">
+            </div>
+          </div>
           <div class="form-group">
-            <label>Name</label>
-            <input type="text" id="pf-name" required placeholder="Full name">
+            <label>Last name</label>
+            <input type="text" id="pf-last" placeholder="Last (optional)">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nickname</label>
+              <input type="text" id="pf-nickname" placeholder="Optional">
+            </div>
+            <div class="form-group">
+              <label>Maiden name</label>
+              <input type="text" id="pf-maiden" placeholder="Optional">
+            </div>
           </div>
           <div class="toggle-row">
             <span class="t-label">This is you</span>
@@ -454,15 +647,31 @@ main.screen.active{display:block;}
             </div>
           </div>
           <div class="form-group">
-            <label>Pronouns</label>
-            <input type="text" id="pf-pronouns" placeholder="e.g. she/her">
-            <div class="suggest-row">
-              <button type="button" class="suggest-chip" data-fill="she/her">she/her</button>
-              <button type="button" class="suggest-chip" data-fill="he/him">he/him</button>
-              <button type="button" class="suggest-chip" data-fill="they/them">they/them</button>
-              <button type="button" class="suggest-chip" data-fill="she/they">she/they</button>
-              <button type="button" class="suggest-chip" data-fill="he/they">he/they</button>
+            <label>Address</label>
+            <input type="text" id="pf-address" placeholder="Street, city, state">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Pronouns</label>
+              <input type="text" id="pf-pronouns" placeholder="e.g. she/her">
+              <div class="suggest-row">
+                <button type="button" class="suggest-chip" data-fill="she/her">she/her</button>
+                <button type="button" class="suggest-chip" data-fill="he/him">he/him</button>
+                <button type="button" class="suggest-chip" data-fill="they/them">they/them</button>
+                <button type="button" class="suggest-chip" data-fill="she/they">she/they</button>
+                <button type="button" class="suggest-chip" data-fill="he/they">he/they</button>
+              </div>
             </div>
+          </div>
+          <div class="form-group">
+            <label>Gender</label>
+            <select id="pf-gender">
+              <option value="">Not set</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="nonbinary">Nonbinary</option>
+              <option value="other">Other</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Birthday</label>
@@ -472,11 +681,26 @@ main.screen.active{display:block;}
             </div>
             <input type="number" id="pf-byear" placeholder="Year (optional)" min="1900" max="2100" style="margin-top:8px;" inputmode="numeric" pattern="[0-9]*">
           </div>
+          <div class="toggle-row">
+            <span class="t-label">Remind me about their birthday</span>
+            <button type="button" class="switch on" id="pf-cardtoggle"></button>
+          </div>
           <div class="form-group">
+            <label>How to celebrate their birthday</label>
+            <div class="seg-row" id="pf-bmethod-row">
+              <button type="button" data-bmethod="card" class="active">🎁 Send a card</button>
+              <button type="button" data-bmethod="text">💬 Send a text</button>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <span class="t-label">Add to holiday card list</span>
+            <button type="button" class="switch" id="pf-holidaytoggle"></button>
+          </div>
+          <div class="form-group hidden" id="pf-met-wrap">
             <label>How you met</label>
             <textarea id="pf-met-text" placeholder="Tell the story…"></textarea>
           </div>
-          <div class="form-group">
+          <div class="form-group hidden" id="pf-metdate-wrap">
             <label>Date you met (optional)</label>
             <input type="date" id="pf-met-date">
           </div>
@@ -488,10 +712,7 @@ main.screen.active{display:block;}
             <label>Likes &amp; interests</label>
             <input type="text" id="pf-likes" placeholder="coffee, hiking, true crime podcasts (comma separated)">
           </div>
-          <div class="toggle-row">
-            <span class="t-label">Remind me about their birthday</span>
-            <button type="button" class="switch on" id="pf-cardtoggle"></button>
-          </div>
+          <div id="pf-customfields"></div>
           <div class="form-group">
             <label>Notes</label>
             <textarea id="pf-notes" placeholder="Anything else worth remembering"></textarea>
@@ -530,6 +751,7 @@ main.screen.active{display:block;}
           </div>
           <div class="form-group">
             <label>Who was there</label>
+            <input type="text" class="checklist-search" id="ef-people-search" placeholder="Search people…">
             <div class="checklist" id="ef-people-checklist"></div>
           </div>
           <div class="form-group">
@@ -567,9 +789,16 @@ main.screen.active{display:block;}
             <label>Title</label>
             <input type="text" id="ev-title" required placeholder="What's happening?">
           </div>
+          <div class="form-group">
+            <label>Planning status</label>
+            <div class="seg-row" id="ev-planning-row">
+              <button type="button" data-planning="finalized" class="active">📌 Finalized</button>
+              <button type="button" data-planning="unplanned">🌀 Still figuring it out</button>
+            </div>
+          </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Date</label>
+              <label id="ev-date-label">Date</label>
               <input type="date" id="ev-date" required>
             </div>
             <div class="form-group">
@@ -577,9 +806,44 @@ main.screen.active{display:block;}
               <input type="time" id="ev-time">
             </div>
           </div>
+          <div class="form-group hidden" id="ev-avail-wrap">
+            <div class="avail-box">
+              <label style="margin-bottom:8px;">Availability</label>
+              <div class="form-row">
+                <div class="form-group">
+                  <label style="font-weight:400;">My start</label>
+                  <input type="datetime-local" id="ev-avail-mine-start">
+                </div>
+                <div class="form-group">
+                  <label style="font-weight:400;">My end</label>
+                  <input type="datetime-local" id="ev-avail-mine-end">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label style="font-weight:400;">Their start</label>
+                  <input type="datetime-local" id="ev-avail-theirs-start">
+                </div>
+                <div class="form-group">
+                  <label style="font-weight:400;">Their end</label>
+                  <input type="datetime-local" id="ev-avail-theirs-end">
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-weight:400;">Drive time to factor in (minutes, each way)</label>
+                <input type="number" id="ev-drivetime" min="0" placeholder="0" inputmode="numeric">
+              </div>
+              <div class="avail-summary" id="ev-avail-summary"></div>
+            </div>
+          </div>
           <div class="form-group">
             <label>Location (optional)</label>
-            <input type="text" id="ev-location" placeholder="Where">
+            <input type="text" id="ev-location" placeholder="Where" list="ev-location-list">
+            <datalist id="ev-location-list"></datalist>
+          </div>
+          <div class="toggle-row">
+            <span class="t-label">Confirmed</span>
+            <button type="button" class="switch" id="ev-confirmedtoggle"></button>
           </div>
           <div class="form-group">
             <label>Details (optional)</label>
@@ -587,6 +851,7 @@ main.screen.active{display:block;}
           </div>
           <div class="form-group">
             <label>Invite</label>
+            <input type="text" class="checklist-search" id="ev-people-search" placeholder="Search people…">
             <div class="checklist" id="ev-people-checklist"></div>
           </div>
         </div>
@@ -607,7 +872,11 @@ main.screen.active{display:block;}
           <input type="hidden" id="rf-id">
           <div class="form-group">
             <label>Person A</label>
-            <select id="rf-personA" required></select>
+            <div class="search-select" id="rf-personA-wrap">
+              <input type="text" class="ss-input" id="rf-personA-input" placeholder="Search people…" autocomplete="off">
+              <input type="hidden" id="rf-personA">
+              <div class="ss-dropdown" id="rf-personA-dropdown"></div>
+            </div>
           </div>
           <div class="form-group">
             <label>Relationship type</label>
@@ -615,7 +884,11 @@ main.screen.active{display:block;}
           </div>
           <div class="form-group">
             <label>Person B</label>
-            <select id="rf-personB" required></select>
+            <div class="search-select" id="rf-personB-wrap">
+              <input type="text" class="ss-input" id="rf-personB-input" placeholder="Search people…" autocomplete="off">
+              <input type="hidden" id="rf-personB">
+              <div class="ss-dropdown" id="rf-personB-dropdown"></div>
+            </div>
           </div>
           <div class="form-group">
             <label>Note (optional)</label>
@@ -625,6 +898,100 @@ main.screen.active{display:block;}
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-relationship">Cancel</button>
           <button type="submit" class="btn btn-primary">Save relationship</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ JOURNAL ENTRY FORM MODAL ============ -->
+  <div class="modal-overlay" id="modal-journal">
+    <div class="modal-sheet">
+      <div class="modal-header"><h3 id="journalFormTitle">Write in journal</h3><button class="modal-close" data-action="close-modal" data-modal="modal-journal">✕</button></div>
+      <form id="journalForm">
+        <div class="modal-body">
+          <input type="hidden" id="jf-id">
+          <p style="font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:12px;">This is a soft privacy lock, not real encryption — it keeps entries from showing at a glance, but anyone with full access to this device or your backup file could still read the underlying data.</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="jf-date" required>
+            </div>
+            <div class="form-group">
+              <label>Time (optional)</label>
+              <input type="time" id="jf-time">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Location (optional)</label>
+            <input type="text" id="jf-location" placeholder="Where" list="ev-location-list">
+          </div>
+          <div class="form-group">
+            <label>Entry</label>
+            <textarea id="jf-text" rows="8" placeholder="Write freely — type @Name to tag someone"></textarea>
+          </div>
+          <div class="mention-chip-row" id="jf-mention-preview"></div>
+          <div class="form-group" style="margin-top:8px;">
+            <div class="search-select" id="jf-addmention-wrap">
+              <input type="text" class="ss-input" id="jf-addmention-input" placeholder="＋ Tag someone manually" autocomplete="off">
+              <input type="hidden" id="jf-addmention">
+              <div class="ss-dropdown" id="jf-addmention-dropdown"></div>
+            </div>
+          </div>
+          <div class="btn-row" style="margin-top:6px;">
+            <button type="button" class="btn btn-secondary btn-sm" data-action="scan-journal-dates">🔎 Scan text for dates</button>
+          </div>
+          <div class="date-suggest-row" id="jf-date-suggestions"></div>
+
+          <div class="section-label">Retroactive mentions</div>
+          <p style="font-size:12.5px;color:var(--muted);margin-bottom:8px;">Reference a different date from within this entry — it'll show up on the timeline at that date too, still locked.</p>
+          <div id="jf-retro-list"></div>
+          <button type="button" class="btn btn-secondary btn-sm" data-action="add-retro-row">＋ Add a retroactive mention</button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-journal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save entry</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ JOURNAL PIN ENTRY MODAL ============ -->
+  <div class="modal-overlay" id="modal-journalpin">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3>Enter your code</h3><button class="modal-close" data-action="close-modal" data-modal="modal-journalpin">✕</button></div>
+      <form id="journalPinForm">
+        <div class="modal-body">
+          <input type="password" inputmode="numeric" id="jpin-input" placeholder="Code" style="width:100%;padding:14px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:20px;text-align:center;letter-spacing:4px;box-sizing:border-box;" autofocus>
+          <p class="hidden" id="jpinError" style="color:var(--danger);font-size:13px;margin-top:10px;text-align:center;">That code doesn't match. Try again.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-journalpin">Cancel</button>
+          <button type="submit" class="btn btn-primary">Unlock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ JOURNAL PIN SETUP MODAL ============ -->
+  <div class="modal-overlay" id="modal-journalpinsetup">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3 id="jpinSetupTitle">Set a journal code</h3><button class="modal-close" data-action="close-modal" data-modal="modal-journalpinsetup">✕</button></div>
+      <form id="journalPinSetupForm">
+        <div class="modal-body">
+          <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">Choose a short code. You'll need it to open any journal entry — remember it, there's no recovery if you forget it.</p>
+          <div class="form-group">
+            <label>New code</label>
+            <input type="password" inputmode="numeric" id="jpin-new" placeholder="Code" required>
+          </div>
+          <div class="form-group">
+            <label>Confirm code</label>
+            <input type="password" inputmode="numeric" id="jpin-confirm" placeholder="Code again" required>
+          </div>
+          <p class="hidden" id="jpinSetupError" style="color:var(--danger);font-size:13px;">Codes don't match.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-journalpinsetup">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save code</button>
         </div>
       </form>
     </div>
@@ -727,6 +1094,103 @@ main.screen.active{display:block;}
     </div>
   </div>
 
+  <!-- ============ CSV/EXCEL IMPORT MODAL ============ -->
+  <div class="modal-overlay" id="modal-csvimport">
+    <div class="modal-sheet">
+      <div class="modal-header"><h3>Import people</h3><button class="modal-close" data-action="close-modal" data-modal="modal-csvimport">✕</button></div>
+      <div class="modal-body" id="csvImportBody">
+        <p style="font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:14px;">Choose a .csv or .xlsx file. The first row should be column headers (Name, Phone, Email, etc.).</p>
+        <input type="file" accept=".csv,.xlsx,.xls" id="csvFileInput">
+        <div id="csvMappingArea"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-csvimport">Cancel</button>
+        <button type="button" class="btn btn-primary hidden" id="csvImportConfirmBtn" data-action="confirm-csv-import">Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ QUICK ADD PERSON MODAL ============ -->
+  <div class="modal-overlay" id="modal-quickperson">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3>Add someone new</h3><button class="modal-close" data-action="close-modal" data-modal="modal-quickperson">✕</button></div>
+      <form id="quickPersonForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="qp-name" required placeholder="Full name" autofocus>
+          </div>
+          <p style="font-size:12.5px;color:var(--muted);">Creates a bare profile and adds them here. Fill in the rest from their profile later.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-quickperson">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add &amp; select</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ CUSTOM FIELD DEF MODAL ============ -->
+  <div class="modal-overlay" id="modal-cfield">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3>New profile field</h3><button class="modal-close" data-action="close-modal" data-modal="modal-cfield">✕</button></div>
+      <form id="cfieldForm">
+        <div class="modal-body">
+          <input type="hidden" id="cf-id">
+          <div class="form-group">
+            <label>Field name</label>
+            <input type="text" id="cf-label" required placeholder="e.g. Shirt size">
+          </div>
+          <div class="form-group">
+            <label>Field type</label>
+            <select id="cf-type">
+              <option value="text">Text</option>
+              <option value="date">Date</option>
+              <option value="number">Number</option>
+              <option value="select">Dropdown (choices)</option>
+              <option value="toggle">Yes / No</option>
+            </select>
+          </div>
+          <div class="form-group hidden" id="cf-options-wrap">
+            <label>Choices (comma separated)</label>
+            <input type="text" id="cf-options" placeholder="Small, Medium, Large">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-cfield">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save field</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ BACKLOG ITEM MODAL ============ -->
+  <div class="modal-overlay" id="modal-backlog">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3 id="backlogFormTitle">New bug / idea</h3><button class="modal-close" data-action="close-modal" data-modal="modal-backlog">✕</button></div>
+      <form id="backlogForm">
+        <div class="modal-body">
+          <input type="hidden" id="bl-id">
+          <div class="form-group">
+            <label>Type</label>
+            <div class="seg-row" id="bl-type-row">
+              <button type="button" data-bltype="bug" class="active">🐛 Bug</button>
+              <button type="button" data-bltype="idea">💡 Idea</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>What is it?</label>
+            <textarea id="bl-text" required placeholder="Describe it"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-backlog">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -752,6 +1216,16 @@ var urlCache=new Map();
 var entryPhotoStaging=[]; // {id?, blob, previewUrl} for the entry form in-progress
 var currentEntryType='hangout';
 var confirmCallback=null;
+var currentBirthdayMethod='card';
+var currentPlanningStatus='finalized';
+var currentBacklogType='bug';
+var pendingChecklistElId=null; // which checklist quick-add-person should check into
+var csvParsedRows=null, csvParsedHeaders=null;
+var currentTimelineView='list';
+var currentGalleryFilters={day:'',month:'',year:'',person:''};
+var journalUnlocked=false;
+var journalPendingAction=null;
+var journalRetroStaging=[]; // [{id, date, excerpt, peopleIds}]
 
 /* ================= UTIL ================= */
 function uid(prefix){ return prefix+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
@@ -922,6 +1396,16 @@ function loadData(){
   migrateData();
   saveData();
 }
+function splitLegacyName(name){
+  var parts=(name||'').trim().split(/\s+/).filter(Boolean);
+  if(parts.length===0) return {first:'',middle:'',last:''};
+  if(parts.length===1) return {first:parts[0],middle:'',last:''};
+  if(parts.length===2) return {first:parts[0],middle:'',last:parts[1]};
+  return {first:parts[0], middle:parts.slice(1,-1).join(' '), last:parts[parts.length-1]};
+}
+function composeFullName(p){
+  return [p.firstName, p.middleName, p.lastName].filter(Boolean).join(' ').trim() || p.name || '(unnamed)';
+}
 function migrateData(){
   data.people = data.people || [];
   data.timeline = data.timeline || [];
@@ -929,6 +1413,18 @@ function migrateData(){
   data.relationshipTypes = data.relationshipTypes && data.relationshipTypes.length ? data.relationshipTypes : defaultRelationshipTypes();
   data.events = data.events || [];
   data.dismissedDuplicatePairs = data.dismissedDuplicatePairs || [];
+  data.customFieldDefs = data.customFieldDefs || [];
+  data.backlog = data.backlog || [];
+  data.journalPin = data.journalPin || null;
+  data.journalEntries = data.journalEntries || [];
+  data.journalEntries.forEach(function(je){
+    if(je.deletedAt===undefined) je.deletedAt=null;
+    je.peopleIds = je.peopleIds || [];
+    je.retroMentions = je.retroMentions || [];
+    je.retroMentions.forEach(function(rm){ rm.peopleIds = rm.peopleIds || []; });
+    if(je.location===undefined) je.location='';
+    if(je.time===undefined) je.time=null;
+  });
   data.people.forEach(function(p){
     p.galleryPhotoIds = p.galleryPhotoIds || [];
     p.likes = p.likes || [];
@@ -941,6 +1437,19 @@ function migrateData(){
     if(p.isMe===undefined) p.isMe=false;
     if(p.phone===undefined) p.phone='';
     if(p.email===undefined) p.email='';
+    if(p.firstName===undefined){
+      var split=splitLegacyName(p.name);
+      p.firstName=split.first; p.middleName=split.middle; p.lastName=split.last;
+    }
+    if(p.nickname===undefined) p.nickname='';
+    if(p.maidenName===undefined) p.maidenName='';
+    if(p.gender===undefined) p.gender='';
+    if(p.address===undefined) p.address='';
+    if(p.holidayCard===undefined) p.holidayCard=false;
+    if(p.birthdayMethod===undefined) p.birthdayMethod='card';
+    if(p.customFieldValues===undefined) p.customFieldValues={};
+    if(p.lastUpdated===undefined) p.lastUpdated={};
+    p.name = composeFullName(p);
   });
   data.timeline.forEach(function(e){
     if(e.deletedAt===undefined) e.deletedAt=null;
@@ -948,6 +1457,10 @@ function migrateData(){
   data.events.forEach(function(ev){
     if(ev.deletedAt===undefined) ev.deletedAt=null;
     ev.invitees = ev.invitees || [];
+    if(ev.status===undefined) ev.status = ev.confirmed ? 'confirmed' : 'planned';
+    if(ev.planningStatus===undefined) ev.planningStatus='finalized';
+    if(ev.availability===undefined) ev.availability=null;
+    if(ev.driveTimeMinutes===undefined) ev.driveTimeMinutes=null;
   });
 }
 function saveData(){
@@ -955,6 +1468,29 @@ function saveData(){
   catch(e){ toast('Could not save — storage may be full'); }
 }
 function relType(id){ return data.relationshipTypes.find(function(t){ return t.id===id; }); }
+function touch(p, section){ p.lastUpdated = p.lastUpdated || {}; p.lastUpdated[section]=Date.now(); }
+function updatedHtml(p, section){
+  var ms = p.lastUpdated && p.lastUpdated[section];
+  if(!ms) return '';
+  return '<div class="field-updated">Updated '+formatDateDisplay(new Date(ms).getFullYear()+'-'+String(new Date(ms).getMonth()+1).padStart(2,'0')+'-'+String(new Date(ms).getDate()).padStart(2,'0'))+'</div>';
+}
+function relChipLabel(r, personId, otherId){
+  var t=relType(r.typeId); if(!t) return '';
+  var iAmA = r.personA===personId;
+  if(t.id==='parent'){
+    var other=findPerson(otherId);
+    if(iAmA){ // otherId is my child
+      if(other && other.gender==='female') return 'Daughter';
+      if(other && other.gender==='male') return 'Son';
+      return 'Child';
+    } else { // otherId is my parent
+      if(other && other.gender==='female') return 'Mother';
+      if(other && other.gender==='male') return 'Father';
+      return 'Parent';
+    }
+  }
+  return iAmA ? t.label : (t.symmetric ? t.label : t.inverse);
+}
 
 /* ================= NAV ================= */
 function showScreen(name, opts){
@@ -984,8 +1520,11 @@ function showScreen(name, opts){
     archived:['Kept','Kept'],
     trash:['Kept','Kept'],
     duplicates:['Kept','Kept'],
-    sync:['Kept','Kept']};
-  if(titles[name] && ['tree','person-detail','archived','trash','duplicates','sync'].indexOf(name)===-1){
+    sync:['Kept','Kept'],
+    missinginfo:['Kept','Kept'],
+    customfields:['Kept','Kept'],
+    backlog:['Kept','Kept']};
+  if(titles[name] && ['tree','person-detail','archived','trash','duplicates','sync','missinginfo','customfields','backlog'].indexOf(name)===-1){
     document.getElementById('topbarTitle').textContent=titles[name][0];
     document.getElementById('topbarTagline').textContent=titles[name][1];
   }
@@ -1000,6 +1539,9 @@ function showScreen(name, opts){
   else if(name==='trash') renderTrash();
   else if(name==='duplicates') renderDuplicates();
   else if(name==='sync') renderSync();
+  else if(name==='missinginfo') renderMissingInfo();
+  else if(name==='customfields') renderCustomFields();
+  else if(name==='backlog') renderBacklog();
 }
 
 /* ================= RENDER: TIMELINE ================= */
@@ -1022,13 +1564,11 @@ function metEntryForPerson(p){
 function allSyntheticMetEntries(){
   return activePeople().map(metEntryForPerson).filter(Boolean);
 }
-function renderTimeline(){
-  var sel=document.getElementById('timelinePersonFilter');
-  var prevVal=sel.value;
-  populatePersonSelect(sel, true, prevVal);
-  var personFilter=sel.value;
-  var q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
-
+function pastOrAttendedEvents(){
+  var todayStr=dateStr();
+  return data.events.filter(function(ev){ return !ev.deletedAt && (ev.status==='attended' || ev.date<todayStr); });
+}
+function timelineFilteredEntries(personFilter, q){
   var entries=data.timeline.concat(allSyntheticMetEntries()).filter(function(e){
     if(e.deletedAt) return false;
     if(personFilter && (e.people||[]).indexOf(personFilter)===-1) return false;
@@ -1038,6 +1578,33 @@ function renderTimeline(){
     }
     return true;
   });
+  var events=pastOrAttendedEvents().filter(function(ev){
+    if(personFilter && (ev.invitees||[]).indexOf(personFilter)===-1) return false;
+    if(q){
+      var hay=(ev.title+' '+(ev.description||'')+' '+(ev.location||'')).toLowerCase();
+      if(hay.indexOf(q)===-1) return false;
+    }
+    return true;
+  }).map(function(ev){ return Object.assign({}, ev, {_isEvent:true, people:ev.invitees}); });
+  var journal = q ? [] : activeJournalEntries().filter(function(e){
+    return !personFilter || (e.peopleIds||[]).indexOf(personFilter)!==-1;
+  }).map(function(e){ return {_isJournal:true, date:e.date, createdAt:e.createdAt, entry:e}; });
+  var retro = q ? [] : [];
+  if(!q){
+    activeJournalEntries().forEach(function(e){
+      (e.retroMentions||[]).forEach(function(rm){
+        if(!personFilter || (rm.peopleIds||[]).indexOf(personFilter)!==-1){
+          retro.push({_isRetro:true, date:rm.date, createdAt:e.createdAt, parent:e, retro:rm});
+        }
+      });
+    });
+  }
+  return entries.concat(events).concat(journal).concat(retro);
+}
+function renderTimeline(){
+  var personFilter=document.getElementById('timelinePersonFilter').value;
+  var q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
+  var entries=timelineFilteredEntries(personFilter, q);
 
   var dated=entries.filter(function(e){ return e.date; }).sort(function(a,b){ return b.date.localeCompare(a.date); });
   var undated=entries.filter(function(e){ return !e.date; }).sort(function(a,b){ return b.createdAt-a.createdAt; });
@@ -1046,7 +1613,11 @@ function renderTimeline(){
   if(dated.length===0 && undated.length===0){
     html='<div class="empty-state"><div class="big">🕰️</div><h3>No memories yet</h3><p>Tap the + button to log a hangout or save a memory.</p></div>';
   } else {
-    dated.forEach(function(e){ html+=renderEntryCard(e); });
+    dated.forEach(function(e){
+      if(e._isJournal) html+=renderJournalCard(e.entry);
+      else if(e._isRetro) html+=renderRetroCard(e.parent, e.retro);
+      else html+= e._isEvent ? renderEventCard(e) : renderEntryCard(e);
+    });
     if(undated.length){
       html+='<div class="section-label">Undated memories</div>';
       undated.forEach(function(e){ html+=renderEntryCard(e); });
@@ -1055,6 +1626,41 @@ function renderTimeline(){
   var list=document.getElementById('timelineList');
   list.innerHTML=html;
   hydrateImages(list);
+  renderTimelineGallery(entries);
+}
+function renderTimelineGallery(entries){
+  var wall=document.getElementById('timelineGallery');
+  if(!wall) return;
+  var mSel=document.getElementById('galleryFilterMonth'), ySel=document.getElementById('galleryFilterYear');
+  if(mSel && !mSel.dataset.built){
+    mSel.innerHTML='<option value="">Any month</option>'+MONTHS.map(function(m,i){return '<option value="'+(i+1)+'">'+m+'</option>';}).join('');
+    mSel.dataset.built='1';
+  }
+  if(ySel && !ySel.dataset.built){
+    var years=new Set();
+    data.timeline.concat(data.events).forEach(function(e){ if(e.date) years.add(e.date.slice(0,4)); });
+    var yrList=Array.from(years).sort().reverse();
+    ySel.innerHTML='<option value="">Any year</option>'+yrList.map(function(y){return '<option value="'+y+'">'+y+'</option>';}).join('');
+    ySel.dataset.built='1';
+  }
+  var mVal=mSel? mSel.value:'', yVal=ySel? ySel.value:'';
+  var photoItems=[];
+  entries.forEach(function(e){
+    if(!e.date && !mVal && !yVal){} // undated allowed only when no date filter active
+    if(mVal || yVal){
+      if(!e.date) return;
+      var d=parseISODate(e.date);
+      if(mVal && (d.getMonth()+1)!==Number(mVal)) return;
+      if(yVal && d.getFullYear()!==Number(yVal)) return;
+    }
+    (e.photoIds||[]).forEach(function(pid){
+      photoItems.push({photoId:pid, dateLabel:e.date?formatDateDisplay(e.date):'Undated', title:e.title});
+    });
+  });
+  wall.innerHTML = photoItems.length ? photoItems.map(function(it){
+    return '<div class="gw-item" data-action="view-photo" data-photo-full="'+it.photoId+'"><img data-photo-id="'+it.photoId+'"><div class="gw-cap">'+esc(it.title)+'<br>'+esc(it.dateLabel)+'</div></div>';
+  }).join('') : '<div class="empty-state"><div class="big">🖼️</div><h3>No photos yet</h3><p>Photos from hangouts, memories, and events will show up here.</p></div>';
+  hydrateImages(wall);
 }
 function renderEntryCard(e){
   var peopleChips=(e.people||[]).map(function(pid){
@@ -1084,18 +1690,40 @@ function renderEntryCard(e){
   '</div>';
 }
 function renderEventCard(ev){
-  var dateLabel=formatDateDisplay(ev.date) + (ev.time? ' · '+formatTimeDisplay(ev.time):'');
+  var isUnplanned = ev.planningStatus==='unplanned';
+  var dateLabel = isUnplanned ? 'Still figuring out a time' : (formatDateDisplay(ev.date) + (ev.time? ' · '+formatTimeDisplay(ev.time):''));
   var inviteeChips=(ev.invitees||[]).map(function(pid){
-    return '<button class="chip tap" data-action="open-person" data-id="'+pid+'">'+esc(personName(pid))+'</button>';
+    var pp=findPerson(pid);
+    return '<button class="chip tap" data-action="open-person" data-id="'+pid+'">'+esc(personName(pid))+(pp&&pp.isMe?' (Me)':'')+'</button>';
   }).join('');
+  var status=ev.status||'planned';
+  var statusLabel={planned:'Planned',confirmed:'Confirmed',declined:'Declined',attended:'Attended'}[status];
+  var pillClass=status;
+  var avail='';
+  if(isUnplanned && ev.availability){
+    var a=ev.availability;
+    if(a.mine.start || a.theirs.start){
+      avail='<div class="avail-summary">' +
+        (a.mine.start&&a.mine.end? '<div>My availability: '+esc(a.mine.start.replace('T',' '))+' – '+esc(a.mine.end.replace('T',' '))+'</div>':'') +
+        (a.theirs.start&&a.theirs.end? '<div>Their availability: '+esc(a.theirs.start.replace('T',' '))+' – '+esc(a.theirs.end.replace('T',' '))+'</div>':'') +
+        (ev.driveTimeMinutes? '<div>Drive time factored: '+ev.driveTimeMinutes+' min each way</div>':'') +
+      '</div>';
+    }
+  }
   return '<div class="tl-entry">' +
     '<div class="tl-top">' +
-      '<div><div class="tl-date">'+dateLabel+'</div><div class="tl-title">'+esc(ev.title)+'</div></div>' +
+      '<div><div class="tl-date">'+dateLabel+'</div><div class="tl-title">'+esc(ev.title)+' <span class="status-pill '+pillClass+'">'+(isUnplanned?'Unplanned':statusLabel)+'</span></div></div>' +
       '<div class="tl-type">📅</div>' +
     '</div>' +
     (ev.location? '<div class="tl-loc">📍 '+esc(ev.location)+'</div>':'') +
     (ev.description? '<div class="tl-desc">'+esc(ev.description)+'</div>':'') +
+    avail +
     (inviteeChips? '<div class="tl-people">'+inviteeChips+'</div>':'') +
+    '<div class="event-status-row">' +
+      '<button class="'+(status==='confirmed'?'active':'')+'" data-action="set-event-status" data-status="confirmed" data-id="'+ev.id+'">✓ Confirmed</button>' +
+      '<button class="'+(status==='declined'?'active':'')+'" data-action="set-event-status" data-status="declined" data-id="'+ev.id+'">✕ Declined</button>' +
+      '<button class="'+(status==='attended'?'active':'')+'" data-action="set-event-status" data-status="attended" data-id="'+ev.id+'">★ Attended</button>' +
+    '</div>' +
     '<div class="tl-actions">' +
       '<button data-action="ics-event" data-id="'+ev.id+'">Add to calendar</button>' +
       '<button data-action="edit-event" data-id="'+ev.id+'">Edit</button>' +
@@ -1109,7 +1737,7 @@ function renderPeopleList(){
   var q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
   var people=activePeople().filter(function(p){
     if(!q) return true;
-    var hay=(p.name+' '+(p.pronouns||'')+' '+(p.tags||[]).join(' ')).toLowerCase();
+    var hay=(p.name+' '+(p.nickname||'')+' '+(p.pronouns||'')+' '+(p.tags||[]).join(' ')).toLowerCase();
     return hay.indexOf(q)!==-1;
   }).sort(function(a,b){ return a.name.localeCompare(b.name); });
 
@@ -1137,6 +1765,7 @@ function renderPeopleList(){
 }
 
 /* ================= RENDER: PERSON DETAIL ================= */
+function personGalleryToggleId(personId){ return 'pdGallery_'+personId; }
 function renderPersonDetail(personId){
   currentPersonId=personId;
   var p=findPerson(personId);
@@ -1154,7 +1783,7 @@ function renderPersonDetail(personId){
     var t=relType(r.typeId);
     if(!t) return '';
     var otherId = r.personA===personId ? r.personB : r.personA;
-    var label = r.personA===personId ? t.label : (t.symmetric? t.label : t.inverse);
+    var label = relChipLabel(r, personId, otherId);
     return '<button class="chip tap" data-action="open-person" data-id="'+otherId+'">'+esc(personName(otherId))+' · '+esc(label)+'</button>';
   }).join('');
 
@@ -1165,10 +1794,28 @@ function renderPersonDetail(personId){
   var metEntry=metEntryForPerson(p);
   var personEntries=data.timeline.filter(function(e){ return !e.deletedAt && (e.people||[]).indexOf(personId)!==-1; });
   if(metEntry) personEntries=personEntries.concat([metEntry]);
+  var personEvents=pastOrAttendedEvents().filter(function(ev){ return (ev.invitees||[]).indexOf(personId)!==-1; })
+    .map(function(ev){ return Object.assign({}, ev, {_isEvent:true, people:ev.invitees}); });
+  personEntries=personEntries.concat(personEvents);
+  var personJournal=journalEntriesForPerson(personId).map(function(e){ return {_isJournal:true, date:e.date, createdAt:e.createdAt, entry:e}; });
+  personEntries=personEntries.concat(personJournal);
+  retroNodesForPerson(personId).forEach(function(n){
+    personEntries.push({_isRetro:true, date:n.retro.date, createdAt:n.parent.createdAt, parent:n.parent, retro:n.retro});
+  });
   var dated=personEntries.filter(function(e){return e.date;}).sort(function(a,b){return b.date.localeCompare(a.date);});
   var undated=personEntries.filter(function(e){return !e.date;}).sort(function(a,b){return b.createdAt-a.createdAt;});
-  var timelineHtml = personEntries.length ? (dated.map(renderEntryCard).join('') + undated.map(renderEntryCard).join('')) :
+  var renderMixed=function(e){
+    if(e._isJournal) return renderJournalCard(e.entry);
+    if(e._isRetro) return renderRetroCard(e.parent, e.retro);
+    return e._isEvent ? renderEventCard(e) : renderEntryCard(e);
+  };
+  var timelineHtml = personEntries.length ? (dated.map(renderMixed).join('') + undated.map(renderMixed).join('')) :
     '<p style="color:var(--muted);font-size:14px;">No memories logged with '+esc(p.name)+' yet.</p>';
+  var personPhotos=[];
+  personEntries.forEach(function(e){ (e.photoIds||[]).forEach(function(pid){ personPhotos.push({photoId:pid, dateLabel:e.date?formatDateDisplay(e.date):'Undated', title:e.title}); }); });
+  var timelineGalleryHtml = personPhotos.length ? personPhotos.map(function(it){
+    return '<div class="gw-item" data-action="view-photo" data-photo-full="'+it.photoId+'"><img data-photo-id="'+it.photoId+'"><div class="gw-cap">'+esc(it.title)+'<br>'+esc(it.dateLabel)+'</div></div>';
+  }).join('') : '<p style="color:var(--muted);font-size:14px;">No photos yet.</p>';
 
   var quotesHtml=(p.quotes||[]).filter(function(q){return !q.deletedAt;}).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');}).map(function(q){
     return '<div class="quote-card">' +
@@ -1210,6 +1857,22 @@ function renderPersonDetail(personId){
     '</div>';
   }
 
+  var nameParts=[p.firstName || p.name];
+  if(p.middleName) nameParts.push(p.middleName);
+  var nameLine = nameParts.map(esc).join(' ');
+  if(p.nickname) nameLine += ' \u201c'+esc(p.nickname)+'\u201d';
+  if(p.lastName) nameLine += ' '+esc(p.lastName);
+  if(p.maidenName) nameLine += ' (n\u00e9e '+esc(p.maidenName)+')';
+
+  var customFieldsHtml='';
+  if(data.customFieldDefs.length){
+    customFieldsHtml = data.customFieldDefs.map(function(f){
+      var v=(p.customFieldValues||{})[f.id];
+      var display = (v===undefined||v===null||v==='') ? '<span class="muted">Not set</span>' : (f.type==='toggle' ? (v?'Yes':'No') : esc(v));
+      return '<div class="field-block"><div class="label">'+esc(f.label)+'</div><div class="value">'+display+'</div></div>';
+    }).join('');
+  }
+
   root.innerHTML =
   '<div class="back-row">' +
     '<button class="back-btn" data-action="goto-people">‹ Back</button>' +
@@ -1217,30 +1880,38 @@ function renderPersonDetail(personId){
   '</div>' +
   '<div class="detail-header">' +
     '<button class="avatar lg" data-action="view-photo" data-photo-full="'+(p.photoId||'')+'">'+avatarInner+'</button>' +
-    '<div class="who"><h2>'+esc(p.name)+'</h2>' + (p.isMe? '<span class="pill thread">You</span>':'') + (p.pronouns? '<span class="pill">'+esc(p.pronouns)+'</span>':'') + '</div>' +
+    '<div class="who"><h2>'+nameLine+'</h2>' + (p.isMe? '<span class="pill thread">You</span>':'') + (p.pronouns? '<span class="pill">'+esc(p.pronouns)+'</span>':'') + (p.holidayCard? '<span class="pill">🎄 Card list</span>':'') + '</div>' +
   '</div>' +
 
   (p.tags && p.tags.length ? '<div class="chip-row">'+p.tags.map(function(t){return '<span class="chip">'+esc(t)+'</span>';}).join('')+'</div>' : '') +
 
   '<div class="stitch-divider"></div>' +
-  '<div class="field-block"><div class="label">Birthday</div><div class="value'+(bday?'':' muted')+'">' +
+  '<div class="field-block"><div class="label-row"><div class="label">Birthday</div></div><div class="value'+(bday?'':' muted')+'">' +
     (bday? bday + (age!==null? ' · turns '+ (age+1) +' in '+daysB+' day'+(daysB===1?'':'s') : (daysB!==null? ' · in '+daysB+' day'+(daysB===1?'':'s'):'')) : 'Not set') +
-  '</div></div>' +
+  '</div>'+updatedHtml(p,'birthday')+'</div>' +
   '<div class="toggle-row"><span class="t-label">Remind me about their birthday</span>' +
     '<button class="switch '+(p.cardReminder?'on':'')+'" data-action="toggle-card-reminder" data-id="'+p.id+'"></button></div>' +
+  (p.cardReminder!==false ? '<div class="field-block"><div class="label">Celebrate with</div><div class="value">'+(p.birthdayMethod==='text'?'💬 A text':'🎁 A card')+'</div></div>' : '') +
 
   (p.phone||p.email ? '<div class="field-block"><div class="label">Contact</div><div class="value">' +
     (p.phone? esc(p.phone):'') + (p.phone && p.email? ' · ':'') + (p.email? esc(p.email):'') +
-  '</div></div>' : '') +
+  '</div>'+updatedHtml(p,'contact')+'</div>' : '') +
 
+  (p.address ? '<div class="field-block"><div class="label">Address</div><div class="value">'+esc(p.address)+'</div>'+updatedHtml(p,'address')+'</div>' : '') +
+
+  (p.gender ? '<div class="field-block"><div class="label">Gender</div><div class="value">'+esc({female:'Female',male:'Male',nonbinary:'Nonbinary',other:'Other'}[p.gender]||p.gender)+'</div></div>' : '') +
+
+  (p.isMe ? '' :
   '<div class="field-block"><div class="label">How you met</div><div class="value'+(p.howWeMet&&p.howWeMet.text?'':' muted')+'">' +
     (p.howWeMet && p.howWeMet.text ? esc(p.howWeMet.text) : 'Not recorded') +
     (p.howWeMet && p.howWeMet.date ? '<br><span style="color:var(--muted);font-size:12.5px;">'+formatDateDisplay(p.howWeMet.date)+'</span>' : '') +
-  '</div></div>' +
+  '</div>'+updatedHtml(p,'profile')+'</div>') +
 
   '<div class="field-block"><div class="label">Likes &amp; interests</div>' +
     (p.likes && p.likes.length ? '<div class="chip-row">'+p.likes.map(function(t){return '<span class="chip">'+esc(t)+'</span>';}).join('')+'</div>' : '<div class="value muted">Not recorded</div>') +
   '</div>' +
+
+  customFieldsHtml +
 
   '<div class="section-label">Relationships</div>' +
   (relChips? '<div class="chip-row">'+relChips+'</div>' : '<p style="color:var(--muted);font-size:14px;">No relationships added yet.</p>') +
@@ -1251,11 +1922,16 @@ function renderPersonDetail(personId){
   '<div class="gallery-grid">'+galleryHtml+'</div>' +
 
   '<div class="section-label">Timeline together</div>' +
+  '<div class="view-toggle" id="'+personGalleryToggleId(personId)+'">' +
+    '<button type="button" class="active" data-pdview="list">📜 List</button>' +
+    '<button type="button" data-pdview="gallery">🖼️ Gallery</button>' +
+  '</div>' +
   '<div class="btn-row wrap" style="margin-bottom:10px;">' +
     '<button class="btn btn-secondary btn-sm" data-action="add-hangout-for" data-id="'+p.id+'">📍 Log hangout</button>' +
     '<button class="btn btn-secondary btn-sm" data-action="add-memory-for" data-id="'+p.id+'">💭 Add memory</button>' +
   '</div>' +
-  timelineHtml +
+  '<div id="pdTimelineList">'+timelineHtml+'</div>' +
+  '<div class="gallery-wall hidden" id="pdTimelineGallery">'+timelineGalleryHtml+'</div>' +
 
   '<div class="section-label">Quotes</div>' +
   quotesHtml +
@@ -1268,53 +1944,85 @@ function renderPersonDetail(personId){
   '<div class="section-label">Notes</div>' +
   '<div class="form-group"><textarea id="pd-notes" placeholder="Anything else worth remembering">'+esc(p.notes||'')+'</textarea></div>' +
   '<button class="btn btn-secondary btn-sm" data-action="save-notes" data-id="'+p.id+'">Save notes</button>' +
+  updatedHtml(p,'notes') +
 
   '<div class="stitch-divider"></div>' +
   bottomActions;
 
   hydrateImages(root);
+  document.querySelectorAll('#'+personGalleryToggleId(personId)+' button').forEach(function(b){
+    b.addEventListener('click', function(){
+      document.querySelectorAll('#'+personGalleryToggleId(personId)+' button').forEach(function(x){ x.classList.toggle('active', x===b); });
+      document.getElementById('pdTimelineList').classList.toggle('hidden', b.dataset.pdview==='gallery');
+      document.getElementById('pdTimelineGallery').classList.toggle('hidden', b.dataset.pdview!=='gallery');
+    });
+  });
 }
 
-/* ================= RENDER: REMINDERS ================= */
+function bucketForDays(diffDays){
+  if(diffDays<=0) return 'Today';
+  var today=new Date(); today.setHours(0,0,0,0);
+  var dow=today.getDay();
+  var daysLeftInWeek=6-dow;
+  if(diffDays<=daysLeftInWeek) return 'This week';
+  var target=new Date(today.getTime()); target.setDate(today.getDate()+diffDays);
+  if(target.getMonth()===today.getMonth() && target.getFullYear()===today.getFullYear()) return 'This month';
+  var nmMonth=(today.getMonth()+1)%12, nmYear=today.getFullYear()+(today.getMonth()===11?1:0);
+  if(target.getMonth()===nmMonth && target.getFullYear()===nmYear) return 'Next month';
+  return 'Later';
+}
 function renderReminders(){
   var todayStr=dateStr();
-  var events=data.events.filter(function(ev){ return !ev.deletedAt && ev.date>=todayStr; })
-    .sort(function(a,b){ return a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''); });
+  var BUCKET_ORDER=['Unplanned','Today','This week','This month','Next month','Later'];
+
+  var events=data.events.filter(function(ev){ return !ev.deletedAt && ev.status!=='attended'; })
+    .filter(function(ev){ return ev.planningStatus==='unplanned' || ev.date>=todayStr; });
 
   var people=activePeople().filter(function(p){ return p.birthday && p.birthday.month && p.birthday.day; });
   people.forEach(function(p){ p._days=daysUntil(p.birthday.month,p.birthday.day); });
-  people.sort(function(a,b){ return a._days-b._days; });
-
-  var withReminder=people.filter(function(p){ return p.cardReminder!==false; });
+  var withReminder=people.filter(function(p){ return p.cardReminder!==false; }).sort(function(a,b){ return a._days-b._days; });
   var withoutBday=activePeople().filter(function(p){ return !(p.birthday && p.birthday.month && p.birthday.day); });
 
-  var html='<div class="section-label">Upcoming events</div>' +
-    '<div class="btn-row" style="margin-top:0;margin-bottom:12px;"><button class="btn btn-secondary btn-sm" data-action="plan-event">＋ Plan an event</button></div>';
-  if(events.length===0){
-    html+='<p style="color:var(--muted);font-size:14px;margin-bottom:20px;">Nothing planned yet.</p>';
-  } else {
-    html+=events.map(renderEventCard).join('');
-  }
+  var buckets={};
+  BUCKET_ORDER.forEach(function(b){ buckets[b]=[]; });
 
-  html+='<div class="section-label">Birthdays</div>';
-  if(withReminder.length===0){
-    html+='<div class="empty-state"><div class="big">🎂</div><h3>No upcoming reminders</h3><p>Add birthdays to people\'s profiles to see them here.</p></div>';
-  } else {
-    withReminder.forEach(function(p){
-      var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
-      var avatarInner = p.photoId ? '<img data-photo-id="'+p.photoId+'">' : initials;
-      var relYear=relevantBirthdayYear(p.birthday.month,p.birthday.day);
-      var sent = p.lastCardSentYear===relYear;
-      html+='<div class="rem-row">' +
+  events.forEach(function(ev){
+    var bucket = ev.planningStatus==='unplanned' ? 'Unplanned' : bucketForDays(daysUntilDate(ev.date));
+    var sortKey = ev.planningStatus==='unplanned' ? -1 : daysUntilDate(ev.date);
+    buckets[bucket].push({sortKey:sortKey, html:renderEventCard(ev)});
+  });
+
+  withReminder.forEach(function(p){
+    var bucket=bucketForDays(p._days);
+    var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+    var avatarInner = p.photoId ? '<img data-photo-id="'+p.photoId+'">' : initials;
+    var relYear=relevantBirthdayYear(p.birthday.month,p.birthday.day);
+    var sent = p.lastCardSentYear===relYear;
+    var methodLabel = p.birthdayMethod==='text' ? '💬 Text' : '🎁 Card';
+    var html='<div class="rem-row tap" data-action="open-person" data-id="'+p.id+'">' +
         '<div class="avatar">'+avatarInner+'</div>' +
         '<div class="person-info">' +
           '<div class="name">'+esc(p.name)+'</div>' +
-          '<div class="meta">'+formatBirthday(p.birthday)+'</div>' +
-          '<label class="rem-check"><input type="checkbox" '+(sent?'checked':'')+' data-action="toggle-card-sent" data-id="'+p.id+'" data-year="'+relYear+'"> Card sent for '+relYear+'</label>' +
+          '<div class="meta">'+formatBirthday(p.birthday)+' · '+methodLabel+'</div>' +
+          '<label class="rem-check" data-stop-row-click="1"><input type="checkbox" '+(sent?'checked':'')+' data-action="toggle-card-sent" data-id="'+p.id+'" data-year="'+relYear+'"> Sent for '+relYear+'</label>' +
         '</div>' +
         '<div class="rem-days'+(p._days===0?' today':'')+'">'+(p._days===0?'Today!':'In '+p._days+'d')+'</div>' +
       '</div>';
-    });
+    buckets[bucket].push({sortKey:p._days, html:html});
+  });
+
+  var html='<div class="btn-row" style="margin-top:0;margin-bottom:16px;"><button class="btn btn-secondary btn-sm" data-action="plan-event">＋ Plan an event</button></div>';
+  var anyItems=false;
+  BUCKET_ORDER.forEach(function(b){
+    var items=buckets[b];
+    if(!items.length) return;
+    anyItems=true;
+    items.sort(function(a,c){ return a.sortKey-c.sortKey; });
+    html+='<div class="time-bucket-label">'+(b==='Unplanned'?'Still figuring out':b)+'</div>';
+    items.forEach(function(it){ html+=it.html; });
+  });
+  if(!anyItems){
+    html+='<div class="empty-state"><div class="big">🎉</div><h3>Nothing coming up</h3><p>Plan an event or add birthdays to people\'s profiles to see them here.</p></div>';
   }
   if(withoutBday.length){
     html+='<div class="section-label">No birthday saved ('+withoutBday.length+')</div>';
@@ -1328,7 +2036,7 @@ function renderReminders(){
   hydrateImages(list);
 
   var soon=withReminder.filter(function(p){ return p._days<=14; }).length;
-  var soonEvents=events.filter(function(ev){ var du=daysUntilDate(ev.date); return du!==null && du<=14; }).length;
+  var soonEvents=events.filter(function(ev){ var du=ev.planningStatus==='unplanned'?null:daysUntilDate(ev.date); return du!==null && du<=14; }).length;
   document.getElementById('remindersBadge').classList.toggle('hidden', (soon+soonEvents)===0);
 }
 
@@ -1383,6 +2091,19 @@ function renderMore(){
   '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-duplicates">' +
     '<span class="mc-ic">🔍</span><span class="mc-body"><span class="mc-title">Find duplicates</span><span class="mc-sub">'+(dupCount? dupCount+' possible match'+(dupCount===1?'':'es') : 'None found')+'</span></span><span class="mc-arrow">›</span>' +
   '</button>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-missinginfo">' +
+    '<span class="mc-ic">🧩</span><span class="mc-body"><span class="mc-title">What\'s missing</span><span class="mc-sub">'+missingInfoTotalCount()+' gaps across everyone</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
+  '<div class="section-label">Customize</div>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-customfields">' +
+    '<span class="mc-ic">🛠️</span><span class="mc-body"><span class="mc-title">Custom fields</span><span class="mc-sub">'+data.customFieldDefs.length+' field'+(data.customFieldDefs.length===1?'':'s')+' added</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-backlog">' +
+    '<span class="mc-ic">🐛</span><span class="mc-body"><span class="mc-title">Bugs &amp; ideas</span><span class="mc-sub">'+data.backlog.filter(function(b){return !b.done;}).length+' open</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="change-journal-pin">' +
+    '<span class="mc-ic">🔒</span><span class="mc-body"><span class="mc-title">Journal code</span><span class="mc-sub">'+(data.journalPin?'Change your code':'Set up a code')+'</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
   '<div class="section-label">Relationship types</div>' +
   '<div class="card"><div class="chip-row">'+relTypesHtml+'</div>' +
     '<div class="btn-row"><button class="btn btn-secondary btn-sm" data-action="add-reltype">＋ New type</button></div></div>' +
@@ -1391,6 +2112,7 @@ function renderMore(){
     '<p style="font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px;">Bring people in from your phone\'s Contacts app, or send your Kept people back out as contacts.</p>' +
     '<div class="btn-row wrap">' +
       '<button class="btn btn-secondary btn-sm" data-action="import-contacts">Import from Contacts (.vcf)</button>' +
+      '<button class="btn btn-secondary btn-sm" data-action="add-sheet-fromcsv">Import from CSV/Excel</button>' +
       '<button class="btn btn-secondary btn-sm" data-action="export-contacts">Export to Contacts (.vcf)</button>' +
     '</div>' +
     '<input type="file" accept=".vcf,text/vcard" id="importContactsInput" class="hidden">' +
@@ -1433,11 +2155,424 @@ function renderMore(){
   }
 }
 
+/* ================= MISSING INFO DASHBOARD ================= */
+var missingInfoActiveFilter='';
+function missingChecks(){
+  var checks=[
+    {key:'birthday', label:'Birthday', test:function(p){ return !(p.birthday && p.birthday.month && p.birthday.day); }},
+    {key:'phone', label:'Phone number', test:function(p){ return !p.phone; }},
+    {key:'email', label:'Email', test:function(p){ return !p.email; }},
+    {key:'address', label:'Address', test:function(p){ return !p.address; }},
+    {key:'gender', label:'Gender', test:function(p){ return !p.gender; }},
+    {key:'pronouns', label:'Pronouns', test:function(p){ return !p.pronouns; }},
+    {key:'howmet', label:'How you met', test:function(p){ return !p.isMe && !(p.howWeMet && p.howWeMet.text); }},
+    {key:'holiday', label:'Holiday card list status', test:function(p){ return p.holidayCard===undefined; }}
+  ];
+  data.customFieldDefs.forEach(function(f){
+    checks.push({key:'cf_'+f.id, label:f.label, test:function(p){ var v=(p.customFieldValues||{})[f.id]; return v===undefined || v===null || v===''; }});
+  });
+  return checks;
+}
+function missingInfoTotalCount(){
+  var checks=missingChecks(), total=0;
+  var people=activePeople();
+  checks.forEach(function(c){ people.forEach(function(p){ if(c.test(p)) total++; }); });
+  return total;
+}
+function renderMissingInfo(){
+  var checks=missingChecks();
+  var people=activePeople();
+  var results=checks.map(function(c){
+    var missing=people.filter(c.test);
+    return {check:c, people:missing};
+  }).filter(function(r){ return r.people.length; });
+
+  var filterRow='<div class="missing-filter-row">' +
+    '<button data-action="filter-missing" data-key="" class="'+(missingInfoActiveFilter===''?'active':'')+'">All</button>' +
+    results.map(function(r){ return '<button data-action="filter-missing" data-key="'+r.check.key+'" class="'+(missingInfoActiveFilter===r.check.key?'active':'')+'">'+esc(r.check.label)+'</button>'; }).join('') +
+    '</div>';
+
+  var shown = missingInfoActiveFilter ? results.filter(function(r){ return r.check.key===missingInfoActiveFilter; }) : results;
+
+  var body = shown.length===0 ? '<div class="empty-state"><div class="big">✨</div><h3>Nothing missing</h3><p>Every profile has this info filled in.</p></div>' :
+    shown.map(function(r){
+      return '<div class="missing-row"><div class="mr-top"><span class="mr-title">'+esc(r.check.label)+'</span><span class="mr-count">'+r.people.length+' missing</span></div>' +
+        '<div class="missing-chip-row">' + r.people.map(function(p){
+          return '<button class="chip tap" data-action="open-person" data-id="'+p.id+'">'+esc(p.name)+'</button>';
+        }).join('') + '</div></div>';
+    }).join('');
+
+  document.getElementById('missingInfoContent').innerHTML = filterRow + body;
+}
+
+/* ================= CUSTOM FIELDS MANAGER ================= */
+function renderCustomFields(){
+  var root=document.getElementById('customFieldsContent');
+  var intro='<p style="font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:14px;">Fields you add here show up on every person\'s profile from now on, and get tracked in "What\'s missing" automatically.</p>';
+  var list = data.customFieldDefs.length ? data.customFieldDefs.map(function(f){
+    var typeLabel={text:'Text',date:'Date',number:'Number',select:'Dropdown',toggle:'Yes/No'}[f.type]||f.type;
+    return '<div class="cfield-row"><div class="cf-body"><div class="cf-name">'+esc(f.label)+'</div><div class="cf-type">'+typeLabel+'</div></div>' +
+      '<button data-action="edit-cfield" data-id="'+f.id+'">Edit</button>' +
+      '<button data-action="delete-cfield" data-id="'+f.id+'">Delete</button></div>';
+  }).join('') : '<p style="font-size:13.5px;color:var(--muted);margin-bottom:14px;">No custom fields yet.</p>';
+  root.innerHTML = intro + list + '<div class="btn-row" style="margin-top:8px;"><button class="btn btn-secondary btn-sm" data-action="add-cfield">＋ New field</button></div>';
+}
+function openCfieldForm(fieldId){
+  var form=document.getElementById('cfieldForm');
+  form.reset();
+  document.getElementById('cf-id').value=fieldId||'';
+  document.getElementById('cf-options-wrap').classList.add('hidden');
+  if(fieldId){
+    var f=data.customFieldDefs.find(function(x){return x.id===fieldId;});
+    document.getElementById('cf-label').value=f.label;
+    document.getElementById('cf-type').value=f.type;
+    document.getElementById('cf-options').value=(f.options||[]).join(', ');
+    document.getElementById('cf-options-wrap').classList.toggle('hidden', f.type!=='select');
+  }
+  openModal('modal-cfield');
+}
+function submitQuickPersonForm(e){
+  e.preventDefault();
+  var name=document.getElementById('qp-name').value.trim();
+  if(!name){ toast('Name is required'); return; }
+  var split=splitLegacyName(name);
+  var now=Date.now();
+  var np={
+    id:uid('p'), firstName:split.first, middleName:split.middle, lastName:split.last, nickname:'', maidenName:'',
+    pronouns:'', gender:'', phone:'', email:'', isMe:false, address:'', holidayCard:false,
+    birthday:{month:null,day:null,year:null}, birthdayMethod:'card',
+    photoId:null, galleryPhotoIds:[], howWeMet:{text:'',date:null},
+    tags:[], likes:[], quotes:[], giftIdeas:[], notes:'',
+    cardReminder:true, customFieldValues:{}, lastUpdated:{},
+    lastCardSentYear:null, archived:false, deletedAt:null, createdAt:now, updatedAt:now
+  };
+  np.name=composeFullName(np);
+  data.people.push(np);
+  touch(np,'profile');
+  saveData();
+  closeModal('modal-quickperson');
+  if(pendingChecklistElId){
+    var wrap=document.getElementById(pendingChecklistElId);
+    if(wrap){
+      wrap._selected = wrap._selected || new Set();
+      wrap._selected.add(np.id);
+      var searchInput=document.getElementById(pendingChecklistElId.replace('-checklist','-search'));
+      renderChecklistRows(pendingChecklistElId, searchInput ? searchInput.value : '');
+    }
+  }
+  toast('Added '+np.name);
+}
+function submitCfieldForm(e){
+  e.preventDefault();
+  var id=document.getElementById('cf-id').value;
+  var label=document.getElementById('cf-label').value.trim();
+  if(!label){ toast('Field name is required'); return; }
+  var type=document.getElementById('cf-type').value;
+  var options = type==='select' ? document.getElementById('cf-options').value.split(',').map(function(o){return o.trim();}).filter(Boolean) : [];
+  if(id){
+    var f=data.customFieldDefs.find(function(x){return x.id===id;});
+    f.label=label; f.type=type; f.options=options;
+  } else {
+    data.customFieldDefs.push({id:uid('cf'), label:label, type:type, options:options});
+  }
+  saveData();
+  closeModal('modal-cfield');
+  toast('Saved');
+  renderCustomFields();
+}
+function deleteCfield(fieldId){
+  showConfirm('Delete this field?', 'It will be removed from every profile.', function(){
+    data.customFieldDefs = data.customFieldDefs.filter(function(x){return x.id!==fieldId;});
+    data.people.forEach(function(p){ if(p.customFieldValues) delete p.customFieldValues[fieldId]; });
+    saveData();
+    toast('Field deleted');
+    renderCustomFields();
+  });
+}
+
+/* ================= BACKLOG (bugs & ideas) ================= */
+function renderBacklog(){
+  var root=document.getElementById('backlogContent');
+  var items=data.backlog.slice().sort(function(a,b){ return (a.done - b.done) || (b.createdAt-a.createdAt); });
+  var intro='<div class="btn-row" style="margin-bottom:14px;"><button class="btn btn-primary btn-sm" data-action="add-backlog">＋ New bug / idea</button></div>';
+  var list = items.length ? items.map(function(it){
+    return '<div class="backlog-item'+(it.done?' done':'')+'"><div class="bi-top"><span class="bi-text">'+(it.type==='bug'?'🐛 ':'💡 ')+esc(it.text)+'</span>' +
+      '<div class="bi-actions"><button data-action="toggle-backlog" data-id="'+it.id+'">'+(it.done?'Reopen':'Done')+'</button><button data-action="delete-backlog" data-id="'+it.id+'">✕</button></div></div>' +
+      '<div class="bi-meta">Added '+formatDateDisplay(new Date(it.createdAt).toISOString().slice(0,10))+'</div></div>';
+  }).join('') : '<div class="empty-state"><div class="big">🗒️</div><h3>Nothing tracked yet</h3><p>Log bugs and feature ideas here as they come up.</p></div>';
+  root.innerHTML = intro + list;
+}
+function openBacklogForm(){
+  document.getElementById('backlogForm').reset();
+  document.getElementById('bl-id').value='';
+  currentBacklogType='bug';
+  document.querySelectorAll('#bl-type-row button').forEach(function(b){ b.classList.toggle('active', b.dataset.bltype==='bug'); });
+  openModal('modal-backlog');
+}
+function submitBacklogForm(e){
+  e.preventDefault();
+  var text=document.getElementById('bl-text').value.trim();
+  if(!text){ toast('Description is required'); return; }
+  data.backlog.push({id:uid('bl'), type:currentBacklogType, text:text, done:false, createdAt:Date.now()});
+  saveData();
+  closeModal('modal-backlog');
+  toast('Added');
+  renderBacklog();
+}
+function toggleBacklogItem(id){
+  var it=data.backlog.find(function(x){return x.id===id;});
+  if(!it) return;
+  it.done=!it.done;
+  saveData();
+  renderBacklog();
+}
+function deleteBacklogItem(id){
+  data.backlog=data.backlog.filter(function(x){return x.id!==id;});
+  saveData();
+  renderBacklog();
+}
+
+/* ================= JOURNAL ================= */
+function escapeRegex(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function detectMentionsInText(text){
+  if(!text) return [];
+  var found=new Set();
+  var people=activePeople().slice().sort(function(a,b){ return b.name.length-a.name.length; });
+  people.forEach(function(p){
+    var full=new RegExp('@'+escapeRegex(p.name)+'\\b','i');
+    if(full.test(text)){ found.add(p.id); return; }
+    if(p.firstName){
+      var f=new RegExp('@'+escapeRegex(p.firstName)+'\\b','i');
+      if(f.test(text)) found.add(p.id);
+    }
+    if(p.nickname){
+      var n=new RegExp('@'+escapeRegex(p.nickname)+'\\b','i');
+      if(n.test(text)) found.add(p.id);
+    }
+  });
+  return Array.from(found);
+}
+function renderMentionPreview(){
+  var text=document.getElementById('jf-text').value;
+  var auto=detectMentionsInText(text);
+  var manual=(document.getElementById('jf-mention-preview').dataset.manual||'').split(',').filter(Boolean);
+  var all=Array.from(new Set(auto.concat(manual)));
+  document.getElementById('jf-mention-preview').innerHTML = all.map(function(pid){
+    var p=findPerson(pid);
+    return p ? '<span class="mention-chip">@'+esc(p.name)+' <span data-action="unmention" data-id="'+pid+'" style="cursor:pointer;">✕</span></span>' : '';
+  }).join('') || '<span style="font-size:12px;color:var(--muted);">No one tagged yet — type @Name or use the field below.</span>';
+}
+function currentJournalPeopleIds(){
+  var text=document.getElementById('jf-text').value;
+  var auto=detectMentionsInText(text);
+  var manual=(document.getElementById('jf-mention-preview').dataset.manual||'').split(',').filter(Boolean);
+  return Array.from(new Set(auto.concat(manual)));
+}
+function scanJournalDates(){
+  var text=document.getElementById('jf-text').value;
+  var out=[];
+  var monthRe=/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2})(st|nd|rd|th)?(,?\s+(\d{4}))?\b/gi;
+  var m;
+  while((m=monthRe.exec(text))){
+    var mi=MONTHS_SHORT.findIndex(function(x){ return x.toLowerCase()===m[1].slice(0,3).toLowerCase(); });
+    if(mi===-1) continue;
+    var year=m[5] ? Number(m[5]) : new Date().getFullYear();
+    var day=Number(m[2]);
+    var iso=year+'-'+pad2(mi+1)+'-'+pad2(day);
+    var start=Math.max(0,m.index-25), end=Math.min(text.length, m.index+m[0].length+25);
+    out.push({date:iso, label:m[0], excerpt:text.slice(start,end).trim()});
+  }
+  var slashRe=/\b(\d{1,2})\/(\d{1,2})(\/(\d{2,4}))?\b/g;
+  while((m=slashRe.exec(text))){
+    var yr = m[4] ? (m[4].length===2? '20'+m[4] : m[4]) : new Date().getFullYear();
+    var iso2=yr+'-'+pad2(Number(m[1]))+'-'+pad2(Number(m[2]));
+    var start2=Math.max(0,m.index-25), end2=Math.min(text.length, m.index+m[0].length+25);
+    out.push({date:iso2, label:m[0], excerpt:text.slice(start2,end2).trim()});
+  }
+  var wrap=document.getElementById('jf-date-suggestions');
+  if(!out.length){ wrap.innerHTML='<span style="font-size:12px;color:var(--muted);">No dates found in the text.</span>'; return; }
+  wrap.innerHTML=out.map(function(o,i){
+    return '<button type="button" class="date-suggest-chip" data-action="use-date-suggestion" data-date="'+o.date+'" data-excerpt="'+esc(o.excerpt)+'">'+esc(o.label)+' → add as mention</button>';
+  }).join('');
+}
+function renderRetroRows(){
+  var wrap=document.getElementById('jf-retro-list');
+  if(!journalRetroStaging.length){ wrap.innerHTML=''; return; }
+  wrap.innerHTML = journalRetroStaging.map(function(r,i){
+    return '<div class="retro-row" data-retro-idx="'+i+'">' +
+      '<div class="rr-top"><b style="font-size:12.5px;">Retroactive mention</b><button type="button" data-action="remove-retro-row" data-idx="'+i+'">Remove</button></div>' +
+      '<input type="date" data-retro-field="date" value="'+esc(r.date||'')+'">' +
+      '<textarea data-retro-field="excerpt" placeholder="What happened / what you wrote">'+esc(r.excerpt||'')+'</textarea>' +
+      '<input type="text" data-retro-field="peopleNames" placeholder="Tag people (comma separated names)" value="'+esc((r.peopleIds||[]).map(function(id){var p=findPerson(id); return p?p.name:'';}).filter(Boolean).join(', '))+'">' +
+    '</div>';
+  }).join('');
+  wrap.querySelectorAll('[data-retro-field]').forEach(function(el){
+    el.addEventListener('input', function(){
+      var idx=Number(el.closest('[data-retro-idx]').getAttribute('data-retro-idx'));
+      var field=el.getAttribute('data-retro-field');
+      if(field==='peopleNames'){
+        var names=el.value.split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean);
+        journalRetroStaging[idx].peopleIds = activePeople().filter(function(p){ return names.indexOf(p.name.toLowerCase())!==-1; }).map(function(p){return p.id;});
+      } else {
+        journalRetroStaging[idx][field]=el.value;
+      }
+    });
+  });
+}
+function openJournalForm(entryId){
+  var form=document.getElementById('journalForm');
+  form.reset();
+  document.getElementById('jf-id').value=entryId||'';
+  document.getElementById('jf-mention-preview').dataset.manual='';
+  document.getElementById('jf-date-suggestions').innerHTML='';
+  journalRetroStaging=[];
+  buildLocationDatalist();
+  var open=function(){
+    if(entryId){
+      var e=data.journalEntries.find(function(x){return x.id===entryId;});
+      document.getElementById('journalFormTitle').textContent='Edit journal entry';
+      document.getElementById('jf-date').value=e.date||'';
+      document.getElementById('jf-time').value=e.time||'';
+      document.getElementById('jf-location').value=e.location||'';
+      document.getElementById('jf-text').value=e.text||'';
+      document.getElementById('jf-mention-preview').dataset.manual=(e.peopleIds||[]).join(',');
+      journalRetroStaging=(e.retroMentions||[]).map(function(rm){ return Object.assign({},rm); });
+    } else {
+      document.getElementById('journalFormTitle').textContent='Write in journal';
+      document.getElementById('jf-date').value=dateStr();
+    }
+    renderMentionPreview();
+    renderRetroRows();
+    openModal('modal-journal');
+  };
+  requireJournalUnlock(open);
+}
+function submitJournalForm(e){
+  e.preventDefault();
+  var id=document.getElementById('jf-id').value;
+  var text=document.getElementById('jf-text').value;
+  if(!text.trim()){ toast('Write something first'); return; }
+  var date=document.getElementById('jf-date').value;
+  if(!date){ toast('Date is required'); return; }
+  var peopleIds=currentJournalPeopleIds();
+  var retroMentions=journalRetroStaging.filter(function(r){ return r.date; }).map(function(r){
+    return {id:r.id||uid('rm'), date:r.date, excerpt:r.excerpt||'', peopleIds:r.peopleIds||[]};
+  });
+  var payload={
+    date:date, time:document.getElementById('jf-time').value||null,
+    location:document.getElementById('jf-location').value.trim(),
+    text:text, peopleIds:peopleIds, retroMentions:retroMentions
+  };
+  if(id){
+    var e2=data.journalEntries.find(function(x){return x.id===id;});
+    Object.assign(e2, payload); e2.updatedAt=Date.now();
+  } else {
+    data.journalEntries.push(Object.assign({id:uid('je'), deletedAt:null, createdAt:Date.now(), updatedAt:Date.now()}, payload));
+  }
+  saveData();
+  closeModal('modal-journal');
+  toast('Saved');
+  refreshCurrentScreen();
+}
+function deleteJournalEntry(entryId){
+  showConfirm('Delete this journal entry?', 'This removes it and all its retroactive mentions.', function(){
+    var e=data.journalEntries.find(function(x){return x.id===entryId;});
+    if(e){ e.deletedAt=Date.now(); saveData(); toast('Deleted'); refreshCurrentScreen(); }
+  });
+}
+
+/* ---- PIN gate ---- */
+function requireJournalUnlock(callback){
+  if(journalUnlocked){ callback(); return; }
+  if(!data.journalPin){ openJournalPinSetup(callback); return; }
+  journalPendingAction=callback;
+  document.getElementById('jpin-input').value='';
+  document.getElementById('jpinError').classList.add('hidden');
+  openModal('modal-journalpin');
+  setTimeout(function(){ document.getElementById('jpin-input').focus(); }, 50);
+}
+function submitJournalPin(e){
+  e.preventDefault();
+  var val=document.getElementById('jpin-input').value;
+  if(val && val===data.journalPin){
+    journalUnlocked=true;
+    closeModal('modal-journalpin');
+    var cb=journalPendingAction; journalPendingAction=null;
+    if(cb) cb();
+    refreshCurrentScreen();
+  } else {
+    document.getElementById('jpinError').classList.remove('hidden');
+  }
+}
+function openJournalPinSetup(afterSetupCallback){
+  document.getElementById('journalPinSetupForm').reset();
+  document.getElementById('jpinSetupError').classList.add('hidden');
+  document.getElementById('jpinSetupTitle').textContent = data.journalPin ? 'Change your journal code' : 'Set a journal code';
+  document.getElementById('journalPinSetupForm').dataset.afterSetup = afterSetupCallback ? '1' : '';
+  journalPendingAction = afterSetupCallback || null;
+  openModal('modal-journalpinsetup');
+}
+function submitJournalPinSetup(e){
+  e.preventDefault();
+  var a=document.getElementById('jpin-new').value, b=document.getElementById('jpin-confirm').value;
+  if(!a || a!==b){ document.getElementById('jpinSetupError').classList.remove('hidden'); return; }
+  data.journalPin=a;
+  saveData();
+  journalUnlocked=true;
+  closeModal('modal-journalpinsetup');
+  toast('Journal code saved');
+  var cb=journalPendingAction; journalPendingAction=null;
+  if(cb) cb();
+  refreshCurrentScreen();
+}
+
+/* ---- Rendering journal cards on timelines ---- */
+function activeJournalEntries(){ return data.journalEntries.filter(function(e){ return !e.deletedAt; }); }
+function journalEntriesForPerson(personId){
+  return activeJournalEntries().filter(function(e){ return (e.peopleIds||[]).indexOf(personId)!==-1; });
+}
+function retroNodesForPerson(personId){
+  var nodes=[];
+  activeJournalEntries().forEach(function(e){
+    (e.retroMentions||[]).forEach(function(rm){
+      if((rm.peopleIds||[]).indexOf(personId)!==-1) nodes.push({parent:e, retro:rm});
+    });
+  });
+  return nodes;
+}
+function renderJournalCard(entry, personFilterId){
+  var dateLabel=formatDateDisplay(entry.date)+(entry.time?' · '+formatTimeDisplay(entry.time):'');
+  if(!journalUnlocked){
+    return '<div class="journal-card locked"><div class="jc-top"><span class="jc-date">'+dateLabel+'</span><span>🔒</span></div>' +
+      '<div class="jc-lock-label">Journal entry — <button type="button" class="jc-lock-btn" data-action="unlock-journal">enter code to view</button></div></div>';
+  }
+  var mentionChips=(entry.peopleIds||[]).map(function(pid){ return '<button class="chip tap" data-action="open-person" data-id="'+pid+'">'+esc(personName(pid))+'</button>'; }).join('');
+  return '<div class="journal-card"><div class="jc-top"><span class="jc-date">'+dateLabel+'</span><span>🔓</span></div>' +
+    (entry.location? '<div class="jc-loc">📍 '+esc(entry.location)+'</div>':'') +
+    '<div class="jc-text">'+esc(entry.text)+'</div>' +
+    (mentionChips? '<div class="tl-people">'+mentionChips+'</div>':'') +
+    '<div class="tl-actions"><button data-action="edit-journal" data-id="'+entry.id+'">Edit</button><button data-action="delete-journal" data-id="'+entry.id+'">Delete</button></div>' +
+  '</div>';
+}
+function renderRetroCard(parent, retro){
+  var dateLabel=formatDateDisplay(retro.date);
+  if(!journalUnlocked){
+    return '<div class="journal-card locked retro"><div class="jc-top"><span class="jc-date">'+dateLabel+'</span><span>🔒</span></div>' +
+      '<div class="jc-lock-label">From a journal entry — <button type="button" class="jc-lock-btn" data-action="unlock-journal">enter code to view</button></div></div>';
+  }
+  var mentionChips=(retro.peopleIds||[]).map(function(pid){ return '<button class="chip tap" data-action="open-person" data-id="'+pid+'">'+esc(personName(pid))+'</button>'; }).join('');
+  return '<div class="journal-card retro"><div class="jc-top"><span class="jc-date">'+dateLabel+'</span><span>🔓</span></div>' +
+    '<div class="jc-text">'+esc(retro.excerpt||'')+'</div>' +
+    (mentionChips? '<div class="tl-people">'+mentionChips+'</div>':'') +
+    '<div class="tl-actions"><button data-action="edit-journal" data-id="'+parent.id+'">Open full entry</button></div>' +
+  '</div>';
+}
+
 /* ================= RENDER: TREE ================= */
 function renderTree(focusId){
   currentTreeFocus=focusId||'';
-  var sel=document.getElementById('treeFocusSelect');
-  populatePersonSelect(sel, true, currentTreeFocus);
+  var wrap=document.getElementById('treeFocusSelect-wrap');
+  if(wrap && wrap._ssSetValue) wrap._ssSetValue(currentTreeFocus);
 
   var meRow=document.getElementById('treeMeRow');
   if(meRow){
@@ -1635,6 +2770,50 @@ function showConfirm(title, message, onConfirm){
 }
 
 /* ---- Person form ---- */
+function syncMetFieldsVisibility(){
+  var isMe=document.getElementById('pf-ismetoggle').classList.contains('on');
+  document.getElementById('pf-met-wrap').classList.toggle('hidden', isMe);
+  document.getElementById('pf-metdate-wrap').classList.toggle('hidden', isMe);
+}
+function setBirthdayMethod(method){
+  currentBirthdayMethod=method;
+  document.querySelectorAll('#pf-bmethod-row button').forEach(function(b){
+    b.classList.toggle('active', b.dataset.bmethod===method);
+  });
+}
+function renderCustomFieldInputs(values){
+  values = values || {};
+  var wrap=document.getElementById('pf-customfields');
+  if(!data.customFieldDefs.length){ wrap.innerHTML=''; return; }
+  wrap.innerHTML = data.customFieldDefs.map(function(f){
+    var v = values[f.id];
+    var input='';
+    if(f.type==='select'){
+      input='<select data-cfid="'+f.id+'"><option value="">Not set</option>'+(f.options||[]).map(function(o){
+        return '<option value="'+esc(o)+'"'+(v===o?' selected':'')+'>'+esc(o)+'</option>';
+      }).join('')+'</select>';
+    } else if(f.type==='toggle'){
+      input='<div class="toggle-row" style="padding:4px 2px;"><span class="t-label">'+esc(f.label)+'</span><button type="button" class="switch'+(v?' on':'')+'" data-cfid="'+f.id+'" data-cftoggle="1"></button></div>';
+    } else {
+      var itype = f.type==='date' ? 'date' : (f.type==='number' ? 'number' : 'text');
+      input='<input type="'+itype+'" data-cfid="'+f.id+'" value="'+esc(v||'')+'">';
+    }
+    if(f.type==='toggle') return '<div class="form-group">'+input+'</div>';
+    return '<div class="form-group"><label>'+esc(f.label)+'</label>'+input+'</div>';
+  }).join('');
+}
+function readCustomFieldInputs(){
+  var out={};
+  document.querySelectorAll('#pf-customfields [data-cfid]').forEach(function(el){
+    var fid=el.getAttribute('data-cfid');
+    if(el.dataset.cftoggle) out[fid]=el.classList.contains('on');
+    else out[fid]=el.value;
+  });
+  document.querySelectorAll('#pf-customfields [data-cftoggle]').forEach(function(el){
+    el.onclick = function(){ el.classList.toggle('on'); };
+  });
+  return out;
+}
 function openPersonForm(personId, presetIsMe){
   var form=document.getElementById('personForm');
   form.reset();
@@ -1643,6 +2822,8 @@ function openPersonForm(personId, presetIsMe){
   document.getElementById('pf-avatar-preview').removeAttribute('data-photo-id');
   document.getElementById('pf-avatar-preview').dataset.newPhotoId='';
   document.getElementById('pf-ismetoggle').classList.remove('on');
+  document.getElementById('pf-holidaytoggle').classList.remove('on');
+  setBirthdayMethod('card');
   var msel=document.getElementById('pf-bmonth'), dsel=document.getElementById('pf-bday');
   if(!msel.dataset.built){
     msel.innerHTML='<option value="">Month</option>'+MONTHS.map(function(m,i){return '<option value="'+(i+1)+'">'+m+'</option>';}).join('');
@@ -1659,11 +2840,19 @@ function openPersonForm(personId, presetIsMe){
   if(personId){
     var p=findPerson(personId);
     document.getElementById('personFormTitle').textContent='Edit person';
-    document.getElementById('pf-name').value=p.name||'';
+    document.getElementById('pf-first').value=p.firstName||'';
+    document.getElementById('pf-middle').value=p.middleName||'';
+    document.getElementById('pf-last').value=p.lastName||'';
+    document.getElementById('pf-nickname').value=p.nickname||'';
+    document.getElementById('pf-maiden').value=p.maidenName||'';
     document.getElementById('pf-pronouns').value=p.pronouns||'';
+    document.getElementById('pf-gender').value=p.gender||'';
     document.getElementById('pf-phone').value=p.phone||'';
     document.getElementById('pf-email').value=p.email||'';
+    document.getElementById('pf-address').value=p.address||'';
     document.getElementById('pf-ismetoggle').classList.toggle('on', !!p.isMe);
+    document.getElementById('pf-holidaytoggle').classList.toggle('on', !!p.holidayCard);
+    setBirthdayMethod(p.birthdayMethod||'card');
     if(p.birthday){
       msel.value=p.birthday.month||''; buildDays(); dsel.value=p.birthday.day||'';
       document.getElementById('pf-byear').value=p.birthday.year||'';
@@ -1674,6 +2863,7 @@ function openPersonForm(personId, presetIsMe){
     document.getElementById('pf-likes').value=(p.likes||[]).join(', ');
     document.getElementById('pf-notes').value=p.notes||'';
     document.getElementById('pf-cardtoggle').classList.toggle('on', p.cardReminder!==false);
+    renderCustomFieldInputs(p.customFieldValues||{});
     if(p.photoId){
       document.getElementById('pf-avatar-preview').innerHTML='<img data-photo-id="'+p.photoId+'">';
       hydrateImages(document.getElementById('pf-avatar-preview'));
@@ -1681,14 +2871,20 @@ function openPersonForm(personId, presetIsMe){
   } else {
     document.getElementById('personFormTitle').textContent='Add person';
     if(presetIsMe) document.getElementById('pf-ismetoggle').classList.add('on');
+    renderCustomFieldInputs({});
   }
+  syncMetFieldsVisibility();
   openModal('modal-person');
 }
 function submitPersonForm(e){
   e.preventDefault();
   var id=document.getElementById('pf-id').value;
-  var name=document.getElementById('pf-name').value.trim();
-  if(!name){ toast('Name is required'); return; }
+  var first=document.getElementById('pf-first').value.trim();
+  var middle=document.getElementById('pf-middle').value.trim();
+  var last=document.getElementById('pf-last').value.trim();
+  if(!first){ toast('First name is required'); return; }
+  var nickname=document.getElementById('pf-nickname').value.trim();
+  var maiden=document.getElementById('pf-maiden').value.trim();
   var tagsRaw=document.getElementById('pf-tags').value;
   var tags=tagsRaw.split(',').map(function(t){return t.trim();}).filter(Boolean);
   var likesRaw=document.getElementById('pf-likes').value;
@@ -1696,35 +2892,52 @@ function submitPersonForm(e){
   var month=document.getElementById('pf-bmonth').value, day=document.getElementById('pf-bday').value, year=document.getElementById('pf-byear').value;
   var phone=document.getElementById('pf-phone').value.trim();
   var email=document.getElementById('pf-email').value.trim();
+  var address=document.getElementById('pf-address').value.trim();
+  var gender=document.getElementById('pf-gender').value;
   var isMe=document.getElementById('pf-ismetoggle').classList.contains('on');
+  var holidayCard=document.getElementById('pf-holidaytoggle').classList.contains('on');
+  var customValues=readCustomFieldInputs();
 
   function finish(photoId){
     if(isMe){
       data.people.forEach(function(x){ if(x.id!==id) x.isMe=false; });
     }
+    var now=Date.now();
     if(id){
       var p=findPerson(id);
-      p.name=name; p.pronouns=document.getElementById('pf-pronouns').value.trim();
-      p.phone=phone; p.email=email; p.isMe=isMe;
+      p.firstName=first; p.middleName=middle; p.lastName=last; p.nickname=nickname; p.maidenName=maiden;
+      p.name=composeFullName(p);
+      p.pronouns=document.getElementById('pf-pronouns').value.trim();
+      p.gender=gender;
+      p.phone=phone; p.email=email; p.isMe=isMe; p.address=address; p.holidayCard=holidayCard;
       p.birthday={month:month?Number(month):null, day:day?Number(day):null, year:year?Number(year):null};
+      p.birthdayMethod=currentBirthdayMethod;
       p.howWeMet={text:document.getElementById('pf-met-text').value.trim(), date:document.getElementById('pf-met-date').value||null};
       p.tags=tags;
       p.likes=likes;
       p.notes=document.getElementById('pf-notes').value.trim();
       p.cardReminder=document.getElementById('pf-cardtoggle').classList.contains('on');
+      p.customFieldValues=customValues;
       if(photoId) p.photoId=photoId;
-      p.updatedAt=Date.now();
+      p.updatedAt=now;
+      touch(p,'profile'); touch(p,'birthday'); touch(p,'contact'); touch(p,'address'); touch(p,'notes');
     } else {
-      data.people.push({
-        id:uid('p'), name:name, pronouns:document.getElementById('pf-pronouns').value.trim(),
-        phone:phone, email:email, isMe:isMe,
+      var np={
+        id:uid('p'), firstName:first, middleName:middle, lastName:last, nickname:nickname, maidenName:maiden,
+        pronouns:document.getElementById('pf-pronouns').value.trim(), gender:gender,
+        phone:phone, email:email, isMe:isMe, address:address, holidayCard:holidayCard,
         birthday:{month:month?Number(month):null, day:day?Number(day):null, year:year?Number(year):null},
+        birthdayMethod:currentBirthdayMethod,
         photoId:photoId||null, galleryPhotoIds:[],
         howWeMet:{text:document.getElementById('pf-met-text').value.trim(), date:document.getElementById('pf-met-date').value||null},
         tags:tags, likes:likes, quotes:[], giftIdeas:[], notes:document.getElementById('pf-notes').value.trim(),
         cardReminder:document.getElementById('pf-cardtoggle').classList.contains('on'),
-        lastCardSentYear:null, archived:false, deletedAt:null, createdAt:Date.now(), updatedAt:Date.now()
-      });
+        customFieldValues:customValues, lastUpdated:{},
+        lastCardSentYear:null, archived:false, deletedAt:null, createdAt:now, updatedAt:now
+      };
+      np.name=composeFullName(np);
+      data.people.push(np);
+      touch(np,'profile'); touch(np,'birthday'); touch(np,'contact'); touch(np,'address'); touch(np,'notes');
     }
     saveData();
     closeModal('modal-person');
@@ -1754,14 +2967,91 @@ function setEntryType(type){
 }
 function buildPeopleChecklistInto(elId, preselect){
   var wrap=document.getElementById(elId);
+  var meP=data.people.find(function(x){return x.isMe && !x.archived && !x.deletedAt;});
+  var initial = preselect!==undefined ? preselect.slice() : (meP ? [meP.id] : []);
+  wrap._selected = new Set(initial);
+  var searchInput=document.getElementById(elId.replace('-checklist','-search'));
+  if(searchInput){
+    searchInput.value='';
+    if(!searchInput.dataset.wired){
+      searchInput.addEventListener('input', function(){ renderChecklistRows(elId, searchInput.value); });
+      searchInput.dataset.wired='1';
+    }
+  }
+  if(!wrap.dataset.wired){
+    wrap.addEventListener('change', function(e){
+      if(e.target && e.target.type==='checkbox'){
+        if(e.target.checked) wrap._selected.add(e.target.value);
+        else wrap._selected.delete(e.target.value);
+      }
+    });
+    wrap.dataset.wired='1';
+  }
+  renderChecklistRows(elId, '');
+}
+function renderChecklistRows(elId, q){
+  var wrap=document.getElementById(elId);
+  var selected=wrap._selected || new Set();
   var people=activePeople().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
-  if(people.length===0){ wrap.innerHTML='<p style="color:var(--muted);font-size:13px;padding:6px;">Add some people first.</p>'; return; }
-  wrap.innerHTML=people.map(function(p){
-    var checked=preselect && preselect.indexOf(p.id)!==-1 ? 'checked' : '';
-    return '<label><input type="checkbox" value="'+p.id+'" '+checked+'> '+esc(p.name)+'</label>';
-  }).join('');
+  if(q) people=people.filter(function(p){return p.name.toLowerCase().indexOf(q.toLowerCase())!==-1;});
+  var html = people.length ? people.map(function(p){
+    var checked = selected.has(p.id) ? 'checked' : '';
+    return '<label><input type="checkbox" value="'+p.id+'" '+checked+'> '+esc(p.name)+(p.isMe?' <span class="pill thread" style="margin-left:4px;">Me</span>':'')+'</label>';
+  }).join('') : '<p style="color:var(--muted);font-size:13px;padding:6px 4px;">No matches.</p>';
+  html += '<button type="button" class="checklist-add-new" data-action="quick-add-person" data-target="'+elId+'">＋ Add someone new</button>';
+  wrap.innerHTML = html;
+}
+function checklistSelected(elId){
+  var wrap=document.getElementById(elId);
+  return Array.from((wrap && wrap._selected) || []);
 }
 function buildPeopleChecklist(preselect){ buildPeopleChecklistInto('ef-people-checklist', preselect); }
+
+/* ---- Searchable single-select people picker ---- */
+function wireSearchSelect(baseId, opts){
+  opts = opts || {};
+  var input=document.getElementById(baseId+'-input');
+  var hidden=document.getElementById(baseId);
+  var dropdown=document.getElementById(baseId+'-dropdown');
+  var wrap=document.getElementById(baseId+'-wrap');
+  if(!input||!hidden||!dropdown||!wrap) return;
+  function optionsList(){
+    var people=activePeople().slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+    if(opts.excludeIds) people=people.filter(function(p){return opts.excludeIds().indexOf(p.id)===-1;});
+    return people;
+  }
+  function renderList(q){
+    var people=optionsList().filter(function(p){
+      return !q || p.name.toLowerCase().indexOf(q.toLowerCase())!==-1;
+    });
+    var html='';
+    if(opts.includeAll) html+='<div class="ss-row" data-id="">'+esc(opts.allLabel||'Everyone')+'</div>';
+    if(people.length===0){ html+='<div class="ss-row ss-empty">No matches</div>'; }
+    people.forEach(function(p){
+      html+='<div class="ss-row" data-id="'+p.id+'">'+esc(p.name)+(p.isMe?' (Me)':'')+'</div>';
+    });
+    dropdown.innerHTML=html;
+  }
+  input.addEventListener('focus', function(){ renderList(''); wrap.classList.add('open'); });
+  input.addEventListener('input', function(){ renderList(input.value); wrap.classList.add('open'); });
+  dropdown.addEventListener('click', function(e){
+    var row=e.target.closest('.ss-row');
+    if(!row || row.classList.contains('ss-empty')) return;
+    var pid=row.getAttribute('data-id');
+    hidden.value=pid;
+    input.value = pid ? row.textContent : '';
+    wrap.classList.remove('open');
+    if(opts.onChange) opts.onChange(pid);
+  });
+  document.addEventListener('click', function(e){
+    if(!wrap.contains(e.target)) wrap.classList.remove('open');
+  });
+  wrap._ssSetValue=function(pid){
+    hidden.value=pid||'';
+    if(pid){ var p=findPerson(pid); input.value=p ? p.name+(p.isMe?' (Me)':'') : ''; }
+    else input.value='';
+  };
+}
 function renderEntryPhotoStaging(){
   var row=document.getElementById('ef-photos-row');
   var addBtn='<button type="button" class="add-photo-btn" data-action="add-entry-photo">＋</button>';
@@ -1794,7 +3084,9 @@ function openEntryForm(entryId, prefillPersonId, forcedType){
     });
   } else {
     document.getElementById('entryFormTitle').textContent = (forcedType==='memory') ? 'Add a memory' : 'Log a hangout';
-    buildPeopleChecklist(prefillPersonId? [prefillPersonId] : []);
+    var meP=data.people.find(function(x){return x.isMe && !x.archived && !x.deletedAt;});
+    var pre = prefillPersonId ? Array.from(new Set([meP? meP.id:null, prefillPersonId].filter(Boolean))) : undefined;
+    buildPeopleChecklist(pre);
   }
   renderEntryPhotoStaging();
   openModal('modal-entry');
@@ -1804,7 +3096,7 @@ function submitEntryForm(e){
   var id=document.getElementById('ef-id').value;
   var title=document.getElementById('ef-title').value.trim();
   if(!title){ toast('Title is required'); return; }
-  var peopleIds=Array.from(document.querySelectorAll('#ef-people-checklist input:checked')).map(function(i){return i.value;});
+  var peopleIds=checklistSelected('ef-people-checklist');
   var date=document.getElementById('ef-date').value || null;
   var approx=document.getElementById('ef-approx').value.trim() || null;
   var location=document.getElementById('ef-location').value.trim();
@@ -1844,13 +3136,55 @@ function refreshCurrentScreen(){
   else if(currentScreen==='trash') renderTrash();
   else if(currentScreen==='duplicates') renderDuplicates();
   else if(currentScreen==='sync') renderSync();
+  else if(currentScreen==='missinginfo') renderMissingInfo();
+  else if(currentScreen==='customfields') renderCustomFields();
+  else if(currentScreen==='backlog') renderBacklog();
 }
 
 /* ---- Event form ---- */
+function setPlanningStatus(status){
+  currentPlanningStatus=status;
+  document.querySelectorAll('#ev-planning-row button').forEach(function(b){
+    b.classList.toggle('active', b.dataset.planning===status);
+  });
+  var unplanned = status==='unplanned';
+  document.getElementById('ev-avail-wrap').classList.toggle('hidden', !unplanned);
+  document.getElementById('ev-date-label').textContent = unplanned ? 'Target date (rough)' : 'Date';
+  document.getElementById('ev-date').required = !unplanned;
+}
+function recomputeAvailSummary(){
+  var out=document.getElementById('ev-avail-summary');
+  var ms=document.getElementById('ev-avail-mine-start').value, me=document.getElementById('ev-avail-mine-end').value;
+  var ts=document.getElementById('ev-avail-theirs-start').value, te=document.getElementById('ev-avail-theirs-end').value;
+  var drive=Number(document.getElementById('ev-drivetime').value)||0;
+  if(!ms||!me||!ts||!te){ out.innerHTML='Fill in both availability windows to see the overlap.'; return; }
+  var mStart=new Date(ms).getTime(), mEnd=new Date(me).getTime();
+  var tStart=new Date(ts).getTime(), tEnd=new Date(te).getTime();
+  var overlapStart=Math.max(mStart,tStart), overlapEnd=Math.min(mEnd,tEnd);
+  var driveMs=drive*60000;
+  overlapStart+=driveMs; overlapEnd-=driveMs;
+  if(overlapEnd<=overlapStart){ out.innerHTML='No overlap in those windows'+(drive?' once drive time is factored in':'')+'. Try widening one side.'; return; }
+  var fmt=function(ms){ var d=new Date(ms); return d.toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); };
+  out.innerHTML='<b>Best window: '+fmt(overlapStart)+' – '+fmt(overlapEnd)+'</b>'+(drive?' (drive time already factored in)':'');
+}
+function buildLocationDatalist(){
+  var dl=document.getElementById('ev-location-list');
+  var locs=new Set();
+  activePeople().forEach(function(p){ if(p.address) locs.add(p.address); });
+  data.events.forEach(function(ev){ if(ev.location) locs.add(ev.location); });
+  dl.innerHTML=Array.from(locs).map(function(l){ return '<option value="'+esc(l)+'">'; }).join('');
+}
 function openEventForm(eventId){
   var form=document.getElementById('eventForm');
   form.reset();
   document.getElementById('ev-id').value=eventId||'';
+  document.getElementById('ev-confirmedtoggle').classList.remove('on');
+  setPlanningStatus('finalized');
+  buildLocationDatalist();
+  ['ev-avail-mine-start','ev-avail-mine-end','ev-avail-theirs-start','ev-avail-theirs-end','ev-drivetime'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  document.getElementById('ev-avail-summary').innerHTML='';
   if(eventId){
     var ev=data.events.find(function(x){return x.id===eventId;});
     document.getElementById('eventFormTitle').textContent='Edit event';
@@ -1859,11 +3193,21 @@ function openEventForm(eventId){
     document.getElementById('ev-time').value=ev.time||'';
     document.getElementById('ev-location').value=ev.location||'';
     document.getElementById('ev-desc').value=ev.description||'';
+    document.getElementById('ev-confirmedtoggle').classList.toggle('on', ev.status==='confirmed'||ev.status==='attended');
+    setPlanningStatus(ev.planningStatus||'finalized');
+    if(ev.availability){
+      document.getElementById('ev-avail-mine-start').value=ev.availability.mine.start||'';
+      document.getElementById('ev-avail-mine-end').value=ev.availability.mine.end||'';
+      document.getElementById('ev-avail-theirs-start').value=ev.availability.theirs.start||'';
+      document.getElementById('ev-avail-theirs-end').value=ev.availability.theirs.end||'';
+    }
+    document.getElementById('ev-drivetime').value=ev.driveTimeMinutes||'';
+    recomputeAvailSummary();
     buildPeopleChecklistInto('ev-people-checklist', ev.invitees||[]);
   } else {
     document.getElementById('eventFormTitle').textContent='Plan an event';
     document.getElementById('ev-date').value=dateStr();
-    buildPeopleChecklistInto('ev-people-checklist', []);
+    buildPeopleChecklistInto('ev-people-checklist', undefined);
   }
   openModal('modal-event');
 }
@@ -1877,21 +3221,46 @@ function submitEventForm(e){
   var time=document.getElementById('ev-time').value||null;
   var location=document.getElementById('ev-location').value.trim();
   var desc=document.getElementById('ev-desc').value.trim();
-  var invitees=Array.from(document.querySelectorAll('#ev-people-checklist input:checked')).map(function(i){return i.value;});
+  var invitees=checklistSelected('ev-people-checklist');
+  var confirmedOn=document.getElementById('ev-confirmedtoggle').classList.contains('on');
+  var planningStatus=currentPlanningStatus;
+  var availability=null;
+  var driveTimeMinutes=document.getElementById('ev-drivetime').value ? Number(document.getElementById('ev-drivetime').value) : null;
+  if(planningStatus==='unplanned'){
+    availability={
+      mine:{start:document.getElementById('ev-avail-mine-start').value||null, end:document.getElementById('ev-avail-mine-end').value||null},
+      theirs:{start:document.getElementById('ev-avail-theirs-start').value||null, end:document.getElementById('ev-avail-theirs-end').value||null}
+    };
+  }
 
   if(id){
     var ev=data.events.find(function(x){return x.id===id;});
     ev.title=title; ev.date=date; ev.time=time; ev.location=location; ev.description=desc; ev.invitees=invitees;
+    ev.planningStatus=planningStatus; ev.availability=availability; ev.driveTimeMinutes=driveTimeMinutes;
+    if(ev.status!=='attended' && ev.status!=='declined'){
+      ev.status = confirmedOn ? 'confirmed' : 'planned';
+    }
     ev.updatedAt=Date.now();
   } else {
     data.events.push({
       id:uid('ev'), title:title, date:date, time:time, location:location, description:desc,
-      invitees:invitees, deletedAt:null, createdAt:Date.now(), updatedAt:Date.now()
+      invitees:invitees, status: confirmedOn?'confirmed':'planned', planningStatus:planningStatus,
+      availability:availability, driveTimeMinutes:driveTimeMinutes,
+      deletedAt:null, createdAt:Date.now(), updatedAt:Date.now()
     });
   }
   saveData();
   closeModal('modal-event');
   toast('Saved');
+  refreshCurrentScreen();
+}
+function setEventStatus(eventId, status){
+  var ev=data.events.find(function(x){return x.id===eventId;});
+  if(!ev) return;
+  ev.status=status;
+  ev.updatedAt=Date.now();
+  saveData();
+  toast(status==='attended' ? 'Marked attended' : status==='declined' ? 'Marked declined' : status==='confirmed' ? 'Confirmed' : 'Updated');
   refreshCurrentScreen();
 }
 
@@ -1905,15 +3274,17 @@ function openRelationshipForm(relId, prefillA){
   var form=document.getElementById('relationshipForm');
   form.reset();
   document.getElementById('rf-id').value=relId||'';
-  populatePersonSelect(document.getElementById('rf-personA'), false, prefillA||'');
-  populatePersonSelect(document.getElementById('rf-personB'), false, '');
+  var wrapA=document.getElementById('rf-personA-wrap'), wrapB=document.getElementById('rf-personB-wrap');
   populateRelTypeSelect(document.getElementById('rf-type'), '');
   if(relId){
     var r=data.relationships.find(function(x){return x.id===relId;});
-    document.getElementById('rf-personA').value=r.personA;
-    document.getElementById('rf-personB').value=r.personB;
+    if(wrapA._ssSetValue) wrapA._ssSetValue(r.personA);
+    if(wrapB._ssSetValue) wrapB._ssSetValue(r.personB);
     document.getElementById('rf-type').value=r.typeId;
     document.getElementById('rf-note').value=r.note||'';
+  } else {
+    if(wrapA._ssSetValue) wrapA._ssSetValue(prefillA||'');
+    if(wrapB._ssSetValue) wrapB._ssSetValue('');
   }
   openModal('modal-relationship');
 }
@@ -2360,12 +3731,16 @@ function vcardUnescape(s){
 function personToVCard(p){
   var lines=['BEGIN:VCARD','VERSION:3.0'];
   lines.push('FN:'+vcardEscape(p.name));
-  lines.push('N:'+vcardEscape(p.name)+';;;;');
+  lines.push('N:'+vcardEscape(p.lastName||'')+';'+vcardEscape(p.firstName||'')+';'+vcardEscape(p.middleName||'')+';;');
+  if(p.nickname) lines.push('NICKNAME:'+vcardEscape(p.nickname));
   if(p.birthday && p.birthday.year && p.birthday.month && p.birthday.day){
     lines.push('BDAY:'+p.birthday.year+'-'+pad2(p.birthday.month)+'-'+pad2(p.birthday.day));
+  } else if(p.birthday && p.birthday.month && p.birthday.day){
+    lines.push('BDAY:--'+pad2(p.birthday.month)+'-'+pad2(p.birthday.day));
   }
   if(p.phone) lines.push('TEL:'+vcardEscape(p.phone));
   if(p.email) lines.push('EMAIL:'+vcardEscape(p.email));
+  if(p.address) lines.push('ADR:;;'+vcardEscape(p.address)+';;;;');
   var noteParts=[];
   if(p.pronouns) noteParts.push('Pronouns: '+p.pronouns);
   if(p.tags && p.tags.length) noteParts.push('Tags: '+p.tags.join(', '));
@@ -2399,7 +3774,7 @@ function unfoldVCardLines(text){
   return lines;
 }
 function parseVCardBlock(lines){
-  var card={name:'', birthday:null, phone:'', email:''};
+  var card={name:'', firstName:'', lastName:'', birthday:null, phone:'', email:'', photoBase64:null, photoMime:'image/jpeg'};
   lines.forEach(function(line){
     var idx=line.indexOf(':');
     if(idx===-1) return;
@@ -2407,19 +3782,48 @@ function parseVCardBlock(lines){
     var value=line.slice(idx+1);
     var key=keyPart.split(';')[0].toUpperCase();
     if(key==='FN'){ card.name=vcardUnescape(value); }
-    else if(key==='N' && !card.name){
+    else if(key==='N'){
       var parts=value.split(';');
-      var joined=[parts[1],parts[0]].filter(Boolean).join(' ');
-      card.name=vcardUnescape(joined) || vcardUnescape(value.replace(/;/g,' ').trim());
+      card.lastName=vcardUnescape(parts[0]||'');
+      card.firstName=vcardUnescape(parts[1]||'');
+      if(!card.name){
+        var joined=[card.firstName,card.lastName].filter(Boolean).join(' ');
+        card.name=joined || vcardUnescape(value.replace(/;/g,' ').trim());
+      }
     }
     else if(key==='BDAY'){
-      var m=value.match(/(\d{4})-?(\d{2})-?(\d{2})/);
-      if(m) card.birthday={year:Number(m[1]), month:Number(m[2]), day:Number(m[3])};
+      var noYear=value.match(/^--(\d{2})-?(\d{2})/);
+      if(noYear){
+        card.birthday={year:null, month:Number(noYear[1]), day:Number(noYear[2])};
+      } else {
+        var m=value.match(/(\d{4})-?(\d{2})-?(\d{2})/);
+        if(m){
+          var yr=Number(m[1]);
+          // Apple/Contacts write 1604 as a sentinel meaning "no year given"
+          card.birthday={year: yr===1604 ? null : yr, month:Number(m[2]), day:Number(m[3])};
+        }
+      }
     }
     else if(key==='TEL' && !card.phone){ card.phone=vcardUnescape(value); }
     else if(key==='EMAIL' && !card.email){ card.email=vcardUnescape(value); }
+    else if(key==='PHOTO'){
+      var params=keyPart.split(';').slice(1).join(';').toUpperCase();
+      if(params.indexOf('VALUE=URI')===-1 && params.indexOf('VALUE=URL')===-1){
+        card.photoBase64=value.replace(/\s+/g,'');
+        var typeMatch=params.match(/TYPE=([A-Z]+)/);
+        if(typeMatch) card.photoMime='image/'+typeMatch[1].toLowerCase();
+      }
+    }
   });
   return card;
+}
+function base64ToBlob(base64, mime){
+  try{
+    var byteChars=atob(base64);
+    var byteNumbers=new Array(byteChars.length);
+    for(var i=0;i<byteChars.length;i++) byteNumbers[i]=byteChars.charCodeAt(i);
+    return new Blob([new Uint8Array(byteNumbers)], {type:mime||'image/jpeg'});
+  } catch(err){ return null; }
 }
 function parseVCardFile(text){
   var lines=unfoldVCardLines(text);
@@ -2439,23 +3843,142 @@ function importContactsFile(file){
     if(!cards.length){ toast('No contacts found in that file'); return; }
     showConfirm('Import '+cards.length+' contact'+(cards.length===1?'':'s')+'?',
       'New people will be added for each contact. Existing people won\'t be matched automatically — check Find Duplicates afterward if you\'re re-importing.', function(){
+      var photoJobs=[];
       cards.forEach(function(c){
-        data.people.push({
-          id:uid('p'), name:c.name, pronouns:'', phone:c.phone||'', email:c.email||'', isMe:false,
-          birthday:c.birthday||{month:null,day:null,year:null},
+        var split = c.firstName || c.lastName ? {first:c.firstName,middle:'',last:c.lastName} : splitLegacyName(c.name);
+        var now=Date.now();
+        var np={
+          id:uid('p'), firstName:split.first, middleName:split.middle||'', lastName:split.last,
+          nickname:'', maidenName:'', pronouns:'', gender:'', phone:c.phone||'', email:c.email||'', isMe:false,
+          address:'', holidayCard:false,
+          birthday:c.birthday||{month:null,day:null,year:null}, birthdayMethod:'card',
           photoId:null, galleryPhotoIds:[],
           howWeMet:{text:'',date:null},
           tags:[], likes:[], quotes:[], giftIdeas:[],
-          notes:'', cardReminder:true, lastCardSentYear:null,
-          archived:false, deletedAt:null, createdAt:Date.now(), updatedAt:Date.now()
-        });
+          notes:'', cardReminder:true, customFieldValues:{}, lastUpdated:{}, lastCardSentYear:null,
+          archived:false, deletedAt:null, createdAt:now, updatedAt:now
+        };
+        np.name=composeFullName(np);
+        touch(np,'profile');
+        data.people.push(np);
+        if(c.photoBase64){
+          var blob=base64ToBlob(c.photoBase64, c.photoMime);
+          if(blob) photoJobs.push(storePhoto(blob).then(function(photoId){ np.photoId=photoId; }));
+        }
       });
-      saveData();
-      toast(cards.length+' contact'+(cards.length===1?'':'s')+' imported');
-      refreshCurrentScreen();
+      Promise.all(photoJobs).then(function(){
+        saveData();
+        toast(cards.length+' contact'+(cards.length===1?'':'s')+' imported');
+        refreshCurrentScreen();
+      });
     });
   };
   reader.readAsText(file);
+}
+
+/* ---- People import from CSV/Excel ---- */
+var CSV_TARGET_FIELDS=[
+  {key:'firstName', label:'First name', required:true},
+  {key:'lastName', label:'Last name'},
+  {key:'nickname', label:'Nickname'},
+  {key:'phone', label:'Phone'},
+  {key:'email', label:'Email'},
+  {key:'address', label:'Address'},
+  {key:'birthday', label:'Birthday (any date format)'},
+  {key:'notes', label:'Notes'}
+];
+function parseCsvText(text){
+  var rows=[]; var row=[]; var field=''; var inQuotes=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
+    if(inQuotes){
+      if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else inQuotes=false; }
+      else field+=c;
+    } else {
+      if(c==='"') inQuotes=true;
+      else if(c===','){ row.push(field); field=''; }
+      else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else if(c==='\r'){ /* skip */ }
+      else field+=c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(function(r){ return r.some(function(f){ return f.trim()!==''; }); });
+}
+function openCsvImport(){
+  document.getElementById('csvFileInput').value='';
+  document.getElementById('csvMappingArea').innerHTML='';
+  document.getElementById('csvImportConfirmBtn').classList.add('hidden');
+  csvParsedRows=null; csvParsedHeaders=null;
+  openModal('modal-csvimport');
+}
+function handleCsvFile(file){
+  var isExcel=/\.xlsx?$/i.test(file.name);
+  if(isExcel){
+    var reader=new FileReader();
+    reader.onload=function(){
+      var wb=XLSX.read(new Uint8Array(reader.result), {type:'array'});
+      var sheet=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
+      onCsvRowsParsed(rows);
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    var r2=new FileReader();
+    r2.onload=function(){ onCsvRowsParsed(parseCsvText(r2.result)); };
+    r2.readAsText(file);
+  }
+}
+function onCsvRowsParsed(rows){
+  if(!rows || rows.length<2){ toast('Couldn\'t find any data rows in that file'); return; }
+  csvParsedHeaders=rows[0].map(function(h){ return String(h||'').trim(); });
+  csvParsedRows=rows.slice(1);
+  var mapHtml='<p style="font-size:13px;color:var(--ink-soft);margin-bottom:10px;">Match your columns to Kept fields ('+csvParsedRows.length+' row'+(csvParsedRows.length===1?'':'s')+' found).</p>';
+  mapHtml += CSV_TARGET_FIELDS.map(function(f){
+    var guessIdx=csvParsedHeaders.findIndex(function(h){ return h.toLowerCase().indexOf(f.key.toLowerCase().replace('name',''))!==-1 || h.toLowerCase()===f.label.toLowerCase(); });
+    var options='<option value="">'+(f.required?'— choose a column —':'Skip')+'</option>' + csvParsedHeaders.map(function(h,i){
+      return '<option value="'+i+'"'+(i===guessIdx?' selected':'')+'>'+esc(h)+'</option>';
+    }).join('');
+    return '<div class="form-group"><label>'+esc(f.label)+(f.required?' *':'')+'</label><select data-csvfield="'+f.key+'">'+options+'</select></div>';
+  }).join('');
+  document.getElementById('csvMappingArea').innerHTML=mapHtml;
+  document.getElementById('csvImportConfirmBtn').classList.remove('hidden');
+}
+function confirmCsvImport(){
+  if(!csvParsedRows){ toast('Choose a file first'); return; }
+  var mapping={};
+  document.querySelectorAll('#csvMappingArea [data-csvfield]').forEach(function(sel){
+    mapping[sel.getAttribute('data-csvfield')]=sel.value;
+  });
+  if(mapping.firstName===''){ toast('Map a First name column'); return; }
+  var count=0;
+  csvParsedRows.forEach(function(row){
+    var get=function(key){ return mapping[key]!=='' && mapping[key]!==undefined ? String(row[Number(mapping[key])]||'').trim() : ''; };
+    var first=get('firstName');
+    if(!first) return;
+    var now=Date.now();
+    var bday={month:null,day:null,year:null};
+    var bRaw=get('birthday');
+    if(bRaw){
+      var d=new Date(bRaw);
+      if(!isNaN(d.getTime())){ bday={month:d.getMonth()+1, day:d.getDate(), year:d.getFullYear()}; }
+    }
+    var np={
+      id:uid('p'), firstName:first, middleName:'', lastName:get('lastName'), nickname:get('nickname'), maidenName:'',
+      pronouns:'', gender:'', phone:get('phone'), email:get('email'), isMe:false, address:get('address'), holidayCard:false,
+      birthday:bday, birthdayMethod:'card', photoId:null, galleryPhotoIds:[], howWeMet:{text:'',date:null},
+      tags:[], likes:[], quotes:[], giftIdeas:[], notes:get('notes'), cardReminder:true, customFieldValues:{}, lastUpdated:{},
+      lastCardSentYear:null, archived:false, deletedAt:null, createdAt:now, updatedAt:now
+    };
+    np.name=composeFullName(np);
+    touch(np,'profile');
+    data.people.push(np);
+    count++;
+  });
+  saveData();
+  closeModal('modal-csvimport');
+  toast(count+' people imported');
+  refreshCurrentScreen();
 }
 
 /* ================= RENDER: ARCHIVED / TRASH / DUPLICATES / SYNC ================= */
@@ -2691,7 +4214,9 @@ function handleAction(action, target){
     case 'save-notes': {
       var p3=findPerson(id);
       p3.notes=document.getElementById('pd-notes').value.trim();
+      touch(p3,'notes');
       saveData(); toast('Notes saved');
+      renderPersonDetail(id);
       break;
     }
     case 'archive-person':
@@ -2827,11 +4352,48 @@ function handleAction(action, target){
       renderEntryPhotoStaging();
       break;
     }
-    case 'add-sheet-person': closeModal('modal-addsheet'); openPersonForm(null); break;
+    case 'add-sheet-person': closeModal('modal-addsheet'); openModal('modal-addpersonsheet'); break;
+    case 'add-sheet-person-choice': closeModal('modal-addsheet'); openModal('modal-addpersonsheet'); break;
+    case 'add-sheet-fromcontacts': closeModal('modal-addpersonsheet'); document.getElementById('importContactsInput').click(); break;
+    case 'add-sheet-fromcsv': closeModal('modal-addpersonsheet'); openCsvImport(); break;
     case 'add-sheet-hangout': closeModal('modal-addsheet'); openEntryForm(null, null, 'hangout'); break;
     case 'add-sheet-memory': closeModal('modal-addsheet'); openEntryForm(null, null, 'memory'); break;
     case 'add-sheet-relationship': closeModal('modal-addsheet'); openRelationshipForm(null); break;
     case 'add-sheet-event': closeModal('modal-addsheet'); openEventForm(null); break;
+    case 'goto-missinginfo': showScreen('missinginfo'); break;
+    case 'goto-customfields': showScreen('customfields'); break;
+    case 'goto-backlog': showScreen('backlog'); break;
+    case 'filter-missing': missingInfoActiveFilter=target.getAttribute('data-key')||''; renderMissingInfo(); break;
+    case 'add-cfield': openCfieldForm(null); break;
+    case 'edit-cfield': openCfieldForm(id); break;
+    case 'delete-cfield': deleteCfield(id); break;
+    case 'add-backlog': openBacklogForm(); break;
+    case 'toggle-backlog': toggleBacklogItem(id); break;
+    case 'delete-backlog': deleteBacklogItem(id); break;
+    case 'quick-add-person': pendingChecklistElId=target.getAttribute('data-target'); document.getElementById('qp-name').value=''; openModal('modal-quickperson'); break;
+    case 'set-event-status': setEventStatus(id, target.getAttribute('data-status')); break;
+    case 'confirm-csv-import': confirmCsvImport(); break;
+    case 'add-sheet-journal': closeModal('modal-addsheet'); openJournalForm(null); break;
+    case 'edit-journal': closeAllModals(); openJournalForm(id); break;
+    case 'delete-journal': deleteJournalEntry(id); break;
+    case 'unlock-journal': requireJournalUnlock(refreshCurrentScreen); break;
+    case 'change-journal-pin': openJournalPinSetup(null); break;
+    case 'add-retro-row': journalRetroStaging.push({id:uid('rm'), date:'', excerpt:'', peopleIds:[]}); renderRetroRows(); break;
+    case 'remove-retro-row': journalRetroStaging.splice(Number(target.getAttribute('data-idx')),1); renderRetroRows(); break;
+    case 'scan-journal-dates': scanJournalDates(); break;
+    case 'use-date-suggestion': {
+      journalRetroStaging.push({id:uid('rm'), date:target.getAttribute('data-date'), excerpt:target.getAttribute('data-excerpt'), peopleIds:currentJournalPeopleIds()});
+      renderRetroRows();
+      toast('Added — review and tag people below');
+      break;
+    }
+    case 'unmention': {
+      var wrap=document.getElementById('jf-mention-preview');
+      var manual=(wrap.dataset.manual||'').split(',').filter(function(x){return x && x!==id;});
+      wrap.dataset.manual=manual.join(',');
+      renderMentionPreview();
+      break;
+    }
     case 'plan-event': closeAllModals(); openEventForm(null); break;
     case 'edit-event': closeAllModals(); openEventForm(id); break;
     case 'delete-event':
@@ -2968,7 +4530,55 @@ function wireGlobalEvents(){
     else if(currentScreen==='people') renderPeopleList();
   });
 
+  document.querySelectorAll('#screen-timeline .view-toggle button').forEach(function(b){
+    b.addEventListener('click', function(){
+      currentTimelineView=b.dataset.tlview;
+      document.querySelectorAll('#screen-timeline .view-toggle button').forEach(function(x){ x.classList.toggle('active', x===b); });
+      document.getElementById('timelineList').classList.toggle('hidden', currentTimelineView==='gallery');
+      document.getElementById('timelineGallery').classList.toggle('hidden', currentTimelineView!=='gallery');
+      document.getElementById('galleryFilterBar').classList.toggle('hidden', currentTimelineView!=='gallery');
+      if(currentTimelineView==='gallery') renderTimeline();
+    });
+  });
+  document.getElementById('galleryFilterMonth').addEventListener('change', function(){ renderTimeline(); });
+  document.getElementById('galleryFilterYear').addEventListener('change', function(){ renderTimeline(); });
+
+  document.getElementById('quickPersonForm').addEventListener('submit', submitQuickPersonForm);
+  document.getElementById('cfieldForm').addEventListener('submit', submitCfieldForm);
+  document.getElementById('cf-type').addEventListener('change', function(){
+    document.getElementById('cf-options-wrap').classList.toggle('hidden', this.value!=='select');
+  });
+  document.getElementById('backlogForm').addEventListener('submit', submitBacklogForm);
+  document.querySelectorAll('#bl-type-row button').forEach(function(b){
+    b.addEventListener('click', function(){
+      currentBacklogType=b.dataset.bltype;
+      document.querySelectorAll('#bl-type-row button').forEach(function(x){ x.classList.toggle('active', x===b); });
+    });
+  });
+  document.getElementById('csvFileInput').addEventListener('change', function(){
+    if(this.files && this.files[0]) handleCsvFile(this.files[0]);
+  });
+
   document.getElementById('personForm').addEventListener('submit', submitPersonForm);
+  document.getElementById('journalForm').addEventListener('submit', submitJournalForm);
+  document.getElementById('journalPinForm').addEventListener('submit', submitJournalPin);
+  document.getElementById('journalPinSetupForm').addEventListener('submit', submitJournalPinSetup);
+  document.getElementById('jf-text').addEventListener('input', renderMentionPreview);
+  wireSearchSelect('jf-addmention', {onChange:function(pid){
+    if(!pid) return;
+    var wrap=document.getElementById('jf-mention-preview');
+    var manual=(wrap.dataset.manual||'').split(',').filter(Boolean);
+    if(manual.indexOf(pid)===-1) manual.push(pid);
+    wrap.dataset.manual=manual.join(',');
+    renderMentionPreview();
+    document.getElementById('jf-addmention-input').value='';
+    document.getElementById('jf-addmention').value='';
+  }});
+  document.getElementById('pf-cardtoggle').addEventListener('click', function(){ this.classList.toggle('on'); });
+  document.getElementById('pf-holidaytoggle').addEventListener('click', function(){ this.classList.toggle('on'); });
+  document.querySelectorAll('#pf-bmethod-row button').forEach(function(b){
+    b.addEventListener('click', function(){ setBirthdayMethod(b.dataset.bmethod); });
+  });
   document.querySelectorAll('#personForm .suggest-chip').forEach(function(c){
     c.addEventListener('click', function(){ document.getElementById('pf-pronouns').value=c.dataset.fill; });
   });
@@ -2979,9 +4589,30 @@ function wireGlobalEvents(){
       document.getElementById('pf-avatar-preview').innerHTML='<img src="'+url+'">';
     }
   });
-  document.getElementById('pf-cardtoggle').addEventListener('click', function(){ this.classList.toggle('on'); });
-  document.getElementById('pf-ismetoggle').addEventListener('click', function(){ this.classList.toggle('on'); });
-  document.getElementById('pf-bmonth').addEventListener('change', function(){});
+  document.querySelectorAll('#ev-planning-row button').forEach(function(b){
+    b.addEventListener('click', function(){ setPlanningStatus(b.dataset.planning); });
+  });
+  document.getElementById('ev-confirmedtoggle').addEventListener('click', function(){ this.classList.toggle('on'); });
+  ['ev-avail-mine-start','ev-avail-mine-end','ev-avail-theirs-start','ev-avail-theirs-end','ev-drivetime'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', recomputeAvailSummary);
+  });
+  document.getElementById('pf-ismetoggle').addEventListener('click', function(){
+    var btn=this;
+    var editingId=document.getElementById('pf-id').value;
+    var turningOn=!btn.classList.contains('on');
+    if(turningOn){
+      var existing=data.people.find(function(x){ return x.isMe && x.id!==editingId; });
+      if(existing){
+        showConfirm('Make this the new "you"?', existing.name+' is currently marked as you. Switching will unmark them.', function(){
+          btn.classList.add('on');
+          syncMetFieldsVisibility();
+        });
+        return;
+      }
+    }
+    btn.classList.toggle('on');
+    syncMetFieldsVisibility();
+  });
 
   document.getElementById('entryForm').addEventListener('submit', submitEntryForm);
   document.querySelectorAll('#entryForm .type-toggle button').forEach(function(b){
@@ -3014,8 +4645,10 @@ function wireGlobalEvents(){
     if(cb) cb();
   });
 
-  document.getElementById('timelinePersonFilter').addEventListener('change', function(){ renderTimeline(); });
-  document.getElementById('treeFocusSelect').addEventListener('change', function(){ renderTree(this.value); });
+  wireSearchSelect('timelinePersonFilter', {includeAll:true, allLabel:'All people', onChange:function(){ renderTimeline(); }});
+  wireSearchSelect('treeFocusSelect', {includeAll:true, allLabel:'Everyone', onChange:function(id){ renderTree(id); }});
+  wireSearchSelect('rf-personA', {excludeIds:function(){ return [document.getElementById('rf-personB').value].filter(Boolean); }});
+  wireSearchSelect('rf-personB', {excludeIds:function(){ return [document.getElementById('rf-personA').value].filter(Boolean); }});
 
   document.body.addEventListener('change', function(e){
     if(e.target && e.target.id==='importFileInput'){
