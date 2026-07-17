@@ -102,6 +102,8 @@ main.screen.active{display:block;}
   border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;
 }
 .person-row:active{background:var(--paper-alt);}
+.person-row.selected{background:var(--accent-soft);border-color:var(--accent);}
+.select-check{width:22px;height:22px;flex:0 0 auto;accent-color:var(--accent);}
 .avatar{
   width:50px;height:50px;border-radius:50%;background:var(--moss-soft);flex:0 0 auto;
   display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;
@@ -377,6 +379,10 @@ main.screen.active{display:block;}
 
 /* ---------- Gallery view ---------- */
 .gallery-filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.import-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--thread-soft);color:var(--ink);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:13.5px;}
+.import-banner .btn-row{margin:0;flex-wrap:nowrap;}
+.select-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;margin-bottom:12px;font-size:13.5px;font-weight:600;}
+.select-bar .btn-row{margin:0;flex-wrap:wrap;}
 .gallery-filter-bar select{flex:1;min-width:90px;padding:9px 10px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface);font-size:13.5px;}
 .gallery-wall{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
 .gallery-wall .gw-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:1px solid var(--line);}
@@ -431,7 +437,14 @@ main.screen.active{display:block;}
   <main class="screen" id="screen-people">
     <div class="btn-row" style="margin-top:0;margin-bottom:14px;">
       <button class="btn btn-secondary btn-sm" data-action="goto-tree">🕸️ Relationship tree</button>
+      <button class="btn btn-secondary btn-sm" data-action="toggle-people-select-mode" id="peopleSelectToggleBtn">☑️ Select</button>
     </div>
+    <div class="view-toggle" id="peopleSortToggle">
+      <button type="button" data-sort="name" class="active">Name</button>
+      <button type="button" data-sort="closeness">Closeness</button>
+    </div>
+    <div class="import-banner hidden" id="importUndoBanner"></div>
+    <div class="select-bar hidden" id="peopleSelectBar"></div>
     <div id="peopleList"></div>
   </main>
 
@@ -530,6 +543,16 @@ main.screen.active{display:block;}
     <div id="customFieldsContent"></div>
   </main>
 
+  <!-- ============ CLOSENESS LEVELS ============ -->
+  <main class="screen" id="screen-closeness">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">Closeness levels</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div id="closenessContent"></div>
+  </main>
+
   <!-- ============ BACKLOG ============ -->
   <main class="screen" id="screen-backlog">
     <div class="back-row">
@@ -589,6 +612,30 @@ main.screen.active{display:block;}
         </button>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-fromcsv">
           <span class="so-ic">📄</span><span><span class="so-text" style="display:block;">From a spreadsheet</span><span class="so-sub">Bulk import from CSV or Excel</span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ BULK ACTIONS SHEET ============ -->
+  <div class="modal-overlay" id="modal-bulkactions">
+    <div class="modal-sheet">
+      <div class="modal-header"><h3 id="bulkActionsTitle">Actions</h3><button class="modal-close" data-action="close-modal" data-modal="modal-bulkactions">✕</button></div>
+      <div class="modal-body" style="padding:8px 18px;">
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-add-cardlist">
+          <span class="so-ic">🎄</span><span><span class="so-text" style="display:block;">Add to holiday card list</span><span class="so-sub">Mark everyone selected for cards</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-remove-cardlist">
+          <span class="so-ic">🚫</span><span><span class="so-text" style="display:block;">Remove from holiday card list</span><span class="so-sub">Take everyone selected off the list</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-set-birthday-method" data-method="card">
+          <span class="so-ic">🎁</span><span><span class="so-text" style="display:block;">Celebrate birthdays with a card</span><span class="so-sub">Sets everyone selected's birthday method</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-set-birthday-method" data-method="text">
+          <span class="so-ic">💬</span><span><span class="so-text" style="display:block;">Celebrate birthdays with a text</span><span class="so-sub">Sets everyone selected's birthday method</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-trash-people">
+          <span class="so-ic">🗑️</span><span><span class="so-text" style="display:block;">Move to Trash</span><span class="so-sub">Restorable later from Trash in More</span></span>
         </button>
       </div>
     </div>
@@ -672,6 +719,10 @@ main.screen.active{display:block;}
               <option value="nonbinary">Nonbinary</option>
               <option value="other">Other</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label>Closeness</label>
+            <select id="pf-closeness"></select>
           </div>
           <div class="form-group">
             <label>Birthday</label>
@@ -1164,6 +1215,25 @@ main.screen.active{display:block;}
     </div>
   </div>
 
+  <div class="modal-overlay" id="modal-closenesslevel">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3 id="closenessLevelFormTitle">New closeness level</h3><button class="modal-close" data-action="close-modal" data-modal="modal-closenesslevel">✕</button></div>
+      <form id="closenessLevelForm">
+        <div class="modal-body">
+          <input type="hidden" id="cl-id">
+          <div class="form-group">
+            <label>Level name</label>
+            <input type="text" id="cl-label" required placeholder="e.g. Close, Inner circle, Not close">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-closenesslevel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ============ BACKLOG ITEM MODAL ============ -->
   <div class="modal-overlay" id="modal-backlog">
     <div class="modal-sheet center">
@@ -1221,6 +1291,8 @@ var currentPlanningStatus='finalized';
 var currentBacklogType='bug';
 var pendingChecklistElId=null; // which checklist quick-add-person should check into
 var csvParsedRows=null, csvParsedHeaders=null;
+var peopleSelectMode=false, selectedPeopleIds=[];
+var currentPeopleSort='name';
 var currentTimelineView='list';
 var currentGalleryFilters={day:'',month:'',year:'',person:''};
 var journalUnlocked=false;
@@ -1388,6 +1460,16 @@ function defaultRelationshipTypes(){
     {id:'ex', label:'Ex-partner', inverse:'Ex-partner', symmetric:true}
   ];
 }
+function defaultClosenessLevels(){
+  return [
+    {id:'cl_inner', label:'Inner circle'},
+    {id:'cl_close', label:'Close'},
+    {id:'cl_friendly', label:'Friendly'},
+    {id:'cl_notclose', label:'Not close'}
+  ];
+}
+function closenessLevel(id){ return data.closenessLevels.find(function(l){ return l.id===id; }); }
+function closenessLabel(id){ var l=id?closenessLevel(id):null; return l?l.label:null; }
 function loadData(){
   var raw=null;
   try{ raw=localStorage.getItem(LS_KEY); }catch(e){}
@@ -1414,8 +1496,10 @@ function migrateData(){
   data.events = data.events || [];
   data.dismissedDuplicatePairs = data.dismissedDuplicatePairs || [];
   data.customFieldDefs = data.customFieldDefs || [];
+  data.closenessLevels = (data.closenessLevels && data.closenessLevels.length) ? data.closenessLevels : defaultClosenessLevels();
   data.backlog = data.backlog || [];
   data.journalPin = data.journalPin || null;
+  if(data.lastImportBatch===undefined) data.lastImportBatch=null;
   data.journalEntries = data.journalEntries || [];
   data.journalEntries.forEach(function(je){
     if(je.deletedAt===undefined) je.deletedAt=null;
@@ -1449,6 +1533,7 @@ function migrateData(){
     if(p.birthdayMethod===undefined) p.birthdayMethod='card';
     if(p.customFieldValues===undefined) p.customFieldValues={};
     if(p.lastUpdated===undefined) p.lastUpdated={};
+    if(p.closenessId===undefined) p.closenessId=null;
     p.name = composeFullName(p);
   });
   data.timeline.forEach(function(e){
@@ -1503,6 +1588,7 @@ function showScreen(name, opts){
   });
   document.getElementById('app').scrollTop=0;
   window.scrollTo(0,0);
+  if(name!=='people' && peopleSelectMode){ peopleSelectMode=false; selectedPeopleIds=[]; }
   currentScreen=name;
 
   var showSearch = (name==='timeline' || name==='people');
@@ -1524,7 +1610,7 @@ function showScreen(name, opts){
     missinginfo:['Kept','Kept'],
     customfields:['Kept','Kept'],
     backlog:['Kept','Kept']};
-  if(titles[name] && ['tree','person-detail','archived','trash','duplicates','sync','missinginfo','customfields','backlog'].indexOf(name)===-1){
+  if(titles[name] && ['tree','person-detail','archived','trash','duplicates','sync','missinginfo','customfields','closeness','backlog'].indexOf(name)===-1){
     document.getElementById('topbarTitle').textContent=titles[name][0];
     document.getElementById('topbarTagline').textContent=titles[name][1];
   }
@@ -1541,6 +1627,7 @@ function showScreen(name, opts){
   else if(name==='sync') renderSync();
   else if(name==='missinginfo') renderMissingInfo();
   else if(name==='customfields') renderCustomFields();
+  else if(name==='closeness') renderClosenessLevels();
   else if(name==='backlog') renderBacklog();
 }
 
@@ -1733,35 +1820,96 @@ function renderEventCard(ev){
 }
 
 /* ================= RENDER: PEOPLE ================= */
-function renderPeopleList(){
+function filteredPeopleList(){
   var q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
-  var people=activePeople().filter(function(p){
+  return activePeople().filter(function(p){
     if(!q) return true;
     var hay=(p.name+' '+(p.nickname||'')+' '+(p.pronouns||'')+' '+(p.tags||[]).join(' ')).toLowerCase();
     return hay.indexOf(q)!==-1;
   }).sort(function(a,b){ return a.name.localeCompare(b.name); });
+}
+function renderImportUndoBanner(){
+  var el=document.getElementById('importUndoBanner');
+  if(!el) return;
+  var batch=data.lastImportBatch;
+  var stillThere = batch ? batch.ids.filter(function(id){ var p=findPerson(id); return p && !p.deletedAt; }) : [];
+  if(!batch || stillThere.length===0){ el.classList.add('hidden'); el.innerHTML=''; return; }
+  var typeLabel = batch.type==='csv' ? 'spreadsheet' : batch.type==='contacts' ? 'Contacts' : 'import';
+  el.classList.remove('hidden');
+  el.innerHTML='<span>'+stillThere.length+' people imported from '+typeLabel+'</span>' +
+    '<div class="btn-row"><button class="btn btn-secondary btn-sm" data-action="undo-last-import">Undo</button>' +
+    '<button class="btn btn-secondary btn-sm" data-action="dismiss-import-banner">✕</button></div>';
+}
+function renderPeopleSelectBar(){
+  var bar=document.getElementById('peopleSelectBar');
+  var toggleBtn=document.getElementById('peopleSelectToggleBtn');
+  if(!bar) return;
+  if(!peopleSelectMode){
+    bar.classList.add('hidden'); bar.innerHTML='';
+    if(toggleBtn) toggleBtn.textContent='☑️ Select';
+    return;
+  }
+  if(toggleBtn) toggleBtn.textContent='Cancel';
+  var visibleIds=filteredPeopleList().map(function(p){return p.id;});
+  var allSelected = visibleIds.length>0 && visibleIds.every(function(id){ return selectedPeopleIds.indexOf(id)!==-1; });
+  bar.classList.remove('hidden');
+  bar.innerHTML='<span>'+selectedPeopleIds.length+' selected</span>' +
+    '<div class="btn-row">' +
+      '<button class="btn btn-secondary btn-sm" data-action="select-all-people">'+(allSelected?'Deselect all':'Select all')+'</button>' +
+      '<button class="btn btn-primary btn-sm" data-action="open-bulk-actions"'+(selectedPeopleIds.length===0?' disabled':'')+'>Actions</button>' +
+    '</div>';
+}
+function personRowHtml(p){
+  var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+  var avatarInner = p.photoId ? '<img data-photo-id="'+p.photoId+'">' : initials;
+  var bday=formatBirthday(p.birthday);
+  var tagsHtml=(p.tags||[]).slice(0,2).map(function(t){ return '<span class="pill muted">'+esc(t)+'</span>'; }).join('');
+  if(peopleSelectMode){
+    var checked = selectedPeopleIds.indexOf(p.id)!==-1;
+    return '<div class="person-row'+(checked?' selected':'')+'" data-action="toggle-person-select" data-id="'+p.id+'">' +
+      '<input type="checkbox" class="select-check" data-action="toggle-person-select" data-id="'+p.id+'" '+(checked?'checked':'')+'>' +
+      '<div class="avatar">'+avatarInner+'</div>' +
+      '<div class="person-info">' +
+        '<div class="name">'+esc(p.name)+(p.isMe?' <span class="pill thread">You</span>':'')+'</div>' +
+        '<div class="meta">'+(p.pronouns? '<span>'+esc(p.pronouns)+'</span>':'')+(bday? '<span>🎂 '+bday+'</span>':'')+tagsHtml+'</div>' +
+      '</div>' +
+    '</div>';
+  }
+  return '<button class="person-row" style="width:100%;text-align:left;" data-action="open-person" data-id="'+p.id+'">' +
+    '<div class="avatar">'+avatarInner+'</div>' +
+    '<div class="person-info">' +
+      '<div class="name">'+esc(p.name)+(p.isMe?' <span class="pill thread">You</span>':'')+'</div>' +
+      '<div class="meta">'+(p.pronouns? '<span>'+esc(p.pronouns)+'</span>':'')+(bday? '<span>🎂 '+bday+'</span>':'')+tagsHtml+'</div>' +
+    '</div>' +
+  '</button>';
+}
+function renderPeopleList(){
+  var people=filteredPeopleList();
 
   var html='';
   if(people.length===0){
     html='<div class="empty-state"><div class="big">👥</div><h3>No one here yet</h3><p>Tap the + button to add your first person.</p></div>';
-  } else {
+  } else if(currentPeopleSort==='closeness'){
+    var groups = data.closenessLevels.map(function(l){ return {id:l.id, label:l.label, people:[]}; });
+    var unset=[];
     people.forEach(function(p){
-      var initials=p.name.trim().split(/\s+/).map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
-      var avatarInner = p.photoId ? '<img data-photo-id="'+p.photoId+'">' : initials;
-      var bday=formatBirthday(p.birthday);
-      var tagsHtml=(p.tags||[]).slice(0,2).map(function(t){ return '<span class="pill muted">'+esc(t)+'</span>'; }).join('');
-      html+='<button class="person-row" style="width:100%;text-align:left;" data-action="open-person" data-id="'+p.id+'">' +
-        '<div class="avatar">'+avatarInner+'</div>' +
-        '<div class="person-info">' +
-          '<div class="name">'+esc(p.name)+(p.isMe?' <span class="pill thread">You</span>':'')+'</div>' +
-          '<div class="meta">'+(p.pronouns? '<span>'+esc(p.pronouns)+'</span>':'')+(bday? '<span>🎂 '+bday+'</span>':'')+tagsHtml+'</div>' +
-        '</div>' +
-      '</button>';
+      var g = groups.find(function(x){ return x.id===p.closenessId; });
+      if(g) g.people.push(p); else unset.push(p);
     });
+    groups.push({id:null, label:'Not set', people:unset});
+    groups.forEach(function(g){
+      if(!g.people.length) return;
+      html += '<div class="section-label">'+esc(g.label)+' ('+g.people.length+')</div>';
+      html += g.people.map(personRowHtml).join('');
+    });
+  } else {
+    html = people.map(personRowHtml).join('');
   }
   var list=document.getElementById('peopleList');
   list.innerHTML=html;
   hydrateImages(list);
+  renderImportUndoBanner();
+  renderPeopleSelectBar();
 }
 
 /* ================= RENDER: PERSON DETAIL ================= */
@@ -1880,7 +2028,7 @@ function renderPersonDetail(personId){
   '</div>' +
   '<div class="detail-header">' +
     '<button class="avatar lg" data-action="view-photo" data-photo-full="'+(p.photoId||'')+'">'+avatarInner+'</button>' +
-    '<div class="who"><h2>'+nameLine+'</h2>' + (p.isMe? '<span class="pill thread">You</span>':'') + (p.pronouns? '<span class="pill">'+esc(p.pronouns)+'</span>':'') + (p.holidayCard? '<span class="pill">🎄 Card list</span>':'') + '</div>' +
+    '<div class="who"><h2>'+nameLine+'</h2>' + (p.isMe? '<span class="pill thread">You</span>':'') + (p.pronouns? '<span class="pill">'+esc(p.pronouns)+'</span>':'') + (closenessLabel(p.closenessId)? '<span class="pill moss">'+esc(closenessLabel(p.closenessId))+'</span>':'') + (p.holidayCard? '<span class="pill">🎄 Card list</span>':'') + '</div>' +
   '</div>' +
 
   (p.tags && p.tags.length ? '<div class="chip-row">'+p.tags.map(function(t){return '<span class="chip">'+esc(t)+'</span>';}).join('')+'</div>' : '') +
@@ -2057,6 +2205,7 @@ function renderMore(){
   });
   var trashCount=trashedPeopleCount+trashedEntriesCount+trashedEventsCount+trashedQuoteCount+trashedGiftCount;
   var dupCount=findDuplicateCandidates().length;
+  var undoableImportCount = data.lastImportBatch ? data.lastImportBatch.ids.filter(function(id){ var p=findPerson(id); return p && !p.deletedAt; }).length : 0;
 
   var meAvatarHtml='';
   if(meP){
@@ -2082,6 +2231,11 @@ function renderMore(){
     ) +
   '</div>' +
   '<div class="section-label">Manage people</div>' +
+  (undoableImportCount>0 ?
+    '<button class="more-card" style="width:100%;text-align:left;" data-action="undo-last-import">' +
+      '<span class="mc-ic">↩️</span><span class="mc-body"><span class="mc-title">Undo last import</span><span class="mc-sub">'+undoableImportCount+' people from your last import</span></span><span class="mc-arrow">›</span>' +
+    '</button>'
+    : '') +
   '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-archived">' +
     '<span class="mc-ic">🗃️</span><span class="mc-body"><span class="mc-title">Archived people</span><span class="mc-sub">'+archivedCount+' archived</span></span><span class="mc-arrow">›</span>' +
   '</button>' +
@@ -2097,6 +2251,9 @@ function renderMore(){
   '<div class="section-label">Customize</div>' +
   '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-customfields">' +
     '<span class="mc-ic">🛠️</span><span class="mc-body"><span class="mc-title">Custom fields</span><span class="mc-sub">'+data.customFieldDefs.length+' field'+(data.customFieldDefs.length===1?'':'s')+' added</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-closeness">' +
+    '<span class="mc-ic">🧭</span><span class="mc-body"><span class="mc-title">Closeness levels</span><span class="mc-sub">'+data.closenessLevels.length+' level'+(data.closenessLevels.length===1?'':'s')+' · sort People by these</span></span><span class="mc-arrow">›</span>' +
   '</button>' +
   '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-backlog">' +
     '<span class="mc-ic">🐛</span><span class="mc-body"><span class="mc-title">Bugs &amp; ideas</span><span class="mc-sub">'+data.backlog.filter(function(b){return !b.done;}).length+' open</span></span><span class="mc-arrow">›</span>' +
@@ -2166,7 +2323,8 @@ function missingChecks(){
     {key:'gender', label:'Gender', test:function(p){ return !p.gender; }},
     {key:'pronouns', label:'Pronouns', test:function(p){ return !p.pronouns; }},
     {key:'howmet', label:'How you met', test:function(p){ return !p.isMe && !(p.howWeMet && p.howWeMet.text); }},
-    {key:'holiday', label:'Holiday card list status', test:function(p){ return p.holidayCard===undefined; }}
+    {key:'holiday', label:'Holiday card list status', test:function(p){ return p.holidayCard===undefined; }},
+    {key:'closeness', label:'Closeness', test:function(p){ return !p.closenessId; }}
   ];
   data.customFieldDefs.forEach(function(f){
     checks.push({key:'cf_'+f.id, label:f.label, test:function(p){ var v=(p.customFieldValues||{})[f.id]; return v===undefined || v===null || v===''; }});
@@ -2288,6 +2446,70 @@ function deleteCfield(fieldId){
     toast('Field deleted');
     renderCustomFields();
   });
+}
+
+/* ================= CLOSENESS LEVELS ================= */
+function renderClosenessLevels(){
+  var root=document.getElementById('closenessContent');
+  var intro='<p style="font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:14px;">Sort People by closeness using these levels, closest at the top. Reorder or rename anytime — existing assignments carry over automatically.</p>';
+  var list = data.closenessLevels.length ? data.closenessLevels.map(function(l,i){
+    var count = data.people.filter(function(p){ return !p.deletedAt && p.closenessId===l.id; }).length;
+    return '<div class="cfield-row"><div class="cf-body"><div class="cf-name">'+esc(l.label)+'</div><div class="cf-type">'+count+' '+(count===1?'person':'people')+'</div></div>' +
+      (i>0? '<button data-action="move-closenesslevel-up" data-id="'+l.id+'">↑</button>' : '') +
+      (i<data.closenessLevels.length-1? '<button data-action="move-closenesslevel-down" data-id="'+l.id+'">↓</button>' : '') +
+      '<button data-action="edit-closenesslevel" data-id="'+l.id+'">Edit</button>' +
+      '<button data-action="delete-closenesslevel" data-id="'+l.id+'">Delete</button></div>';
+  }).join('') : '<p style="font-size:13.5px;color:var(--muted);margin-bottom:14px;">No closeness levels yet.</p>';
+  root.innerHTML = intro + list + '<div class="btn-row" style="margin-top:8px;"><button class="btn btn-secondary btn-sm" data-action="add-closenesslevel">＋ New level</button></div>';
+}
+function openClosenessLevelForm(levelId){
+  var form=document.getElementById('closenessLevelForm');
+  form.reset();
+  document.getElementById('cl-id').value=levelId||'';
+  document.getElementById('closenessLevelFormTitle').textContent = levelId ? 'Edit level' : 'New closeness level';
+  if(levelId){
+    var l=closenessLevel(levelId);
+    if(l) document.getElementById('cl-label').value=l.label;
+  }
+  openModal('modal-closenesslevel');
+}
+function submitClosenessLevelForm(e){
+  e.preventDefault();
+  var id=document.getElementById('cl-id').value;
+  var label=document.getElementById('cl-label').value.trim();
+  if(!label){ toast('Level name is required'); return; }
+  if(id){
+    var l=closenessLevel(id);
+    if(l) l.label=label;
+  } else {
+    data.closenessLevels.push({id:uid('cl'), label:label});
+  }
+  saveData();
+  closeModal('modal-closenesslevel');
+  toast('Saved');
+  renderClosenessLevels();
+}
+function deleteClosenessLevel(levelId){
+  var count = data.people.filter(function(p){ return !p.deletedAt && p.closenessId===levelId; }).length;
+  var msg = count ? count+' '+(count===1?'person is':'people are')+' currently set to this level — they\'ll go back to "Not set."' : 'This level isn\'t assigned to anyone yet.';
+  showConfirm('Delete this closeness level?', msg, function(){
+    data.closenessLevels = data.closenessLevels.filter(function(x){return x.id!==levelId;});
+    data.people.forEach(function(p){ if(p.closenessId===levelId) p.closenessId=null; });
+    saveData();
+    toast('Level deleted');
+    renderClosenessLevels();
+  });
+}
+function moveClosenessLevel(levelId, dir){
+  var idx=data.closenessLevels.findIndex(function(x){return x.id===levelId;});
+  if(idx===-1) return;
+  var swapIdx = dir==='up' ? idx-1 : idx+1;
+  if(swapIdx<0 || swapIdx>=data.closenessLevels.length) return;
+  var tmp=data.closenessLevels[idx];
+  data.closenessLevels[idx]=data.closenessLevels[swapIdx];
+  data.closenessLevels[swapIdx]=tmp;
+  saveData();
+  renderClosenessLevels();
 }
 
 /* ================= BACKLOG (bugs & ideas) ================= */
@@ -2824,6 +3046,8 @@ function openPersonForm(personId, presetIsMe){
   document.getElementById('pf-ismetoggle').classList.remove('on');
   document.getElementById('pf-holidaytoggle').classList.remove('on');
   setBirthdayMethod('card');
+  var csel=document.getElementById('pf-closeness');
+  csel.innerHTML='<option value="">Not set</option>'+data.closenessLevels.map(function(l){ return '<option value="'+l.id+'">'+esc(l.label)+'</option>'; }).join('');
   var msel=document.getElementById('pf-bmonth'), dsel=document.getElementById('pf-bday');
   if(!msel.dataset.built){
     msel.innerHTML='<option value="">Month</option>'+MONTHS.map(function(m,i){return '<option value="'+(i+1)+'">'+m+'</option>';}).join('');
@@ -2847,6 +3071,7 @@ function openPersonForm(personId, presetIsMe){
     document.getElementById('pf-maiden').value=p.maidenName||'';
     document.getElementById('pf-pronouns').value=p.pronouns||'';
     document.getElementById('pf-gender').value=p.gender||'';
+    document.getElementById('pf-closeness').value=p.closenessId||'';
     document.getElementById('pf-phone').value=p.phone||'';
     document.getElementById('pf-email').value=p.email||'';
     document.getElementById('pf-address').value=p.address||'';
@@ -2894,6 +3119,7 @@ function submitPersonForm(e){
   var email=document.getElementById('pf-email').value.trim();
   var address=document.getElementById('pf-address').value.trim();
   var gender=document.getElementById('pf-gender').value;
+  var closenessId=document.getElementById('pf-closeness').value || null;
   var isMe=document.getElementById('pf-ismetoggle').classList.contains('on');
   var holidayCard=document.getElementById('pf-holidaytoggle').classList.contains('on');
   var customValues=readCustomFieldInputs();
@@ -2909,6 +3135,7 @@ function submitPersonForm(e){
       p.name=composeFullName(p);
       p.pronouns=document.getElementById('pf-pronouns').value.trim();
       p.gender=gender;
+      p.closenessId=closenessId;
       p.phone=phone; p.email=email; p.isMe=isMe; p.address=address; p.holidayCard=holidayCard;
       p.birthday={month:month?Number(month):null, day:day?Number(day):null, year:year?Number(year):null};
       p.birthdayMethod=currentBirthdayMethod;
@@ -2924,7 +3151,7 @@ function submitPersonForm(e){
     } else {
       var np={
         id:uid('p'), firstName:first, middleName:middle, lastName:last, nickname:nickname, maidenName:maiden,
-        pronouns:document.getElementById('pf-pronouns').value.trim(), gender:gender,
+        pronouns:document.getElementById('pf-pronouns').value.trim(), gender:gender, closenessId:closenessId,
         phone:phone, email:email, isMe:isMe, address:address, holidayCard:holidayCard,
         birthday:{month:month?Number(month):null, day:day?Number(day):null, year:year?Number(year):null},
         birthdayMethod:currentBirthdayMethod,
@@ -3138,6 +3365,7 @@ function refreshCurrentScreen(){
   else if(currentScreen==='sync') renderSync();
   else if(currentScreen==='missinginfo') renderMissingInfo();
   else if(currentScreen==='customfields') renderCustomFields();
+  else if(currentScreen==='closeness') renderClosenessLevels();
   else if(currentScreen==='backlog') renderBacklog();
 }
 
@@ -3844,6 +4072,7 @@ function importContactsFile(file){
     showConfirm('Import '+cards.length+' contact'+(cards.length===1?'':'s')+'?',
       'New people will be added for each contact. Existing people won\'t be matched automatically — check Find Duplicates afterward if you\'re re-importing.', function(){
       var photoJobs=[];
+      var importedIds=[];
       cards.forEach(function(c){
         var split = c.firstName || c.lastName ? {first:c.firstName,middle:'',last:c.lastName} : splitLegacyName(c.name);
         var now=Date.now();
@@ -3861,11 +4090,13 @@ function importContactsFile(file){
         np.name=composeFullName(np);
         touch(np,'profile');
         data.people.push(np);
+        importedIds.push(np.id);
         if(c.photoBase64){
           var blob=base64ToBlob(c.photoBase64, c.photoMime);
           if(blob) photoJobs.push(storePhoto(blob).then(function(photoId){ np.photoId=photoId; }));
         }
       });
+      if(importedIds.length) data.lastImportBatch = {type:'contacts', ids:importedIds, at:Date.now()};
       Promise.all(photoJobs).then(function(){
         saveData();
         toast(cards.length+' contact'+(cards.length===1?'':'s')+' imported');
@@ -3952,6 +4183,7 @@ function confirmCsvImport(){
   });
   if(mapping.firstName===''){ toast('Map a First name column'); return; }
   var count=0;
+  var importedIds=[];
   csvParsedRows.forEach(function(row){
     var get=function(key){ return mapping[key]!=='' && mapping[key]!==undefined ? String(row[Number(mapping[key])]||'').trim() : ''; };
     var first=get('firstName');
@@ -3973,8 +4205,10 @@ function confirmCsvImport(){
     np.name=composeFullName(np);
     touch(np,'profile');
     data.people.push(np);
+    importedIds.push(np.id);
     count++;
   });
+  if(importedIds.length) data.lastImportBatch = {type:'csv', ids:importedIds, at:Date.now()};
   saveData();
   closeModal('modal-csvimport');
   toast(count+' people imported');
@@ -4168,6 +4402,88 @@ function handleAction(action, target){
       break;
     case 'open-person': closeAllModals(); openPersonScreen(id); break;
     case 'goto-people': showScreen('people'); break;
+    case 'toggle-people-select-mode':
+      peopleSelectMode = !peopleSelectMode;
+      selectedPeopleIds = [];
+      renderPeopleList();
+      break;
+    case 'toggle-person-select': {
+      var si = selectedPeopleIds.indexOf(id);
+      if(si===-1) selectedPeopleIds.push(id); else selectedPeopleIds.splice(si,1);
+      renderPeopleList();
+      break;
+    }
+    case 'select-all-people': {
+      var visibleIds = filteredPeopleList().map(function(p){return p.id;});
+      var allSelected = visibleIds.length>0 && visibleIds.every(function(vid){ return selectedPeopleIds.indexOf(vid)!==-1; });
+      selectedPeopleIds = allSelected ? [] : visibleIds.slice();
+      renderPeopleList();
+      break;
+    }
+    case 'open-bulk-actions':
+      if(selectedPeopleIds.length===0) break;
+      document.getElementById('bulkActionsTitle').textContent=selectedPeopleIds.length+' selected';
+      openModal('modal-bulkactions');
+      break;
+    case 'bulk-add-cardlist': {
+      var n1=selectedPeopleIds.length;
+      selectedPeopleIds.forEach(function(pid){ var p=findPerson(pid); if(p) p.holidayCard=true; });
+      saveData();
+      closeModal('modal-bulkactions');
+      renderPeopleList();
+      toast(n1+' people added to card list');
+      break;
+    }
+    case 'bulk-remove-cardlist': {
+      var n2=selectedPeopleIds.length;
+      selectedPeopleIds.forEach(function(pid){ var p=findPerson(pid); if(p) p.holidayCard=false; });
+      saveData();
+      closeModal('modal-bulkactions');
+      renderPeopleList();
+      toast(n2+' people removed from card list');
+      break;
+    }
+    case 'bulk-set-birthday-method': {
+      var method=target.getAttribute('data-method');
+      var n3=selectedPeopleIds.length;
+      selectedPeopleIds.forEach(function(pid){ var p=findPerson(pid); if(p) p.birthdayMethod=method; });
+      saveData();
+      closeModal('modal-bulkactions');
+      renderPeopleList();
+      toast(n3+' people set to '+(method==='text'?'💬 Text':'🎁 Card'));
+      break;
+    }
+    case 'bulk-trash-people': {
+      if(selectedPeopleIds.length===0) break;
+      var n = selectedPeopleIds.length;
+      closeModal('modal-bulkactions');
+      showConfirm('Move '+n+' people to Trash?', 'They\'ll be hidden from your lists. You can restore them, or delete them for good, from Trash in More.', function(){
+        selectedPeopleIds.forEach(function(pid){ var p=findPerson(pid); if(p) p.deletedAt=Date.now(); });
+        saveData();
+        peopleSelectMode=false; selectedPeopleIds=[];
+        renderPeopleList();
+        toast(n+' people moved to Trash');
+      });
+      break;
+    }
+    case 'undo-last-import': {
+      var batch = data.lastImportBatch;
+      if(!batch){ break; }
+      var undoCount = 0;
+      showConfirm('Undo this import?', 'Everyone brought in by this import will be moved to Trash. You can restore them individually from Trash in More if needed.', function(){
+        batch.ids.forEach(function(pid){ var p=findPerson(pid); if(p && !p.deletedAt){ p.deletedAt=Date.now(); undoCount++; } });
+        data.lastImportBatch = null;
+        saveData();
+        refreshCurrentScreen();
+        toast(undoCount+' people moved to Trash');
+      });
+      break;
+    }
+    case 'dismiss-import-banner':
+      data.lastImportBatch = null;
+      saveData();
+      renderImportUndoBanner();
+      break;
     case 'goto-tree': showScreen('tree'); break;
     case 'goto-tree-focus': showScreen('tree', {focusId:id}); break;
     case 'goto-my-connections': showScreen('tree', {focusId:id}); break;
@@ -4362,11 +4678,17 @@ function handleAction(action, target){
     case 'add-sheet-event': closeModal('modal-addsheet'); openEventForm(null); break;
     case 'goto-missinginfo': showScreen('missinginfo'); break;
     case 'goto-customfields': showScreen('customfields'); break;
+    case 'goto-closeness': showScreen('closeness'); break;
     case 'goto-backlog': showScreen('backlog'); break;
     case 'filter-missing': missingInfoActiveFilter=target.getAttribute('data-key')||''; renderMissingInfo(); break;
     case 'add-cfield': openCfieldForm(null); break;
     case 'edit-cfield': openCfieldForm(id); break;
     case 'delete-cfield': deleteCfield(id); break;
+    case 'add-closenesslevel': openClosenessLevelForm(null); break;
+    case 'edit-closenesslevel': openClosenessLevelForm(id); break;
+    case 'delete-closenesslevel': deleteClosenessLevel(id); break;
+    case 'move-closenesslevel-up': moveClosenessLevel(id, 'up'); break;
+    case 'move-closenesslevel-down': moveClosenessLevel(id, 'down'); break;
     case 'add-backlog': openBacklogForm(); break;
     case 'toggle-backlog': toggleBacklogItem(id); break;
     case 'delete-backlog': deleteBacklogItem(id); break;
@@ -4543,8 +4865,17 @@ function wireGlobalEvents(){
   document.getElementById('galleryFilterMonth').addEventListener('change', function(){ renderTimeline(); });
   document.getElementById('galleryFilterYear').addEventListener('change', function(){ renderTimeline(); });
 
+  document.querySelectorAll('#peopleSortToggle button').forEach(function(b){
+    b.addEventListener('click', function(){
+      currentPeopleSort=b.dataset.sort;
+      document.querySelectorAll('#peopleSortToggle button').forEach(function(x){ x.classList.toggle('active', x===b); });
+      renderPeopleList();
+    });
+  });
+
   document.getElementById('quickPersonForm').addEventListener('submit', submitQuickPersonForm);
   document.getElementById('cfieldForm').addEventListener('submit', submitCfieldForm);
+  document.getElementById('closenessLevelForm').addEventListener('submit', submitClosenessLevelForm);
   document.getElementById('cf-type').addEventListener('change', function(){
     document.getElementById('cf-options-wrap').classList.toggle('hidden', this.value!=='select');
   });
