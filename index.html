@@ -622,18 +622,30 @@ main.screen.active{display:block;}
     <div class="modal-sheet">
       <div class="modal-header"><h3 id="bulkActionsTitle">Actions</h3><button class="modal-close" data-action="close-modal" data-modal="modal-bulkactions">✕</button></div>
       <div class="modal-body" style="padding:8px 18px;">
+        <div class="section-label" style="margin:10px 0 4px;">Holiday cards</div>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-add-cardlist">
           <span class="so-ic">🎄</span><span><span class="so-text" style="display:block;">Add to holiday card list</span><span class="so-sub">Mark everyone selected for cards</span></span>
         </button>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-remove-cardlist">
           <span class="so-ic">🚫</span><span><span class="so-text" style="display:block;">Remove from holiday card list</span><span class="so-sub">Take everyone selected off the list</span></span>
         </button>
+        <div class="section-label" style="margin:18px 0 4px;">Birthdays</div>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-set-birthday-method" data-method="card">
           <span class="so-ic">🎁</span><span><span class="so-text" style="display:block;">Celebrate birthdays with a card</span><span class="so-sub">Sets everyone selected's birthday method</span></span>
         </button>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-set-birthday-method" data-method="text">
           <span class="so-ic">💬</span><span><span class="so-text" style="display:block;">Celebrate birthdays with a text</span><span class="so-sub">Sets everyone selected's birthday method</span></span>
         </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-set-card-reminder" data-value="off">
+          <span class="so-ic">🔕</span><span><span class="so-text" style="display:block;">Turn off birthday reminders</span><span class="so-sub">Stops nudging you to wish them happy birthday</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-set-card-reminder" data-value="on">
+          <span class="so-ic">🔔</span><span><span class="so-text" style="display:block;">Turn on birthday reminders</span><span class="so-sub">Back on your Reminders list</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-clear-birthday">
+          <span class="so-ic">🎂</span><span><span class="so-text" style="display:block;">Clear birthday date</span><span class="so-sub">Removes the saved date entirely</span></span>
+        </button>
+        <div class="section-label" style="margin:18px 0 4px;">Danger zone</div>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-trash-people">
           <span class="so-ic">🗑️</span><span><span class="so-text" style="display:block;">Move to Trash</span><span class="so-sub">Restorable later from Trash in More</span></span>
         </button>
@@ -4451,6 +4463,28 @@ function handleAction(action, target){
       closeModal('modal-bulkactions');
       renderPeopleList();
       toast(n3+' people set to '+(method==='text'?'💬 Text':'🎁 Card'));
+      break;
+    }
+    case 'bulk-set-card-reminder': {
+      var onOff=target.getAttribute('data-value')==='on';
+      var n4=selectedPeopleIds.length;
+      selectedPeopleIds.forEach(function(pid){ var p=findPerson(pid); if(p) p.cardReminder=onOff; });
+      saveData();
+      closeModal('modal-bulkactions');
+      renderPeopleList();
+      toast('Birthday reminders turned '+(onOff?'on':'off')+' for '+n4+' people');
+      break;
+    }
+    case 'bulk-clear-birthday': {
+      if(selectedPeopleIds.length===0) break;
+      var n5=selectedPeopleIds.length;
+      closeModal('modal-bulkactions');
+      showConfirm('Clear '+n5+' birthdays?', 'This removes the saved birthday date for everyone selected. You\'ll need to re-enter it by hand if you change your mind.', function(){
+        selectedPeopleIds.forEach(function(pid){ var p=findPerson(pid); if(p) p.birthday=null; });
+        saveData();
+        renderPeopleList();
+        toast(n5+' birthdays cleared');
+      });
       break;
     }
     case 'bulk-trash-people': {
