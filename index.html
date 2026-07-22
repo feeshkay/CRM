@@ -383,6 +383,16 @@ main.screen.active{display:block;}
 .import-banner .btn-row{margin:0;flex-wrap:nowrap;}
 .select-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;margin-bottom:12px;font-size:13.5px;font-weight:600;}
 .select-bar .btn-row{margin:0;flex-wrap:wrap;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
+.cal-dow{text-align:center;font-size:11px;color:var(--muted);font-weight:600;padding-bottom:4px;}
+.cal-day{aspect-ratio:1;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;padding:2px;color:var(--ink);}
+.cal-day.today{border-color:var(--accent);border-width:2px;font-weight:700;}
+.cal-day.selected{background:var(--accent-soft);}
+.cal-day.other-month{visibility:hidden;}
+.cal-dots{display:flex;gap:2px;margin-top:2px;height:5px;}
+.cal-dot{width:5px;height:5px;border-radius:50%;}
+.cal-dot.event{background:var(--accent);}
+.cal-dot.birthday{background:var(--thread);}
 .gallery-filter-bar select{flex:1;min-width:90px;padding:9px 10px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface);font-size:13.5px;}
 .gallery-wall{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
 .gallery-wall .gw-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:1px solid var(--line);}
@@ -458,6 +468,29 @@ main.screen.active{display:block;}
     <div id="remindersList"></div>
   </main>
 
+  <!-- ============ CALENDAR ============ -->
+  <main class="screen" id="screen-calendar">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">Calendar</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="search-wrap" style="margin-bottom:10px;">
+      <input type="text" id="calBirthdaySearch" placeholder="Search birthdays…">
+    </div>
+    <div id="calBirthdaySearchResults"></div>
+    <div class="btn-row" style="margin-top:0;margin-bottom:6px;align-items:center;">
+      <button class="btn btn-secondary btn-sm" data-action="cal-prev-month">‹</button>
+      <span id="calMonthLabel" style="font-weight:700;font-size:16px;flex:1;text-align:center;"></span>
+      <button class="btn btn-secondary btn-sm" data-action="cal-next-month">›</button>
+    </div>
+    <div class="btn-row" style="margin-top:0;margin-bottom:14px;">
+      <button class="btn btn-secondary btn-sm" data-action="cal-today">Today</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div id="calDayPanel"></div>
+  </main>
+
   <!-- ============ TREE ============ -->
   <main class="screen" id="screen-tree">
     <div class="back-row">
@@ -530,6 +563,9 @@ main.screen.active{display:block;}
       <h2 style="font-size:19px;">What's missing</h2>
       <span style="width:40px;"></span>
     </div>
+    <div class="search-wrap" style="margin-bottom:14px;">
+      <input type="text" id="missingSearchInput" placeholder="Search names…">
+    </div>
     <div id="missingInfoContent"></div>
   </main>
 
@@ -582,6 +618,9 @@ main.screen.active{display:block;}
         </button>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-hangout">
           <span class="so-ic">📍</span><span><span class="so-text" style="display:block;">Log a hangout</span><span class="so-sub">Something you did together</span></span>
+        </button>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-interaction">
+          <span class="so-ic">✉️</span><span><span class="so-text" style="display:block;">Log an interaction</span><span class="so-sub">A text, call, email, letter…</span></span>
         </button>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="add-sheet-memory">
           <span class="so-ic">💭</span><span><span class="so-text" style="display:block;">Add a memory</span><span class="so-sub">A moment worth keeping, dated or not</span></span>
@@ -798,7 +837,19 @@ main.screen.active{display:block;}
           <input type="hidden" id="ef-id">
           <div class="type-toggle">
             <button type="button" data-type="hangout" class="active">📍 Hangout</button>
+            <button type="button" data-type="interaction">✉️ Interaction</button>
             <button type="button" data-type="memory">💭 Memory</button>
+          </div>
+          <div class="form-group hidden" id="ef-method-wrap">
+            <label>How</label>
+            <select id="ef-method">
+              <option value="text">💬 Text</option>
+              <option value="call">📞 Phone call</option>
+              <option value="email">📧 Email</option>
+              <option value="letter">✉️ Letter / card</option>
+              <option value="video">🎥 Video call</option>
+              <option value="other">Other</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Title</label>
@@ -1305,6 +1356,7 @@ var pendingChecklistElId=null; // which checklist quick-add-person should check 
 var csvParsedRows=null, csvParsedHeaders=null;
 var peopleSelectMode=false, selectedPeopleIds=[];
 var currentPeopleSort='name';
+var calViewYear=null, calViewMonth=null, calSelectedDate=null;
 var currentTimelineView='list';
 var currentGalleryFilters={day:'',month:'',year:'',person:''};
 var journalUnlocked=false;
@@ -1377,6 +1429,15 @@ function dateStr(){
 function personName(id){
   var p=findPerson(id);
   return p? p.name : '(removed person)';
+}
+function entryIcon(e){
+  if(e.type==='met') return '🌱';
+  if(e.type==='memory') return '💭';
+  if(e.type==='interaction'){
+    var m={text:'💬',call:'📞',email:'📧',letter:'✉️',video:'🎥'};
+    return m[e.method] || '✉️';
+  }
+  return '📍';
 }
 function findPerson(id){ return data.people.find(function(p){ return p.id===id; }); }
 function activePeople(){ return data.people.filter(function(p){ return !p.archived && !p.deletedAt; }); }
@@ -1622,7 +1683,7 @@ function showScreen(name, opts){
     missinginfo:['Kept','Kept'],
     customfields:['Kept','Kept'],
     backlog:['Kept','Kept']};
-  if(titles[name] && ['tree','person-detail','archived','trash','duplicates','sync','missinginfo','customfields','closeness','backlog'].indexOf(name)===-1){
+  if(titles[name] && ['tree','person-detail','archived','trash','duplicates','sync','missinginfo','customfields','closeness','calendar','backlog'].indexOf(name)===-1){
     document.getElementById('topbarTitle').textContent=titles[name][0];
     document.getElementById('topbarTagline').textContent=titles[name][1];
   }
@@ -1640,6 +1701,7 @@ function showScreen(name, opts){
   else if(name==='missinginfo') renderMissingInfo();
   else if(name==='customfields') renderCustomFields();
   else if(name==='closeness') renderClosenessLevels();
+  else if(name==='calendar') renderCalendar();
   else if(name==='backlog') renderBacklog();
 }
 
@@ -1769,7 +1831,7 @@ function renderEntryCard(e){
     return '<img data-photo-id="'+pid+'" data-action="view-photo" data-photo-full="'+pid+'">';
   }).join('');
   var dateLabel = e.date ? formatDateDisplay(e.date) : (e.approxDate ? esc(e.approxDate) : 'Undated');
-  var icon = e.type==='met' ? '🌱' : (e.type==='memory'?'💭':'📍');
+  var icon = entryIcon(e);
   var actions = e.synthetic ?
     '<button data-action="open-person" data-id="'+e.people[0]+'">Edit on their profile</button>' :
     '<button data-action="edit-entry" data-id="'+e.id+'">Edit</button><button data-action="delete-entry" data-id="'+e.id+'">Delete</button>';
@@ -2088,6 +2150,7 @@ function renderPersonDetail(personId){
   '</div>' +
   '<div class="btn-row wrap" style="margin-bottom:10px;">' +
     '<button class="btn btn-secondary btn-sm" data-action="add-hangout-for" data-id="'+p.id+'">📍 Log hangout</button>' +
+    '<button class="btn btn-secondary btn-sm" data-action="add-interaction-for" data-id="'+p.id+'">✉️ Log interaction</button>' +
     '<button class="btn btn-secondary btn-sm" data-action="add-memory-for" data-id="'+p.id+'">💭 Add memory</button>' +
   '</div>' +
   '<div id="pdTimelineList">'+timelineHtml+'</div>' +
@@ -2171,7 +2234,7 @@ function renderReminders(){
     buckets[bucket].push({sortKey:p._days, html:html});
   });
 
-  var html='<div class="btn-row" style="margin-top:0;margin-bottom:16px;"><button class="btn btn-secondary btn-sm" data-action="plan-event">＋ Plan an event</button></div>';
+  var html='<div class="btn-row" style="margin-top:0;margin-bottom:16px;"><button class="btn btn-secondary btn-sm" data-action="plan-event">＋ Plan an event</button><button class="btn btn-secondary btn-sm" data-action="goto-calendar">📅 Calendar view</button></div>';
   var anyItems=false;
   BUCKET_ORDER.forEach(function(b){
     var items=buckets[b];
@@ -2198,6 +2261,77 @@ function renderReminders(){
   var soon=withReminder.filter(function(p){ return p._days<=14; }).length;
   var soonEvents=events.filter(function(ev){ var du=ev.planningStatus==='unplanned'?null:daysUntilDate(ev.date); return du!==null && du<=14; }).length;
   document.getElementById('remindersBadge').classList.toggle('hidden', (soon+soonEvents)===0);
+}
+
+/* ================= RENDER: CALENDAR ================= */
+function birthdayPeopleForMonthDay(month, day){
+  return activePeople().filter(function(p){ return p.birthday && p.birthday.month===month && p.birthday.day===day; });
+}
+function renderCalendar(){
+  if(calViewYear===null){
+    var t=new Date();
+    calViewYear=t.getFullYear(); calViewMonth=t.getMonth()+1; calSelectedDate=dateStr();
+  }
+  var y=calViewYear, m=calViewMonth;
+  document.getElementById('calMonthLabel').textContent = MONTHS[m-1]+' '+y;
+
+  var firstOfMonth=new Date(y, m-1, 1);
+  var startDow=firstOfMonth.getDay();
+  var daysInMonth=new Date(y, m, 0).getDate();
+  var todayStrVal=dateStr();
+
+  var dowHtml=['S','M','T','W','T','F','S'].map(function(d){ return '<div class="cal-dow">'+d+'</div>'; }).join('');
+  var cellsHtml='';
+  for(var i=0;i<startDow;i++){ cellsHtml+='<div class="cal-day other-month"></div>'; }
+  for(var day=1; day<=daysInMonth; day++){
+    var dstr=y+'-'+String(m).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    var hasEvent=data.events.some(function(ev){ return !ev.deletedAt && ev.date===dstr; });
+    var hasBday=birthdayPeopleForMonthDay(m, day).length>0;
+    var isToday = dstr===todayStrVal;
+    var isSelected = dstr===calSelectedDate;
+    cellsHtml += '<button class="cal-day'+(isToday?' today':'')+(isSelected?' selected':'')+'" data-action="cal-select-day" data-date="'+dstr+'">' +
+      '<span>'+day+'</span>' +
+      '<span class="cal-dots">'+(hasEvent?'<span class="cal-dot event"></span>':'')+(hasBday?'<span class="cal-dot birthday"></span>':'')+'</span>' +
+    '</button>';
+  }
+  document.getElementById('calGrid').innerHTML = dowHtml + cellsHtml;
+  renderCalDayPanel();
+}
+function renderCalDayPanel(){
+  var d=calSelectedDate;
+  var parts=d.split('-'); var yy=Number(parts[0]), mm=Number(parts[1]), dd=Number(parts[2]);
+  var dateObj=new Date(yy,mm-1,dd);
+  var label=dateObj.toLocaleDateString(undefined,{weekday:'long', month:'long', day:'numeric', year:'numeric'});
+  var evs=data.events.filter(function(ev){ return !ev.deletedAt && ev.date===d; });
+  var bdays=birthdayPeopleForMonthDay(mm, dd);
+
+  var html='<div class="section-label" style="margin-top:16px;">'+esc(label)+'</div>';
+  if(evs.length===0 && bdays.length===0){
+    html+='<p style="font-size:13.5px;color:var(--muted);margin-bottom:10px;">Nothing on this day.</p>';
+  } else {
+    bdays.forEach(function(p){
+      var ageNote = p.birthday.year ? '<div class="meta"><span>Turning '+(yy-p.birthday.year)+'</span></div>' : '';
+      html+='<button class="person-row" style="width:100%;text-align:left;" data-action="open-person" data-id="'+p.id+'">' +
+        '<div class="avatar">🎂</div><div class="person-info"><div class="name">'+esc(p.name)+'\'s birthday</div>'+ageNote+'</div></button>';
+    });
+    evs.forEach(function(ev){
+      html+='<button class="person-row" style="width:100%;text-align:left;" data-action="edit-event" data-id="'+ev.id+'">' +
+        '<div class="avatar">📅</div><div class="person-info"><div class="name">'+esc(ev.title)+'</div>'+(ev.time?'<div class="meta"><span>'+esc(ev.time)+'</span></div>':'')+'</div></button>';
+    });
+  }
+  html+='<div class="btn-row" style="margin-top:10px;"><button class="btn btn-secondary btn-sm" data-action="cal-add-event">＋ Add event on this day</button></div>';
+  document.getElementById('calDayPanel').innerHTML=html;
+}
+function renderCalBirthdaySearch(){
+  var q=(document.getElementById('calBirthdaySearch').value||'').toLowerCase().trim();
+  var root=document.getElementById('calBirthdaySearchResults');
+  if(!q){ root.innerHTML=''; return; }
+  var matches=activePeople().filter(function(p){ return p.birthday && p.birthday.month && p.birthday.day && p.name.toLowerCase().indexOf(q)!==-1; })
+    .sort(function(a,b){ return a.name.localeCompare(b.name); });
+  if(matches.length===0){ root.innerHTML='<p style="font-size:13px;color:var(--muted);margin-bottom:10px;">No matching birthdays.</p>'; return; }
+  root.innerHTML = '<div class="missing-chip-row" style="margin-bottom:10px;">' + matches.map(function(p){
+    return '<button class="chip tap" data-action="cal-jump-to-birthday" data-id="'+p.id+'">'+esc(p.name)+' · '+MONTHS_SHORT[p.birthday.month-1]+' '+p.birthday.day+'</button>';
+  }).join('') + '</div>';
 }
 
 /* ================= RENDER: MORE ================= */
@@ -2228,6 +2362,9 @@ function renderMore(){
 
   var root=document.getElementById('moreContent');
   root.innerHTML =
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-calendar">' +
+    '<span class="mc-ic">📅</span><span class="mc-body"><span class="mc-title">Calendar</span><span class="mc-sub">Birthdays and events by month</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
   '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-tree">' +
     '<span class="mc-ic">🕸️</span><span class="mc-body"><span class="mc-title">Relationship tree</span><span class="mc-sub">See how everyone connects</span></span><span class="mc-arrow">›</span>' +
   '</button>' +
@@ -2352,8 +2489,9 @@ function missingInfoTotalCount(){
 function renderMissingInfo(){
   var checks=missingChecks();
   var people=activePeople();
+  var q=(document.getElementById('missingSearchInput').value||'').toLowerCase().trim();
   var results=checks.map(function(c){
-    var missing=people.filter(c.test);
+    var missing=people.filter(c.test).sort(function(a,b){ return a.name.localeCompare(b.name); });
     return {check:c, people:missing};
   }).filter(function(r){ return r.people.length; });
 
@@ -2363,8 +2501,11 @@ function renderMissingInfo(){
     '</div>';
 
   var shown = missingInfoActiveFilter ? results.filter(function(r){ return r.check.key===missingInfoActiveFilter; }) : results;
+  shown = shown.map(function(r){
+    return { check:r.check, people: q ? r.people.filter(function(p){ return p.name.toLowerCase().indexOf(q)!==-1; }) : r.people };
+  }).filter(function(r){ return r.people.length; });
 
-  var body = shown.length===0 ? '<div class="empty-state"><div class="big">✨</div><h3>Nothing missing</h3><p>Every profile has this info filled in.</p></div>' :
+  var body = shown.length===0 ? '<div class="empty-state"><div class="big">✨</div><h3>'+(q?'No matches':'Nothing missing')+'</h3><p>'+(q?'No one missing this info matches your search.':'Every profile has this info filled in.')+'</p></div>' :
     shown.map(function(r){
       return '<div class="missing-row"><div class="mr-top"><span class="mr-title">'+esc(r.check.label)+'</span><span class="mr-count">'+r.people.length+' missing</span></div>' +
         '<div class="missing-chip-row">' + r.people.map(function(p){
@@ -3201,8 +3342,10 @@ function setEntryType(type){
   document.querySelectorAll('#entryForm .type-toggle button').forEach(function(b){
     b.classList.toggle('active', b.dataset.type===type);
   });
-  document.getElementById('ef-date-label').textContent = type==='hangout' ? 'Date' : 'Date (optional)';
-  document.getElementById('ef-approx-wrap').classList.toggle('hidden', type==='hangout');
+  document.getElementById('ef-date-label').textContent = type==='memory' ? 'Date (optional)' : 'Date';
+  document.getElementById('ef-approx-wrap').classList.toggle('hidden', type!=='memory');
+  document.getElementById('ef-method-wrap').classList.toggle('hidden', type!=='interaction');
+  document.getElementById('ef-title').placeholder = type==='interaction' ? 'e.g. Caught up over text' : (type==='memory' ? 'What do you want to remember?' : 'What happened?');
 }
 function buildPeopleChecklistInto(elId, preselect){
   var wrap=document.getElementById(elId);
@@ -3312,6 +3455,7 @@ function openEntryForm(entryId, prefillPersonId, forcedType){
     document.getElementById('ef-title').value=e.title||'';
     document.getElementById('ef-date').value=e.date||'';
     document.getElementById('ef-approx').value=e.approxDate||'';
+    document.getElementById('ef-method').value=e.method||'text';
     document.getElementById('ef-location').value=e.location||'';
     document.getElementById('ef-desc').value=e.description||'';
     buildPeopleChecklist(e.people||[]);
@@ -3322,7 +3466,7 @@ function openEntryForm(entryId, prefillPersonId, forcedType){
       });
     });
   } else {
-    document.getElementById('entryFormTitle').textContent = (forcedType==='memory') ? 'Add a memory' : 'Log a hangout';
+    document.getElementById('entryFormTitle').textContent = (forcedType==='memory') ? 'Add a memory' : (forcedType==='interaction') ? 'Log an interaction' : 'Log a hangout';
     var meP=data.people.find(function(x){return x.isMe && !x.archived && !x.deletedAt;});
     var pre = prefillPersonId ? Array.from(new Set([meP? meP.id:null, prefillPersonId].filter(Boolean))) : undefined;
     buildPeopleChecklist(pre);
@@ -3338,6 +3482,7 @@ function submitEntryForm(e){
   var peopleIds=checklistSelected('ef-people-checklist');
   var date=document.getElementById('ef-date').value || null;
   var approx=document.getElementById('ef-approx').value.trim() || null;
+  var method=currentEntryType==='interaction' ? (document.getElementById('ef-method').value || 'text') : null;
   var location=document.getElementById('ef-location').value.trim();
   var desc=document.getElementById('ef-desc').value.trim();
 
@@ -3348,12 +3493,12 @@ function submitEntryForm(e){
     var allPhotoIds=existingPhotoIds.concat(newIds);
     if(id){
       var entry=data.timeline.find(function(x){return x.id===id;});
-      entry.type=currentEntryType; entry.title=title; entry.date=date; entry.approxDate=approx;
+      entry.type=currentEntryType; entry.title=title; entry.date=date; entry.approxDate=approx; entry.method=method;
       entry.people=peopleIds; entry.location=location; entry.description=desc; entry.photoIds=allPhotoIds;
       entry.updatedAt=Date.now();
     } else {
       data.timeline.push({
-        id:uid('t'), type:currentEntryType, title:title, date:date, approxDate:approx,
+        id:uid('t'), type:currentEntryType, title:title, date:date, approxDate:approx, method:method,
         people:peopleIds, location:location, description:desc, photoIds:allPhotoIds,
         createdAt:Date.now(), updatedAt:Date.now()
       });
@@ -3378,6 +3523,7 @@ function refreshCurrentScreen(){
   else if(currentScreen==='missinginfo') renderMissingInfo();
   else if(currentScreen==='customfields') renderCustomFields();
   else if(currentScreen==='closeness') renderClosenessLevels();
+  else if(currentScreen==='calendar') renderCalendar();
   else if(currentScreen==='backlog') renderBacklog();
 }
 
@@ -3414,7 +3560,7 @@ function buildLocationDatalist(){
   data.events.forEach(function(ev){ if(ev.location) locs.add(ev.location); });
   dl.innerHTML=Array.from(locs).map(function(l){ return '<option value="'+esc(l)+'">'; }).join('');
 }
-function openEventForm(eventId){
+function openEventForm(eventId, presetDate){
   var form=document.getElementById('eventForm');
   form.reset();
   document.getElementById('ev-id').value=eventId||'';
@@ -3446,7 +3592,7 @@ function openEventForm(eventId){
     buildPeopleChecklistInto('ev-people-checklist', ev.invitees||[]);
   } else {
     document.getElementById('eventFormTitle').textContent='Plan an event';
-    document.getElementById('ev-date').value=dateStr();
+    document.getElementById('ev-date').value=presetDate || dateStr();
     buildPeopleChecklistInto('ev-people-checklist', undefined);
   }
   openModal('modal-event');
@@ -4289,7 +4435,7 @@ function renderTrash(){
       entries.forEach(function(e){
         html+='<div class="tl-entry">' +
           '<div class="tl-top"><div><div class="tl-date">'+(e.date?formatDateDisplay(e.date):(e.approxDate||'Undated'))+'</div>' +
-          '<div class="tl-title">'+esc(e.title)+'</div></div><div class="tl-type">'+(e.type==='memory'?'💭':'📍')+'</div></div>' +
+          '<div class="tl-title">'+esc(e.title)+'</div></div><div class="tl-type">'+entryIcon(e)+'</div></div>' +
           '<div class="tl-actions">' +
             '<button data-action="restore-entry" data-id="'+e.id+'">Restore</button>' +
             '<button data-action="delete-entry-forever" data-id="'+e.id+'">Delete forever</button>' +
@@ -4543,6 +4689,7 @@ function handleAction(action, target){
     }
     case 'add-relationship-for': openRelationshipForm(null, id); break;
     case 'add-hangout-for': openEntryForm(null, id, 'hangout'); break;
+    case 'add-interaction-for': openEntryForm(null, id, 'interaction'); break;
     case 'add-memory-for': openEntryForm(null, id, 'memory'); break;
     case 'add-gallery-photo': {
       var inp=document.createElement('input');
@@ -4707,11 +4854,44 @@ function handleAction(action, target){
     case 'add-sheet-fromcontacts': closeModal('modal-addpersonsheet'); document.getElementById('importContactsInput').click(); break;
     case 'add-sheet-fromcsv': closeModal('modal-addpersonsheet'); openCsvImport(); break;
     case 'add-sheet-hangout': closeModal('modal-addsheet'); openEntryForm(null, null, 'hangout'); break;
+    case 'add-sheet-interaction': closeModal('modal-addsheet'); openEntryForm(null, null, 'interaction'); break;
     case 'add-sheet-memory': closeModal('modal-addsheet'); openEntryForm(null, null, 'memory'); break;
     case 'add-sheet-relationship': closeModal('modal-addsheet'); openRelationshipForm(null); break;
     case 'add-sheet-event': closeModal('modal-addsheet'); openEventForm(null); break;
     case 'goto-missinginfo': showScreen('missinginfo'); break;
     case 'goto-customfields': showScreen('customfields'); break;
+    case 'goto-calendar': showScreen('calendar'); break;
+    case 'cal-prev-month':
+      calViewMonth--; if(calViewMonth<1){ calViewMonth=12; calViewYear--; }
+      renderCalendar();
+      break;
+    case 'cal-next-month':
+      calViewMonth++; if(calViewMonth>12){ calViewMonth=1; calViewYear++; }
+      renderCalendar();
+      break;
+    case 'cal-today': {
+      var todayD=new Date();
+      calViewYear=todayD.getFullYear(); calViewMonth=todayD.getMonth()+1; calSelectedDate=dateStr();
+      renderCalendar();
+      break;
+    }
+    case 'cal-select-day':
+      calSelectedDate=target.getAttribute('data-date');
+      renderCalendar();
+      break;
+    case 'cal-add-event':
+      closeAllModals();
+      openEventForm(null, calSelectedDate);
+      break;
+    case 'cal-jump-to-birthday': {
+      var bp=findPerson(id);
+      if(bp && bp.birthday && bp.birthday.month){
+        calViewMonth=bp.birthday.month;
+        calSelectedDate=calViewYear+'-'+String(bp.birthday.month).padStart(2,'0')+'-'+String(bp.birthday.day).padStart(2,'0');
+        renderCalendar();
+      }
+      break;
+    }
     case 'goto-closeness': showScreen('closeness'); break;
     case 'goto-backlog': showScreen('backlog'); break;
     case 'filter-missing': missingInfoActiveFilter=target.getAttribute('data-key')||''; renderMissingInfo(); break;
@@ -4906,6 +5086,8 @@ function wireGlobalEvents(){
       renderPeopleList();
     });
   });
+  document.getElementById('missingSearchInput').addEventListener('input', function(){ renderMissingInfo(); });
+  document.getElementById('calBirthdaySearch').addEventListener('input', function(){ renderCalBirthdaySearch(); });
 
   document.getElementById('quickPersonForm').addEventListener('submit', submitQuickPersonForm);
   document.getElementById('cfieldForm').addEventListener('submit', submitCfieldForm);
