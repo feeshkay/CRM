@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
   --paper:#EFEAE0;
@@ -128,6 +130,11 @@ main.screen.active{display:block;}
 }
 .chip.tap{cursor:pointer;}
 .chip.tap:active{background:var(--accent-soft);}
+.chip.tap.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.chip.muted{background:transparent;border-style:dashed;color:var(--muted);}
+.rel-chip-row{display:inline-flex;align-items:center;gap:2px;margin:0 6px 6px 0;}
+.rel-chip-row .chip{margin:0;}
+.chip-edit{width:26px;height:26px;border-radius:50%;background:var(--paper-alt);border:1px solid var(--line);color:var(--muted);font-size:12px;flex:0 0 auto;}
 
 /* Timeline */
 .tl-entry{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow);}
@@ -452,6 +459,18 @@ main.screen.active{display:block;}
     <div class="view-toggle" id="peopleSortToggle">
       <button type="button" data-sort="name" class="active">Name</button>
       <button type="button" data-sort="closeness">Closeness</button>
+      <button type="button" data-sort="tags">Tags</button>
+      <button type="button" data-sort="lastcontact">Contact</button>
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <select id="peopleContactFilter">
+        <option value="">Haven't talked in: any time</option>
+        <option value="30">30+ days</option>
+        <option value="90">90+ days</option>
+        <option value="180">6+ months</option>
+        <option value="365">1+ year</option>
+        <option value="never">Never logged</option>
+      </select>
     </div>
     <div class="import-banner hidden" id="importUndoBanner"></div>
     <div class="select-bar hidden" id="peopleSelectBar"></div>
@@ -473,7 +492,7 @@ main.screen.active{display:block;}
     <div class="back-row">
       <button class="back-btn" data-action="goto-more">‹ Back</button>
       <h2 style="font-size:19px;">Calendar</h2>
-      <span style="width:40px;"></span>
+      <button class="icon-btn" data-action="quick-add-person-calendar" style="width:40px;">＋</button>
     </div>
     <div class="search-wrap" style="margin-bottom:10px;">
       <input type="text" id="calBirthdaySearch" placeholder="Search birthdays…">
@@ -489,6 +508,21 @@ main.screen.active{display:block;}
     </div>
     <div class="cal-grid" id="calGrid"></div>
     <div id="calDayPanel"></div>
+  </main>
+
+  <!-- ============ MAP ============ -->
+  <main class="screen" id="screen-map">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">Map</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div class="btn-row wrap" style="margin-bottom:12px;">
+      <select id="mapFilterCloseness" style="flex:1;min-width:140px;padding:9px 10px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface);font-size:13.5px;"><option value="">Any closeness</option></select>
+      <select id="mapFilterTag" style="flex:1;min-width:140px;padding:9px 10px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--surface);font-size:13.5px;"><option value="">Any tag</option></select>
+    </div>
+    <p id="mapEmptyNote" class="hidden" style="font-size:13.5px;color:var(--muted);margin-bottom:14px;">No one matches these filters with a saved location yet. Add an address from the search suggestions or "Use current location" on a person's profile to see them here.</p>
+    <div id="mapContainer" style="height:60vh;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);"></div>
   </main>
 
   <!-- ============ TREE ============ -->
@@ -589,6 +623,16 @@ main.screen.active{display:block;}
     <div id="closenessContent"></div>
   </main>
 
+  <!-- ============ TAG CATEGORIES ============ -->
+  <main class="screen" id="screen-tagcategories">
+    <div class="back-row">
+      <button class="back-btn" data-action="goto-more">‹ Back</button>
+      <h2 style="font-size:19px;">Tag categories</h2>
+      <span style="width:40px;"></span>
+    </div>
+    <div id="tagCategoriesContent"></div>
+  </main>
+
   <!-- ============ BACKLOG ============ -->
   <main class="screen" id="screen-backlog">
     <div class="back-row">
@@ -684,6 +728,16 @@ main.screen.active{display:block;}
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-clear-birthday">
           <span class="so-ic">🎂</span><span><span class="so-text" style="display:block;">Clear birthday date</span><span class="so-sub">Removes the saved date entirely</span></span>
         </button>
+        <div class="section-label" style="margin:18px 0 4px;">Closeness</div>
+        <div id="bulkClosenessOptions"></div>
+        <div class="section-label" style="margin:18px 0 4px;">Relationship with you</div>
+        <div class="form-group" style="margin-bottom:8px;">
+          <label style="font-size:12px;">If someone doesn't have a relationship with you yet, create it as</label>
+          <select id="bulk-reltype"></select>
+        </div>
+        <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-open-smorgasbord">
+          <span class="so-ic">🍽️</span><span><span class="so-text" style="display:block;">Add smorgasbord descriptors</span><span class="so-sub">Applies to each person's relationship with you — creates one if it doesn't exist yet</span></span>
+        </button>
         <div class="section-label" style="margin:18px 0 4px;">Danger zone</div>
         <button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-trash-people">
           <span class="so-ic">🗑️</span><span><span class="so-text" style="display:block;">Move to Trash</span><span class="so-sub">Restorable later from Trash in More</span></span>
@@ -691,6 +745,8 @@ main.screen.active{display:block;}
       </div>
     </div>
   </div>
+  <input type="hidden" id="bulk-descriptors">
+
 
   <!-- ============ PERSON FORM MODAL ============ -->
   <div class="modal-overlay" id="modal-person">
@@ -746,7 +802,14 @@ main.screen.active{display:block;}
           </div>
           <div class="form-group">
             <label>Address</label>
-            <input type="text" id="pf-address" placeholder="Street, city, state">
+            <div class="search-select" id="pf-address-wrap">
+              <input type="text" class="ss-input" id="pf-address" placeholder="Start typing an address…" autocomplete="off">
+              <input type="hidden" id="pf-lat"><input type="hidden" id="pf-lng">
+              <div class="ss-dropdown" id="pf-address-dropdown"></div>
+            </div>
+            <div class="btn-row" style="margin-top:8px;">
+              <button type="button" class="btn btn-secondary btn-sm" data-action="use-current-location">📍 Use current location</button>
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -808,6 +871,7 @@ main.screen.active{display:block;}
           </div>
           <div class="form-group">
             <label>Tags</label>
+            <div class="missing-chip-row" id="pf-tags-picker" style="margin-bottom:8px;"></div>
             <input type="text" id="pf-tags" placeholder="college friend, neighbor, work (comma separated)">
           </div>
           <div class="form-group">
@@ -980,7 +1044,7 @@ main.screen.active{display:block;}
   <!-- ============ RELATIONSHIP FORM MODAL ============ -->
   <div class="modal-overlay" id="modal-relationship">
     <div class="modal-sheet">
-      <div class="modal-header"><h3>Add a relationship</h3><button class="modal-close" data-action="close-modal" data-modal="modal-relationship">✕</button></div>
+      <div class="modal-header"><h3 id="relationshipFormTitle">Add a relationship</h3><button class="modal-close" data-action="close-modal" data-modal="modal-relationship">✕</button></div>
       <form id="relationshipForm">
         <div class="modal-body">
           <input type="hidden" id="rf-id">
@@ -1005,15 +1069,38 @@ main.screen.active{display:block;}
             </div>
           </div>
           <div class="form-group">
+            <label>Describe it further (optional)</label>
+            <input type="hidden" id="rf-descriptors">
+            <button type="button" class="btn btn-secondary btn-sm" data-action="open-smorgasbord" id="rf-smorgasbord-btn">🍽️ Choose from the smorgasbord</button>
+          </div>
+          <div class="form-group">
+            <label class="toggle-row"><input type="checkbox" id="rf-isex"> This is a past / ex relationship</label>
+          </div>
+          <div class="form-group">
             <label>Note (optional)</label>
             <input type="text" id="rf-note" placeholder="Any context">
           </div>
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-secondary hidden" id="rf-delete-btn" data-action="delete-relationship" data-id="">Delete</button>
           <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-relationship">Cancel</button>
           <button type="submit" class="btn btn-primary">Save relationship</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-smorgasbord">
+    <div class="modal-sheet">
+      <div class="modal-header"><h3>Relationship Anarchy Smorgasbord</h3><button class="modal-close" data-action="close-smorgasbord">✕</button></div>
+      <div class="modal-body">
+        <p style="font-size:12.5px;color:var(--muted);line-height:1.5;margin-bottom:14px;">Pick as many as fit — every relationship is its own combination. Nothing here is required.</p>
+        <div id="smorgasbordContent"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-action="close-smorgasbord">Cancel</button>
+        <button type="button" class="btn btn-primary" data-action="save-smorgasbord">Done</button>
+      </div>
     </div>
   </div>
 
@@ -1297,6 +1384,24 @@ main.screen.active{display:block;}
     </div>
   </div>
 
+  <div class="modal-overlay" id="modal-tagparent">
+    <div class="modal-sheet center">
+      <div class="modal-header"><h3>Tag category</h3><button class="modal-close" data-action="close-modal" data-modal="modal-tagparent">✕</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="tp-tag">
+        <p style="font-size:13px;color:var(--ink-soft);line-height:1.5;margin-bottom:14px;">Anyone tagged "<strong id="tp-tagname"></strong>" will automatically also be grouped under whatever parent category you pick here — no need to add both tags by hand.</p>
+        <div class="form-group">
+          <label>Parent category</label>
+          <select id="tp-parent"><option value="">— No parent category —</option></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-action="close-modal" data-modal="modal-tagparent">Cancel</button>
+        <button type="button" class="btn btn-primary" data-action="save-tagparent">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ BACKLOG ITEM MODAL ============ -->
   <div class="modal-overlay" id="modal-backlog">
     <div class="modal-sheet center">
@@ -1334,7 +1439,7 @@ main.screen.active{display:block;}
 /* ================= CONSTANTS ================= */
 var DB_NAME='keptDB', DB_VERSION=1, STORE='media';
 var LS_KEY='kept_data_v1';
-var SYNC_TOKEN_KEY='kept_sync_token_v1', SYNC_GIST_KEY='kept_sync_gistid_v1', SYNC_LAST_KEY='kept_sync_last_v1';
+var SYNC_TOKEN_KEY='kept_sync_token_v1', SYNC_GIST_KEY='kept_sync_gistid_v1', SYNC_LAST_KEY='kept_sync_last_v1', SYNC_OWNER_KEY='kept_sync_owner_v1';
 var SYNC_CHUNK_SIZE=400000;
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1533,6 +1638,57 @@ function defaultRelationshipTypes(){
     {id:'ex', label:'Ex-partner', inverse:'Ex-partner', symmetric:true}
   ];
 }
+var SMORGASBORD=[
+  {cat:'Time & Presence', items:[
+    {id:'sb_scheduled_time', label:'Regular scheduled time together'},
+    {id:'sb_spontaneous', label:'Spontaneous, drop-in visits'},
+    {id:'sb_live_together', label:'Live together'},
+    {id:'sb_long_distance', label:'Long-distance or infrequent contact'}
+  ]},
+  {cat:'Physical & Sexual', items:[
+    {id:'sb_physical_affection', label:'Physical affection (hugs, hand-holding)'},
+    {id:'sb_sexual', label:'Sexual intimacy'},
+    {id:'sb_sleepovers', label:'Cuddling / sleeping over'},
+    {id:'sb_nonphysical', label:'Not physical or sexual'}
+  ]},
+  {cat:'Emotional', items:[
+    {id:'sb_deep_emotional', label:'Deep emotional intimacy'},
+    {id:'sb_crisis_support', label:'Go-to person in a crisis'},
+    {id:'sb_casual', label:'Casual, light-hearted connection'},
+    {id:'sb_vulnerable', label:'Space for vulnerable, hard conversations'}
+  ]},
+  {cat:'Practical & Logistics', items:[
+    {id:'sb_shared_finances', label:'Share finances'},
+    {id:'sb_shared_household', label:'Share a household'},
+    {id:'sb_mutual_care', label:'Help each other with errands or caretaking'},
+    {id:'sb_emergency_contact', label:'Each other\'s emergency contact'}
+  ]},
+  {cat:'Commitment & Structure', items:[
+    {id:'sb_longterm', label:'Long-term intentional commitment'},
+    {id:'sb_open_ended', label:'Open-ended, no defined future'},
+    {id:'sb_anchor', label:'Anchor / nesting-style partner'},
+    {id:'sb_lower_priority', label:'Lower day-to-day priority, by choice'}
+  ]},
+  {cat:'Family & Labels', items:[
+    {id:'sb_chosen_family', label:'Chosen family'},
+    {id:'sb_blood_family', label:'Legal or blood family'},
+    {id:'sb_metamour', label:'Metamour (partner\'s partner)'},
+    {id:'sb_queerplatonic', label:'Queerplatonic partner'}
+  ]},
+  {cat:'Roles & Hierarchy', items:[
+    {id:'sb_mentor', label:'Mentor / mentee'},
+    {id:'sb_colleague', label:'Colleague or professional connection'},
+    {id:'sb_collaborator', label:'Creative or work collaborator'}
+  ]}
+];
+function smorgasbordLabel(id){
+  for(var i=0;i<SMORGASBORD.length;i++){
+    for(var j=0;j<SMORGASBORD[i].items.length;j++){
+      if(SMORGASBORD[i].items[j].id===id) return SMORGASBORD[i].items[j].label;
+    }
+  }
+  return id;
+}
 function defaultClosenessLevels(){
   return [
     {id:'cl_inner', label:'Inner circle'},
@@ -1565,11 +1721,17 @@ function migrateData(){
   data.people = data.people || [];
   data.timeline = data.timeline || [];
   data.relationships = data.relationships || [];
+  data.relationships.forEach(function(r){
+    if(r.descriptorIds===undefined) r.descriptorIds=[];
+    if(r.isEx===undefined) r.isEx=false;
+  });
   data.relationshipTypes = data.relationshipTypes && data.relationshipTypes.length ? data.relationshipTypes : defaultRelationshipTypes();
   data.events = data.events || [];
   data.dismissedDuplicatePairs = data.dismissedDuplicatePairs || [];
+  data.dismissedAddressPairs = data.dismissedAddressPairs || [];
   data.customFieldDefs = data.customFieldDefs || [];
   data.closenessLevels = (data.closenessLevels && data.closenessLevels.length) ? data.closenessLevels : defaultClosenessLevels();
+  data.tagParents = data.tagParents || {};
   data.backlog = data.backlog || [];
   data.journalPin = data.journalPin || null;
   if(data.lastImportBatch===undefined) data.lastImportBatch=null;
@@ -1602,6 +1764,8 @@ function migrateData(){
     if(p.maidenName===undefined) p.maidenName='';
     if(p.gender===undefined) p.gender='';
     if(p.address===undefined) p.address='';
+    if(p.lat===undefined) p.lat=null;
+    if(p.lng===undefined) p.lng=null;
     if(p.holidayCard===undefined) p.holidayCard=false;
     if(p.birthdayMethod===undefined) p.birthdayMethod='card';
     if(p.customFieldValues===undefined) p.customFieldValues={};
@@ -1683,7 +1847,7 @@ function showScreen(name, opts){
     missinginfo:['Kept','Kept'],
     customfields:['Kept','Kept'],
     backlog:['Kept','Kept']};
-  if(titles[name] && ['tree','person-detail','archived','trash','duplicates','sync','missinginfo','customfields','closeness','calendar','backlog'].indexOf(name)===-1){
+  if(titles[name] && ['tree','person-detail','archived','trash','duplicates','sync','missinginfo','customfields','closeness','tagcategories','calendar','map','backlog'].indexOf(name)===-1){
     document.getElementById('topbarTitle').textContent=titles[name][0];
     document.getElementById('topbarTagline').textContent=titles[name][1];
   }
@@ -1701,7 +1865,9 @@ function showScreen(name, opts){
   else if(name==='missinginfo') renderMissingInfo();
   else if(name==='customfields') renderCustomFields();
   else if(name==='closeness') renderClosenessLevels();
+  else if(name==='tagcategories') renderTagCategories();
   else if(name==='calendar') renderCalendar();
+  else if(name==='map') renderMap();
   else if(name==='backlog') renderBacklog();
 }
 
@@ -1728,6 +1894,44 @@ function allSyntheticMetEntries(){
 function pastOrAttendedEvents(){
   var todayStr=dateStr();
   return data.events.filter(function(ev){ return !ev.deletedAt && (ev.status==='attended' || ev.date<todayStr); });
+}
+/* ---- Last contact (derived from hangout/interaction/memory log + attended events) ---- */
+function lastContactDate(personId){
+  var dates=[];
+  data.timeline.forEach(function(e){
+    if(e.deletedAt) return;
+    if(e.type!=='hangout' && e.type!=='interaction' && e.type!=='memory') return;
+    if((e.people||[]).indexOf(personId)===-1) return;
+    if(e.date) dates.push(e.date);
+  });
+  data.events.forEach(function(ev){
+    if(ev.deletedAt || ev.status!=='attended') return;
+    if((ev.invitees||[]).indexOf(personId)===-1) return;
+    if(ev.date) dates.push(ev.date);
+  });
+  if(!dates.length) return null;
+  return dates.sort().pop();
+}
+function daysSinceDate(iso){
+  var d=parseISODate(iso);
+  if(!d) return null;
+  var today=new Date(); today.setHours(0,0,0,0); d.setHours(0,0,0,0);
+  return Math.round((today-d)/86400000);
+}
+function daysSinceLastContact(personId){
+  var d=lastContactDate(personId);
+  return d? daysSinceDate(d) : null;
+}
+function lastContactLabel(personId){
+  var days=daysSinceLastContact(personId);
+  if(days===null) return 'No hangout, interaction, or memory logged yet';
+  if(days<=0) return 'Today';
+  if(days===1) return 'Yesterday';
+  if(days<30) return days+' days ago';
+  if(days<60) return '1 month ago';
+  if(days<365) return Math.round(days/30)+' months ago';
+  var yrs=Math.round(days/365);
+  return yrs+' year'+(yrs===1?'':'s')+' ago';
 }
 function timelineFilteredEntries(personFilter, q){
   var entries=data.timeline.concat(allSyntheticMetEntries()).filter(function(e){
@@ -1896,10 +2100,19 @@ function renderEventCard(ev){
 /* ================= RENDER: PEOPLE ================= */
 function filteredPeopleList(){
   var q=(document.getElementById('searchInput').value||'').toLowerCase().trim();
+  var contactEl=document.getElementById('peopleContactFilter');
+  var contactFilter=contactEl?contactEl.value:'';
   return activePeople().filter(function(p){
-    if(!q) return true;
-    var hay=(p.name+' '+(p.nickname||'')+' '+(p.pronouns||'')+' '+(p.tags||[]).join(' ')).toLowerCase();
-    return hay.indexOf(q)!==-1;
+    if(q){
+      var hay=(p.name+' '+(p.nickname||'')+' '+(p.pronouns||'')+' '+expandedTagsForPerson(p).join(' ')).toLowerCase();
+      if(hay.indexOf(q)===-1) return false;
+    }
+    if(contactFilter){
+      var days=daysSinceLastContact(p.id);
+      if(contactFilter==='never'){ if(days!==null) return false; }
+      else { var threshold=Number(contactFilter); if(days===null || days<threshold) return false; }
+    }
+    return true;
   }).sort(function(a,b){ return a.name.localeCompare(b.name); });
 }
 function renderImportUndoBanner(){
@@ -1938,6 +2151,7 @@ function personRowHtml(p){
   var avatarInner = p.photoId ? '<img data-photo-id="'+p.photoId+'">' : initials;
   var bday=formatBirthday(p.birthday);
   var tagsHtml=(p.tags||[]).slice(0,2).map(function(t){ return '<span class="pill muted">'+esc(t)+'</span>'; }).join('');
+  var contactHtml = currentPeopleSort==='lastcontact' ? '<span>🕰️ '+esc(lastContactLabel(p.id))+'</span>' : '';
   if(peopleSelectMode){
     var checked = selectedPeopleIds.indexOf(p.id)!==-1;
     return '<div class="person-row'+(checked?' selected':'')+'" data-action="toggle-person-select" data-id="'+p.id+'">' +
@@ -1945,7 +2159,7 @@ function personRowHtml(p){
       '<div class="avatar">'+avatarInner+'</div>' +
       '<div class="person-info">' +
         '<div class="name">'+esc(p.name)+(p.isMe?' <span class="pill thread">You</span>':'')+'</div>' +
-        '<div class="meta">'+(p.pronouns? '<span>'+esc(p.pronouns)+'</span>':'')+(bday? '<span>🎂 '+bday+'</span>':'')+tagsHtml+'</div>' +
+        '<div class="meta">'+contactHtml+(p.pronouns? '<span>'+esc(p.pronouns)+'</span>':'')+(bday? '<span>🎂 '+bday+'</span>':'')+tagsHtml+'</div>' +
       '</div>' +
     '</div>';
   }
@@ -1953,7 +2167,7 @@ function personRowHtml(p){
     '<div class="avatar">'+avatarInner+'</div>' +
     '<div class="person-info">' +
       '<div class="name">'+esc(p.name)+(p.isMe?' <span class="pill thread">You</span>':'')+'</div>' +
-      '<div class="meta">'+(p.pronouns? '<span>'+esc(p.pronouns)+'</span>':'')+(bday? '<span>🎂 '+bday+'</span>':'')+tagsHtml+'</div>' +
+      '<div class="meta">'+contactHtml+(p.pronouns? '<span>'+esc(p.pronouns)+'</span>':'')+(bday? '<span>🎂 '+bday+'</span>':'')+tagsHtml+'</div>' +
     '</div>' +
   '</button>';
 }
@@ -1976,6 +2190,37 @@ function renderPeopleList(){
       html += '<div class="section-label">'+esc(g.label)+' ('+g.people.length+')</div>';
       html += g.people.map(personRowHtml).join('');
     });
+  } else if(currentPeopleSort==='tags'){
+    var tagGroups={};
+    var untagged=[];
+    people.forEach(function(p){
+      var expanded=expandedTagsForPerson(p);
+      if(!expanded.length){ untagged.push(p); return; }
+      expanded.forEach(function(t){
+        if(!t) return;
+        if(!tagGroups[t]) tagGroups[t]=[];
+        tagGroups[t].push(p);
+      });
+    });
+    var tagNames=Object.keys(tagGroups).sort(function(a,b){ return a.localeCompare(b); });
+    tagNames.forEach(function(t){
+      var members=tagGroups[t].sort(function(a,b){ return a.name.localeCompare(b.name); });
+      html += '<div class="section-label">'+esc(t)+' ('+members.length+')</div>';
+      html += members.map(personRowHtml).join('');
+    });
+    if(untagged.length){
+      html += '<div class="section-label">No tags ('+untagged.length+')</div>';
+      html += untagged.map(personRowHtml).join('');
+    }
+  } else if(currentPeopleSort==='lastcontact'){
+    var withContact=people.slice().sort(function(a,b){
+      var da=lastContactDate(a.id), db=lastContactDate(b.id);
+      if(!da && !db) return a.name.localeCompare(b.name);
+      if(!da) return -1;
+      if(!db) return 1;
+      return da.localeCompare(db) || a.name.localeCompare(b.name);
+    });
+    html = withContact.map(personRowHtml).join('');
   } else {
     html = people.map(personRowHtml).join('');
   }
@@ -2006,7 +2251,11 @@ function renderPersonDetail(personId){
     if(!t) return '';
     var otherId = r.personA===personId ? r.personB : r.personA;
     var label = relChipLabel(r, personId, otherId);
-    return '<button class="chip tap" data-action="open-person" data-id="'+otherId+'">'+esc(personName(otherId))+' · '+esc(label)+'</button>';
+    var extra = (r.isEx?' · ex':'') + ((r.descriptorIds&&r.descriptorIds.length)?' · '+r.descriptorIds.length+' 🍽️':'');
+    return '<span class="rel-chip-row">' +
+      '<button class="chip tap" data-action="open-person" data-id="'+otherId+'">'+esc(personName(otherId))+' · '+esc(label)+esc(extra)+'</button>' +
+      '<button class="chip-edit" data-action="edit-relationship" data-id="'+r.id+'" title="Edit">✎</button>' +
+    '</span>';
   }).join('');
 
   var galleryHtml=(p.galleryPhotoIds||[]).map(function(gid){
@@ -2106,8 +2355,13 @@ function renderPersonDetail(personId){
   '</div>' +
 
   (p.tags && p.tags.length ? '<div class="chip-row">'+p.tags.map(function(t){return '<span class="chip">'+esc(t)+'</span>';}).join('')+'</div>' : '') +
+  (function(){
+    var inherited=expandedTagsForPerson(p).filter(function(t){ return (p.tags||[]).indexOf(t)===-1; });
+    return inherited.length ? '<div class="chip-row"><span style="font-size:11.5px;color:var(--muted);align-self:center;margin-right:2px;">Also grouped under:</span>'+inherited.map(function(t){return '<span class="chip muted">'+esc(t)+'</span>';}).join('')+'</div>' : '';
+  })() +
 
   '<div class="stitch-divider"></div>' +
+  (p.isMe ? '' : '<div class="field-block"><div class="label">Last contact</div><div class="value'+(lastContactDate(p.id)?'':' muted')+'">'+esc(lastContactLabel(p.id))+'</div></div>') +
   '<div class="field-block"><div class="label-row"><div class="label">Birthday</div></div><div class="value'+(bday?'':' muted')+'">' +
     (bday? bday + (age!==null? ' · turns '+ (age+1) +' in '+daysB+' day'+(daysB===1?'':'s') : (daysB!==null? ' · in '+daysB+' day'+(daysB===1?'':'s'):'')) : 'Not set') +
   '</div>'+updatedHtml(p,'birthday')+'</div>' +
@@ -2322,6 +2576,61 @@ function renderCalDayPanel(){
   html+='<div class="btn-row" style="margin-top:10px;"><button class="btn btn-secondary btn-sm" data-action="cal-add-event">＋ Add event on this day</button></div>';
   document.getElementById('calDayPanel').innerHTML=html;
 }
+/* ================= RENDER: MAP ================= */
+var keptLeafletMap=null, keptLeafletMarkers=[];
+function renderMap(){
+  var closenessSel=document.getElementById('mapFilterCloseness');
+  var curCloseness=closenessSel.value;
+  closenessSel.innerHTML='<option value="">Any closeness</option>'+data.closenessLevels.map(function(l){
+    return '<option value="'+l.id+'"'+(l.id===curCloseness?' selected':'')+'>'+esc(l.label)+'</option>';
+  }).join('');
+
+  var tagSel=document.getElementById('mapFilterTag');
+  var curTag=tagSel.value;
+  tagSel.innerHTML='<option value="">Any tag</option>'+allKnownTags().map(function(t){
+    return '<option value="'+esc(t)+'"'+(t===curTag?' selected':'')+'>'+esc(t)+'</option>';
+  }).join('');
+
+  var located=activePeople().filter(function(p){
+    if(typeof p.lat!=='number' || typeof p.lng!=='number') return false;
+    if(curCloseness && p.closenessId!==curCloseness) return false;
+    if(curTag){
+      var expanded=expandedTagsForPerson(p).map(tagKey);
+      if(expanded.indexOf(tagKey(curTag))===-1) return false;
+    }
+    return true;
+  });
+  document.getElementById('mapEmptyNote').classList.toggle('hidden', located.length>0);
+  if(typeof L==='undefined'){
+    document.getElementById('mapContainer').innerHTML='<div class="empty-state"><div class="big">🗺️</div><h3>Map couldn\'t load</h3><p>Check your internet connection and try again.</p></div>';
+    return;
+  }
+  if(!keptLeafletMap){
+    keptLeafletMap=L.map('mapContainer');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:'&copy; OpenStreetMap contributors', maxZoom:19
+    }).addTo(keptLeafletMap);
+  }
+  keptLeafletMarkers.forEach(function(m){ keptLeafletMap.removeLayer(m); });
+  keptLeafletMarkers=[];
+  if(located.length===0){
+    keptLeafletMap.setView([20,0], 2);
+  } else {
+    located.forEach(function(p){
+      var marker=L.marker([p.lat, p.lng]).addTo(keptLeafletMap);
+      var popupEl=document.createElement('div');
+      popupEl.textContent=p.name;
+      popupEl.style.cursor='pointer';
+      popupEl.style.fontWeight='600';
+      popupEl.addEventListener('click', function(){ showScreen('person-detail', {personId:p.id}); });
+      marker.bindPopup(popupEl);
+      keptLeafletMarkers.push(marker);
+    });
+    var bounds=L.latLngBounds(located.map(function(p){ return [p.lat, p.lng]; }));
+    keptLeafletMap.fitBounds(bounds, {padding:[30,30], maxZoom:14});
+  }
+  setTimeout(function(){ if(keptLeafletMap) keptLeafletMap.invalidateSize(); }, 100);
+}
 function renderCalBirthdaySearch(){
   var q=(document.getElementById('calBirthdaySearch').value||'').toLowerCase().trim();
   var root=document.getElementById('calBirthdaySearchResults');
@@ -2365,6 +2674,9 @@ function renderMore(){
   '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-calendar">' +
     '<span class="mc-ic">📅</span><span class="mc-body"><span class="mc-title">Calendar</span><span class="mc-sub">Birthdays and events by month</span></span><span class="mc-arrow">›</span>' +
   '</button>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-map">' +
+    '<span class="mc-ic">🗺️</span><span class="mc-body"><span class="mc-title">Map</span><span class="mc-sub">Where people live</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
   '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-tree">' +
     '<span class="mc-ic">🕸️</span><span class="mc-body"><span class="mc-title">Relationship tree</span><span class="mc-sub">See how everyone connects</span></span><span class="mc-arrow">›</span>' +
   '</button>' +
@@ -2403,6 +2715,9 @@ function renderMore(){
   '</button>' +
   '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-closeness">' +
     '<span class="mc-ic">🧭</span><span class="mc-body"><span class="mc-title">Closeness levels</span><span class="mc-sub">'+data.closenessLevels.length+' level'+(data.closenessLevels.length===1?'':'s')+' · sort People by these</span></span><span class="mc-arrow">›</span>' +
+  '</button>' +
+  '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-tagcategories">' +
+    '<span class="mc-ic">🏷️</span><span class="mc-body"><span class="mc-title">Tag categories</span><span class="mc-sub">Group tags under a parent, like a high school under itself</span></span><span class="mc-arrow">›</span>' +
   '</button>' +
   '<button class="more-card" style="width:100%;text-align:left;" data-action="goto-backlog">' +
     '<span class="mc-ic">🐛</span><span class="mc-body"><span class="mc-title">Bugs &amp; ideas</span><span class="mc-sub">'+data.backlog.filter(function(b){return !b.done;}).length+' open</span></span><span class="mc-arrow">›</span>' +
@@ -2466,7 +2781,7 @@ var missingInfoActiveFilter='';
 function missingChecks(){
   var checks=[
     {key:'birthday', label:'Birthday', test:function(p){ return !(p.birthday && p.birthday.month && p.birthday.day); }},
-    {key:'phone', label:'Phone number', test:function(p){ return !p.phone; }},
+    {key:'phone', label:'Phone number', test:function(p){ return !p.phone || /[a-zA-Z]/.test(p.phone); }},
     {key:'email', label:'Email', test:function(p){ return !p.email; }},
     {key:'address', label:'Address', test:function(p){ return !p.address; }},
     {key:'gender', label:'Gender', test:function(p){ return !p.gender; }},
@@ -2663,6 +2978,67 @@ function moveClosenessLevel(levelId, dir){
   data.closenessLevels[swapIdx]=tmp;
   saveData();
   renderClosenessLevels();
+}
+
+function renderBulkClosenessOptions(){
+  var root=document.getElementById('bulkClosenessOptions');
+  if(!root) return;
+  var opts=data.closenessLevels.map(function(l){
+    return '<button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-set-closeness" data-clvl="'+l.id+'">' +
+      '<span class="so-ic">🧭</span><span><span class="so-text" style="display:block;">'+esc(l.label)+'</span></span></button>';
+  }).join('');
+  opts += '<button class="sheet-option" style="width:100%;text-align:left;" data-action="bulk-set-closeness" data-clvl="">' +
+    '<span class="so-ic">◯</span><span><span class="so-text" style="display:block;">Not set</span></span></button>';
+  root.innerHTML=opts;
+}
+function renderBulkReltypeOptions(){
+  var sel=document.getElementById('bulk-reltype');
+  if(!sel) return;
+  var cur=sel.value;
+  sel.innerHTML=data.relationshipTypes.map(function(t){
+    return '<option value="'+t.id+'">'+esc(t.label)+'</option>';
+  }).join('');
+  sel.value = (cur && data.relationshipTypes.some(function(t){return t.id===cur;})) ? cur : 'friend';
+}
+
+/* ================= TAG CATEGORIES ================= */
+function renderTagCategories(){
+  var root=document.getElementById('tagCategoriesContent');
+  var tags=allKnownTags();
+  var intro='<p style="font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:14px;">Give any tag a parent category and everyone tagged with it will automatically show up under that parent too — in the Tags sort, search, and the Map\'s tag filter.</p>';
+  if(!tags.length){
+    root.innerHTML=intro+'<p style="font-size:13.5px;color:var(--muted);">No tags yet — add some from a person\'s profile first.</p>';
+    return;
+  }
+  var list=tags.map(function(t){
+    var parent=data.tagParents[tagKey(t)];
+    return '<div class="cfield-row"><div class="cf-body"><div class="cf-name">'+esc(t)+'</div>' +
+      '<div class="cf-type">'+(parent? 'Within: '+esc(parent) : 'No parent category')+'</div></div>' +
+      '<button data-action="edit-tagparent" data-tag="'+esc(t)+'">Edit</button></div>';
+  }).join('');
+  root.innerHTML = intro+list;
+}
+function openTagParentForm(tag){
+  document.getElementById('tp-tag').value=tag;
+  document.getElementById('tp-tagname').textContent=tag;
+  var candidates=allKnownTags().filter(function(c){ return tagKey(c)!==tagKey(tag) && !wouldCreateTagCycle(tag, c); });
+  var sel=document.getElementById('tp-parent');
+  sel.innerHTML='<option value="">— No parent category —</option>'+candidates.map(function(c){
+    return '<option value="'+esc(c)+'">'+esc(c)+'</option>';
+  }).join('');
+  sel.value=data.tagParents[tagKey(tag)]||'';
+  openModal('modal-tagparent');
+}
+function saveTagParent(){
+  var tag=document.getElementById('tp-tag').value;
+  var parent=document.getElementById('tp-parent').value;
+  if(!tag) return;
+  if(parent) data.tagParents[tagKey(tag)]=parent;
+  else delete data.tagParents[tagKey(tag)];
+  saveData();
+  closeModal('modal-tagparent');
+  toast('Saved');
+  renderTagCategories();
 }
 
 /* ================= BACKLOG (bugs & ideas) ================= */
@@ -3189,6 +3565,125 @@ function readCustomFieldInputs(){
   });
   return out;
 }
+function allKnownTags(){
+  var set=new Set();
+  data.people.forEach(function(p){ (p.tags||[]).forEach(function(t){ if(t) set.add(t); }); });
+  Object.keys(data.tagParents||{}).forEach(function(k){ set.add(data.tagParents[k]); });
+  return Array.from(set).sort(function(a,b){ return a.localeCompare(b); });
+}
+/* ---- Tag categories (parent tags) ---- */
+function tagKey(t){ return (t||'').trim().toLowerCase(); }
+function tagAncestors(tag){
+  var result=[], seen={}, current=tagKey(tag), guard=0;
+  while(data.tagParents[current] && guard<12){
+    var parentDisplay=data.tagParents[current];
+    var pk=tagKey(parentDisplay);
+    if(seen[pk] || pk===tagKey(tag)) break;
+    seen[pk]=true;
+    result.push(parentDisplay);
+    current=pk;
+    guard++;
+  }
+  return result;
+}
+function wouldCreateTagCycle(child, parent){
+  if(tagKey(child)===tagKey(parent)) return true;
+  return tagAncestors(parent).some(function(a){ return tagKey(a)===tagKey(child); });
+}
+function expandedTagsForPerson(p){
+  var raw=(p.tags||[]).filter(Boolean);
+  var seen={}, out=[];
+  raw.forEach(function(t){ var k=tagKey(t); if(!seen[k]){ seen[k]=true; out.push(t); } });
+  raw.forEach(function(t){
+    tagAncestors(t).forEach(function(a){
+      var k=tagKey(a);
+      if(!seen[k]){ seen[k]=true; out.push(a); }
+    });
+  });
+  return out;
+}
+function renderTagPicker(){
+  var root=document.getElementById('pf-tags-picker');
+  var known=allKnownTags();
+  if(known.length===0){ root.innerHTML=''; return; }
+  var current=document.getElementById('pf-tags').value.split(',').map(function(t){ return t.trim().toLowerCase(); }).filter(Boolean);
+  root.innerHTML=known.map(function(t){
+    var active=current.indexOf(t.toLowerCase())!==-1;
+    return '<button type="button" class="chip tap'+(active?' active':'')+'" data-action="toggle-tag-picker" data-tag="'+esc(t)+'">'+esc(t)+'</button>';
+  }).join('');
+}
+function toggleTagPickerTag(tag){
+  var input=document.getElementById('pf-tags');
+  var current=input.value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+  var idx=current.findIndex(function(t){ return t.toLowerCase()===tag.toLowerCase(); });
+  if(idx===-1) current.push(tag); else current.splice(idx,1);
+  input.value=current.join(', ');
+  renderTagPicker();
+}
+/* ================= LOCATION / GEOCODING (OpenStreetMap Nominatim, no API key) ================= */
+var addressSearchTimer=null;
+function wireAddressSearch(){
+  var input=document.getElementById('pf-address');
+  var wrap=document.getElementById('pf-address-wrap');
+  var dropdown=document.getElementById('pf-address-dropdown');
+  input.addEventListener('input', function(){
+    document.getElementById('pf-lat').value='';
+    document.getElementById('pf-lng').value='';
+    clearTimeout(addressSearchTimer);
+    var q=input.value.trim();
+    if(q.length<4){ wrap.classList.remove('open'); dropdown.innerHTML=''; return; }
+    addressSearchTimer=setTimeout(function(){ runAddressSearch(q); }, 450);
+  });
+  dropdown.addEventListener('click', function(e){
+    var row=e.target.closest('.ss-row');
+    if(!row || row.classList.contains('ss-empty')) return;
+    input.value=row.getAttribute('data-label');
+    document.getElementById('pf-lat').value=row.getAttribute('data-lat');
+    document.getElementById('pf-lng').value=row.getAttribute('data-lng');
+    wrap.classList.remove('open');
+  });
+  document.addEventListener('click', function(e){
+    if(!wrap.contains(e.target)) wrap.classList.remove('open');
+  });
+}
+function runAddressSearch(q){
+  var wrap=document.getElementById('pf-address-wrap');
+  var dropdown=document.getElementById('pf-address-dropdown');
+  dropdown.innerHTML='<div class="ss-row ss-empty">Searching…</div>';
+  wrap.classList.add('open');
+  fetch('https://nominatim.openstreetmap.org/search?format=json&addressdetails=0&limit=5&q='+encodeURIComponent(q))
+    .then(function(r){ return r.json(); })
+    .then(function(results){
+      if(!results || results.length===0){ dropdown.innerHTML='<div class="ss-row ss-empty">No matches</div>'; return; }
+      dropdown.innerHTML=results.map(function(r){
+        return '<div class="ss-row" data-label="'+esc(r.display_name)+'" data-lat="'+r.lat+'" data-lng="'+r.lon+'">'+esc(r.display_name)+'</div>';
+      }).join('');
+    })
+    .catch(function(){ dropdown.innerHTML='<div class="ss-row ss-empty">Search failed — check your connection</div>'; });
+}
+function useCurrentLocationForForm(){
+  if(!navigator.geolocation){ toast('Location isn\'t available on this device'); return; }
+  toast('Finding your location…');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude, lng=pos.coords.longitude;
+    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng)
+      .then(function(r){ return r.json(); })
+      .then(function(r){
+        document.getElementById('pf-address').value = r && r.display_name ? r.display_name : (lat.toFixed(5)+', '+lng.toFixed(5));
+        document.getElementById('pf-lat').value=lat;
+        document.getElementById('pf-lng').value=lng;
+        toast('Location filled in');
+      })
+      .catch(function(){
+        document.getElementById('pf-address').value = lat.toFixed(5)+', '+lng.toFixed(5);
+        document.getElementById('pf-lat').value=lat;
+        document.getElementById('pf-lng').value=lng;
+        toast('Location filled in');
+      });
+  }, function(){
+    toast('Couldn\'t get your location — check permissions');
+  }, {timeout:10000});
+}
 function openPersonForm(personId, presetIsMe){
   var form=document.getElementById('personForm');
   form.reset();
@@ -3228,6 +3723,8 @@ function openPersonForm(personId, presetIsMe){
     document.getElementById('pf-phone').value=p.phone||'';
     document.getElementById('pf-email').value=p.email||'';
     document.getElementById('pf-address').value=p.address||'';
+    document.getElementById('pf-lat').value=p.lat||'';
+    document.getElementById('pf-lng').value=p.lng||'';
     document.getElementById('pf-ismetoggle').classList.toggle('on', !!p.isMe);
     document.getElementById('pf-holidaytoggle').classList.toggle('on', !!p.holidayCard);
     setBirthdayMethod(p.birthdayMethod||'card');
@@ -3252,6 +3749,7 @@ function openPersonForm(personId, presetIsMe){
     renderCustomFieldInputs({});
   }
   syncMetFieldsVisibility();
+  renderTagPicker();
   openModal('modal-person');
 }
 function submitPersonForm(e){
@@ -3271,6 +3769,8 @@ function submitPersonForm(e){
   var phone=document.getElementById('pf-phone').value.trim();
   var email=document.getElementById('pf-email').value.trim();
   var address=document.getElementById('pf-address').value.trim();
+  var lat=document.getElementById('pf-lat').value ? Number(document.getElementById('pf-lat').value) : null;
+  var lng=document.getElementById('pf-lng').value ? Number(document.getElementById('pf-lng').value) : null;
   var gender=document.getElementById('pf-gender').value;
   var closenessId=document.getElementById('pf-closeness').value || null;
   var isMe=document.getElementById('pf-ismetoggle').classList.contains('on');
@@ -3289,7 +3789,10 @@ function submitPersonForm(e){
       p.pronouns=document.getElementById('pf-pronouns').value.trim();
       p.gender=gender;
       p.closenessId=closenessId;
-      p.phone=phone; p.email=email; p.isMe=isMe; p.address=address; p.holidayCard=holidayCard;
+      p.phone=phone; p.email=email; p.isMe=isMe; p.holidayCard=holidayCard;
+      if(lat!==null && lng!==null){ p.lat=lat; p.lng=lng; }
+      else if(address!==p.address){ p.lat=null; p.lng=null; }
+      p.address=address;
       p.birthday={month:month?Number(month):null, day:day?Number(day):null, year:year?Number(year):null};
       p.birthdayMethod=currentBirthdayMethod;
       p.howWeMet={text:document.getElementById('pf-met-text').value.trim(), date:document.getElementById('pf-met-date').value||null};
@@ -3305,7 +3808,7 @@ function submitPersonForm(e){
       var np={
         id:uid('p'), firstName:first, middleName:middle, lastName:last, nickname:nickname, maidenName:maiden,
         pronouns:document.getElementById('pf-pronouns').value.trim(), gender:gender, closenessId:closenessId,
-        phone:phone, email:email, isMe:isMe, address:address, holidayCard:holidayCard,
+        phone:phone, email:email, isMe:isMe, address:address, lat:lat, lng:lng, holidayCard:holidayCard,
         birthday:{month:month?Number(month):null, day:day?Number(day):null, year:year?Number(year):null},
         birthdayMethod:currentBirthdayMethod,
         photoId:photoId||null, galleryPhotoIds:[],
@@ -3523,7 +4026,9 @@ function refreshCurrentScreen(){
   else if(currentScreen==='missinginfo') renderMissingInfo();
   else if(currentScreen==='customfields') renderCustomFields();
   else if(currentScreen==='closeness') renderClosenessLevels();
+  else if(currentScreen==='tagcategories') renderTagCategories();
   else if(currentScreen==='calendar') renderCalendar();
+  else if(currentScreen==='map') renderMap();
   else if(currentScreen==='backlog') renderBacklog();
 }
 
@@ -3656,10 +4161,19 @@ function populateRelTypeSelect(sel, selectedId){
     return '<option value="'+t.id+'"'+(t.id===selectedId?' selected':'')+'>'+esc(t.label)+(t.symmetric?'':' / '+esc(t.inverse))+'</option>';
   }).join('');
 }
+function updateSmorgasbordBtnLabel(){
+  var ids=(document.getElementById('rf-descriptors').value||'').split(',').filter(Boolean);
+  document.getElementById('rf-smorgasbord-btn').textContent = ids.length ? '🍽️ Smorgasbord ('+ids.length+' selected)' : '🍽️ Choose from the smorgasbord';
+}
 function openRelationshipForm(relId, prefillA){
   var form=document.getElementById('relationshipForm');
   form.reset();
   document.getElementById('rf-id').value=relId||'';
+  document.getElementById('rf-descriptors').value='';
+  document.getElementById('relationshipFormTitle').textContent = relId ? 'Edit relationship' : 'Add a relationship';
+  var deleteBtn=document.getElementById('rf-delete-btn');
+  deleteBtn.classList.toggle('hidden', !relId);
+  deleteBtn.setAttribute('data-id', relId||'');
   var wrapA=document.getElementById('rf-personA-wrap'), wrapB=document.getElementById('rf-personB-wrap');
   populateRelTypeSelect(document.getElementById('rf-type'), '');
   if(relId){
@@ -3668,10 +4182,13 @@ function openRelationshipForm(relId, prefillA){
     if(wrapB._ssSetValue) wrapB._ssSetValue(r.personB);
     document.getElementById('rf-type').value=r.typeId;
     document.getElementById('rf-note').value=r.note||'';
+    document.getElementById('rf-descriptors').value=(r.descriptorIds||[]).join(',');
+    document.getElementById('rf-isex').checked=!!r.isEx;
   } else {
     if(wrapA._ssSetValue) wrapA._ssSetValue(prefillA||'');
     if(wrapB._ssSetValue) wrapB._ssSetValue('');
   }
+  updateSmorgasbordBtnLabel();
   openModal('modal-relationship');
 }
 function submitRelationshipForm(e){
@@ -3681,17 +4198,64 @@ function submitRelationshipForm(e){
   var b=document.getElementById('rf-personB').value;
   var typeId=document.getElementById('rf-type').value;
   var note=document.getElementById('rf-note').value.trim();
+  var isEx=document.getElementById('rf-isex').checked;
+  var descriptorIds=(document.getElementById('rf-descriptors').value||'').split(',').filter(Boolean);
   if(!a || !b || a===b){ toast('Choose two different people'); return; }
   if(id){
     var r=data.relationships.find(function(x){return x.id===id;});
-    r.personA=a; r.personB=b; r.typeId=typeId; r.note=note;
+    r.personA=a; r.personB=b; r.typeId=typeId; r.note=note; r.isEx=isEx; r.descriptorIds=descriptorIds;
   } else {
-    data.relationships.push({id:uid('r'), personA:a, personB:b, typeId:typeId, note:note, createdAt:Date.now()});
+    data.relationships.push({id:uid('r'), personA:a, personB:b, typeId:typeId, note:note, isEx:isEx, descriptorIds:descriptorIds, createdAt:Date.now()});
   }
   saveData();
   closeModal('modal-relationship');
   toast('Saved');
   refreshCurrentScreen();
+}
+function deleteRelationship(relId){
+  showConfirm('Delete this relationship?', 'This removes the connection between the two people. Neither profile itself is affected.', function(){
+    data.relationships=data.relationships.filter(function(r){ return r.id!==relId; });
+    saveData();
+    toast('Relationship deleted');
+    refreshCurrentScreen();
+  });
+}
+var smorgasbordTargetFieldId='rf-descriptors';
+function renderSmorgasbordContent(){
+  var selected=(document.getElementById(smorgasbordTargetFieldId).value||'').split(',').filter(Boolean);
+  var root=document.getElementById('smorgasbordContent');
+  root.innerHTML=SMORGASBORD.map(function(cat){
+    return '<div class="section-label" style="margin:16px 0 6px;">'+esc(cat.cat)+'</div>' +
+      cat.items.map(function(it){
+        var checked=selected.indexOf(it.id)!==-1;
+        return '<label class="toggle-row" style="padding:8px 2px;"><span>'+esc(it.label)+'</span><input type="checkbox" data-action="toggle-smorgasbord-item" data-id="'+it.id+'"'+(checked?' checked':'')+'></label>';
+      }).join('');
+  }).join('');
+}
+function toggleSmorgasbordItemLocal(itemId){
+  var selected=(document.getElementById(smorgasbordTargetFieldId).value||'').split(',').filter(Boolean);
+  var idx=selected.indexOf(itemId);
+  if(idx===-1) selected.push(itemId); else selected.splice(idx,1);
+  document.getElementById(smorgasbordTargetFieldId).value=selected.join(',');
+}
+function applyBulkSmorgasbord(){
+  var ids=(document.getElementById('bulk-descriptors').value||'').split(',').filter(Boolean);
+  closeModal('modal-smorgasbord');
+  if(!ids.length){ toast('No descriptors selected'); return; }
+  var meP=data.people.find(function(x){ return x.isMe && !x.deletedAt; });
+  if(!meP){ toast('Set "This is you" on a profile first'); return; }
+  var newTypeId=(document.getElementById('bulk-reltype').value)||'friend';
+  var newTypeLabel=(relType(newTypeId)||{}).label||'new';
+  var touched=0, created=0;
+  selectedPeopleIds.forEach(function(pid){
+    if(pid===meP.id) return;
+    var r=data.relationships.find(function(x){ return (x.personA===meP.id&&x.personB===pid) || (x.personA===pid&&x.personB===meP.id); });
+    if(r){ r.descriptorIds=unionArrays(r.descriptorIds||[], ids); touched++; }
+    else { data.relationships.push({id:uid('r'), personA:meP.id, personB:pid, typeId:newTypeId, note:'', isEx:false, descriptorIds:ids.slice(), createdAt:Date.now()}); created++; }
+  });
+  saveData();
+  refreshCurrentScreen();
+  toast('Descriptors added for '+(touched+created)+' people'+(created? ' ('+created+' new "'+newTypeLabel+'" relationships created)':''));
 }
 
 /* ---- Relationship type form ---- */
@@ -3896,6 +4460,8 @@ function levenshtein(a,b){
   return dp[m][n];
 }
 function pairKey(a,b){ return [a,b].sort().join('|'); }
+function normalizePhone(v){ return (v||'').replace(/\D/g,''); }
+function normalizeAddress(v){ return (v||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim(); }
 function findDuplicateCandidates(){
   if(!data || !data.people) return [];
   var people=activePeople();
@@ -3914,7 +4480,32 @@ function findDuplicateCandidates(){
       else if(a.birthday && b.birthday && a.birthday.month && a.birthday.day &&
         a.birthday.month===b.birthday.month && a.birthday.day===b.birthday.day &&
         na.split(' ')[0] && na.split(' ')[0]===nb.split(' ')[0]){ reason='Same first name & birthday'; }
+      else {
+        var pa=normalizePhone(a.phone), pb=normalizePhone(b.phone);
+        if(pa && pb && pa.length>=7 && pa===pb){ reason='Same phone number'; }
+      }
       if(reason) results.push({a:a, b:b, reason:reason, key:key});
+    }
+  }
+  return results;
+}
+function findAddressSuggestions(){
+  if(!data || !data.people) return [];
+  var people=activePeople().filter(function(p){ return normalizeAddress(p.address); });
+  var dismissed={};
+  (data.dismissedAddressPairs||[]).forEach(function(k){ dismissed[k]=true; });
+  var results=[];
+  for(var i=0;i<people.length;i++){
+    for(var j=i+1;j<people.length;j++){
+      var a=people[i], b=people[j];
+      var key=pairKey(a.id,b.id);
+      if(dismissed[key]) continue;
+      if(normalizeAddress(a.address)!==normalizeAddress(b.address)) continue;
+      var alreadyLinked=data.relationships.some(function(r){
+        return (r.personA===a.id && r.personB===b.id) || (r.personA===b.id && r.personB===a.id);
+      });
+      if(alreadyLinked) continue;
+      results.push({a:a, b:b, key:key});
     }
   }
   return results;
@@ -3981,6 +4572,9 @@ function clearSyncToken(){ try{ localStorage.removeItem(SYNC_TOKEN_KEY); }catch(
 function getSyncGistId(){ try{ return localStorage.getItem(SYNC_GIST_KEY)||''; }catch(e){ return ''; } }
 function setSyncGistId(v){ try{ localStorage.setItem(SYNC_GIST_KEY,v); }catch(e){} }
 function clearSyncGistId(){ try{ localStorage.removeItem(SYNC_GIST_KEY); }catch(e){} }
+function getSyncGistOwner(){ try{ return localStorage.getItem(SYNC_OWNER_KEY)||''; }catch(e){ return ''; } }
+function setSyncGistOwner(v){ try{ if(v) localStorage.setItem(SYNC_OWNER_KEY,v); }catch(e){} }
+function clearSyncGistOwner(){ try{ localStorage.removeItem(SYNC_OWNER_KEY); }catch(e){} }
 function getSyncLast(){ try{ var v=localStorage.getItem(SYNC_LAST_KEY); return v?Number(v):null; }catch(e){ return null; } }
 function setSyncLast(ms){ try{ localStorage.setItem(SYNC_LAST_KEY,String(ms)); }catch(e){} }
 function clearSyncLast(){ try{ localStorage.removeItem(SYNC_LAST_KEY); }catch(e){} }
@@ -4001,6 +4595,7 @@ function gistPush(){
   var files={};
   chunks.forEach(function(c,i){ files['kept_data_part'+i+'.json']={content:c}; });
   files['kept_data_meta.json']={content:JSON.stringify({parts:chunks.length, updatedAt:Date.now(), app:'Kept', version:1})};
+  files['kept_feed.ics']={content:buildAllBirthdaysICS()};
   var headers=syncHeaders(token);
 
   toast('Syncing…');
@@ -4011,6 +4606,7 @@ function gistPush(){
       .then(function(r){ if(!r.ok) throw new Error('create-failed-'+r.status); return r.json(); })
       .then(function(json){
         setSyncGistId(json.id);
+        if(json.owner && json.owner.login) setSyncGistOwner(json.owner.login);
         setSyncLast(Date.now());
         toast('Synced — Gist created');
         renderSync();
@@ -4023,7 +4619,8 @@ function gistPush(){
     });
     return fetch('https://api.github.com/gists/'+gistId,{method:'PATCH',headers:headers, body:JSON.stringify({files:files})})
       .then(function(r){ if(!r.ok) throw new Error('update-failed-'+r.status); return r.json(); })
-      .then(function(){
+      .then(function(json){
+        if(json.owner && json.owner.login) setSyncGistOwner(json.owner.login);
         setSyncLast(Date.now());
         toast('Synced');
         renderSync();
@@ -4033,7 +4630,10 @@ function gistPush(){
   if(gistId){
     fetch('https://api.github.com/gists/'+gistId,{headers:headers})
       .then(function(r){ if(!r.ok) throw new Error('fetch-failed-'+r.status); return r.json(); })
-      .then(function(json){ return doUpdate(Object.keys(json.files||{})); })
+      .then(function(json){
+        if(json.owner && json.owner.login) setSyncGistOwner(json.owner.login);
+        return doUpdate(Object.keys(json.files||{}));
+      })
       .catch(function(err){ toast('Sync failed — check your token and Gist ID'); console.error(err); });
   } else {
     doCreate().catch(function(err){ toast('Sync failed — check your token'); console.error(err); });
@@ -4047,6 +4647,7 @@ function gistPull(){
     fetch('https://api.github.com/gists/'+gistId,{headers:headers})
       .then(function(r){ if(!r.ok) throw new Error('fetch-failed-'+r.status); return r.json(); })
       .then(function(json){
+        if(json.owner && json.owner.login) setSyncGistOwner(json.owner.login);
         var meta=json.files && json.files['kept_data_meta.json'];
         if(!meta) throw new Error('no-meta');
         var metaObj=JSON.parse(meta.content);
@@ -4057,12 +4658,7 @@ function gistPull(){
           parts.push(f.content);
         }
         var payload=JSON.parse(parts.join(''));
-        data.people=payload.people||[];
-        data.timeline=payload.timeline||[];
-        data.relationships=payload.relationships||[];
-        data.relationshipTypes=(payload.relationshipTypes && payload.relationshipTypes.length)?payload.relationshipTypes:defaultRelationshipTypes();
-        data.events=payload.events||[];
-        data.dismissedDuplicatePairs=payload.dismissedDuplicatePairs||[];
+        data=payload;
         migrateData();
         saveData();
         urlCache.clear();
@@ -4082,6 +4678,37 @@ function icsDateStamp(){
   return new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
 }
 function pad2(n){ return (n<10?'0':'')+n; }
+function buildAllBirthdaysICS(){
+  var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Kept//EN','CALSCALE:GREGORIAN','X-WR-CALNAME:Kept \u2014 Birthdays & Events'];
+  activePeople().forEach(function(p){
+    if(!p.birthday || !p.birthday.month || !p.birthday.day) return;
+    var yr=p.birthday.year || 1970;
+    var datePart=yr+pad2(p.birthday.month)+pad2(p.birthday.day);
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:kept-bday-'+p.id+'@kept.local');
+    lines.push('DTSTAMP:'+icsDateStamp());
+    lines.push('DTSTART;VALUE=DATE:'+datePart);
+    lines.push('RRULE:FREQ=YEARLY');
+    lines.push('SUMMARY:'+icsEscape('🎂 '+p.name+"'s birthday"));
+    lines.push('END:VEVENT');
+  });
+  var todayStr=dateStr();
+  (data.events||[]).filter(function(ev){
+    return !ev.deletedAt && ev.date && ev.date>=todayStr && (ev.status==='confirmed' || ev.status==='planned');
+  }).forEach(function(ev){
+    var datePart=(ev.date||'').replace(/-/g,'');
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:kept-event-'+ev.id+'@kept.local');
+    lines.push('DTSTAMP:'+icsDateStamp());
+    if(ev.time) lines.push('DTSTART:'+datePart+'T'+ev.time.replace(':','')+'00');
+    else lines.push('DTSTART;VALUE=DATE:'+datePart);
+    lines.push('SUMMARY:'+icsEscape(ev.title||'Event'));
+    if(ev.location) lines.push('LOCATION:'+icsEscape(ev.location));
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
 function downloadICS(ev){
   var invitees=(ev.invitees||[]).map(personName).join(', ');
   var descLines=[];
@@ -4488,29 +5115,51 @@ function renderTrash(){
 }
 function renderDuplicates(){
   var candidates=findDuplicateCandidates();
+  var addressPairs=findAddressSuggestions();
   var root=document.getElementById('duplicatesContent');
-  if(candidates.length===0){
+  if(candidates.length===0 && addressPairs.length===0){
     root.innerHTML='<div class="empty-state"><div class="big">🔍</div><h3>No duplicates found</h3><p>Everyone in your list looks unique. Check back after adding more people.</p></div>';
     return;
   }
-  root.innerHTML=candidates.map(function(c){
-    return '<div class="card">' +
-      miniPersonRow(c.a) + miniPersonRow(c.b) +
-      '<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">'+esc(c.reason)+'</div>' +
-      '<div class="btn-row wrap">' +
-        '<button class="btn btn-secondary btn-sm" data-action="merge-duplicate" data-source="'+c.b.id+'" data-target="'+c.a.id+'">Merge into '+esc(c.a.name)+'</button>' +
-        '<button class="btn btn-secondary btn-sm" data-action="merge-duplicate" data-source="'+c.a.id+'" data-target="'+c.b.id+'">Merge into '+esc(c.b.name)+'</button>' +
-        '<button class="btn btn-secondary btn-sm" data-action="dismiss-duplicate" data-key="'+esc(c.key)+'">Not a duplicate</button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
+  var html='';
+  if(candidates.length){
+    html += '<div class="section-label">Possible duplicates</div>';
+    html += candidates.map(function(c){
+      return '<div class="card">' +
+        miniPersonRow(c.a) + miniPersonRow(c.b) +
+        '<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">'+esc(c.reason)+'</div>' +
+        '<div class="btn-row wrap">' +
+          '<button class="btn btn-secondary btn-sm" data-action="merge-duplicate" data-source="'+c.b.id+'" data-target="'+c.a.id+'">Merge into '+esc(c.a.name)+'</button>' +
+          '<button class="btn btn-secondary btn-sm" data-action="merge-duplicate" data-source="'+c.a.id+'" data-target="'+c.b.id+'">Merge into '+esc(c.b.name)+'</button>' +
+          '<button class="btn btn-secondary btn-sm" data-action="dismiss-duplicate" data-key="'+esc(c.key)+'">Not a duplicate</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  if(addressPairs.length){
+    html += '<div class="section-label">Same address — related?</div>';
+    html += addressPairs.map(function(c){
+      return '<div class="card">' +
+        miniPersonRow(c.a) + miniPersonRow(c.b) +
+        '<div style="font-size:12.5px;color:var(--muted);margin-bottom:10px;">Both live at the same address.</div>' +
+        '<div class="btn-row wrap">' +
+          '<button class="btn btn-secondary btn-sm" data-action="add-relationship-for-pair" data-a="'+c.a.id+'" data-b="'+c.b.id+'">＋ Add relationship</button>' +
+          '<button class="btn btn-secondary btn-sm" data-action="dismiss-address-suggestion" data-key="'+esc(c.key)+'">Not related</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  root.innerHTML=html;
   hydrateImages(root);
 }
 function renderSync(){
   var root=document.getElementById('syncContent');
   var token=getSyncToken();
   var gistId=getSyncGistId();
+  var owner=getSyncGistOwner();
   var last=getSyncLast();
+  var feedUrl=(gistId && owner) ? ('https://gist.githubusercontent.com/'+owner+'/'+gistId+'/raw/kept_feed.ics') : '';
+  var webcalUrl=feedUrl ? feedUrl.replace(/^https:/,'webcal:') : '';
   root.innerHTML =
     '<div class="card">' +
       '<p style="font-size:13.5px;color:var(--ink-soft);line-height:1.5;margin-bottom:12px;">Sync your people, timeline, and relationships between your devices using a private GitHub Gist. Photos stay on this device only — they are not synced.</p>' +
@@ -4547,6 +5196,19 @@ function renderSync(){
         '<button class="btn btn-secondary btn-sm" data-action="gist-push">⬆ Push to Gist</button>' +
         '<button class="btn btn-secondary btn-sm" data-action="gist-pull">⬇ Pull from Gist</button>' +
       '</div>' +
+    '</div>' +
+    '<div class="section-label">Birthdays & events feed</div>' +
+    '<div class="card">' +
+      (feedUrl ?
+        '<p style="font-size:13px;color:var(--ink-soft);line-height:1.5;margin-bottom:10px;">Subscribe once in Apple or Google Calendar and it\'ll show everyone\'s birthdays plus your upcoming planned/confirmed events — refreshed each time you Push to Gist (calendar apps usually only re-check a subscribed feed once or so a day).</p>' +
+        '<div class="btn-row wrap">' +
+          '<a class="btn btn-secondary btn-sm" href="'+webcalUrl+'">📅 Subscribe on this device</a>' +
+          '<button class="btn btn-secondary btn-sm" data-action="copy-feed-url">Copy feed link</button>' +
+        '</div>' +
+        '<p style="font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.5;">⚠️ Anyone with this link can see these dates — a "secret" Gist isn\'t password-protected, just unlisted. Don\'t share it publicly.</p>'
+        :
+        '<p style="font-size:13px;color:var(--ink-soft);line-height:1.5;">Push to Gist once to turn on a subscribable calendar feed.</p>'
+      ) +
     '</div>';
 }
 
@@ -4581,6 +5243,8 @@ function handleAction(action, target){
     case 'open-bulk-actions':
       if(selectedPeopleIds.length===0) break;
       document.getElementById('bulkActionsTitle').textContent=selectedPeopleIds.length+' selected';
+      renderBulkClosenessOptions();
+      renderBulkReltypeOptions();
       openModal('modal-bulkactions');
       break;
     case 'bulk-add-cardlist': {
@@ -4859,8 +5523,41 @@ function handleAction(action, target){
     case 'add-sheet-relationship': closeModal('modal-addsheet'); openRelationshipForm(null); break;
     case 'add-sheet-event': closeModal('modal-addsheet'); openEventForm(null); break;
     case 'goto-missinginfo': showScreen('missinginfo'); break;
+    case 'use-current-location': useCurrentLocationForForm(); break;
+    case 'open-smorgasbord': smorgasbordTargetFieldId='rf-descriptors'; renderSmorgasbordContent(); openModal('modal-smorgasbord'); break;
+    case 'close-smorgasbord': closeModal('modal-smorgasbord'); break;
+    case 'save-smorgasbord':
+      if(smorgasbordTargetFieldId==='bulk-descriptors') applyBulkSmorgasbord();
+      else { closeModal('modal-smorgasbord'); updateSmorgasbordBtnLabel(); }
+      break;
+    case 'bulk-open-smorgasbord': {
+      if(selectedPeopleIds.length===0) break;
+      var meCheck=data.people.find(function(x){ return x.isMe && !x.deletedAt; });
+      if(!meCheck){ toast('Set "This is you" on a profile first (More → You)'); break; }
+      closeModal('modal-bulkactions');
+      document.getElementById('bulk-descriptors').value='';
+      smorgasbordTargetFieldId='bulk-descriptors';
+      renderSmorgasbordContent();
+      openModal('modal-smorgasbord');
+      break;
+    }
+    case 'bulk-set-closeness': {
+      var clvl=target.getAttribute('data-clvl')||null;
+      var nCl=selectedPeopleIds.length;
+      selectedPeopleIds.forEach(function(pid){ var p=findPerson(pid); if(p) p.closenessId=clvl; });
+      saveData();
+      closeModal('modal-bulkactions');
+      renderPeopleList();
+      toast('Closeness set for '+nCl+' people');
+      break;
+    }
+    case 'toggle-smorgasbord-item': toggleSmorgasbordItemLocal(target.getAttribute('data-id')); break;
+    case 'edit-relationship': openRelationshipForm(id); break;
+    case 'delete-relationship': closeModal('modal-relationship'); deleteRelationship(id); break;
+    case 'toggle-tag-picker': toggleTagPickerTag(target.getAttribute('data-tag')); break;
     case 'goto-customfields': showScreen('customfields'); break;
     case 'goto-calendar': showScreen('calendar'); break;
+    case 'goto-map': showScreen('map'); break;
     case 'cal-prev-month':
       calViewMonth--; if(calViewMonth<1){ calViewMonth=12; calViewYear--; }
       renderCalendar();
@@ -4893,6 +5590,9 @@ function handleAction(action, target){
       break;
     }
     case 'goto-closeness': showScreen('closeness'); break;
+    case 'goto-tagcategories': showScreen('tagcategories'); break;
+    case 'edit-tagparent': openTagParentForm(target.getAttribute('data-tag')); break;
+    case 'save-tagparent': saveTagParent(); break;
     case 'goto-backlog': showScreen('backlog'); break;
     case 'filter-missing': missingInfoActiveFilter=target.getAttribute('data-key')||''; renderMissingInfo(); break;
     case 'add-cfield': openCfieldForm(null); break;
@@ -4907,6 +5607,7 @@ function handleAction(action, target){
     case 'toggle-backlog': toggleBacklogItem(id); break;
     case 'delete-backlog': deleteBacklogItem(id); break;
     case 'quick-add-person': pendingChecklistElId=target.getAttribute('data-target'); document.getElementById('qp-name').value=''; openModal('modal-quickperson'); break;
+    case 'quick-add-person-calendar': pendingChecklistElId=null; document.getElementById('qp-name').value=''; openModal('modal-quickperson'); break;
     case 'set-event-status': setEventStatus(id, target.getAttribute('data-status')); break;
     case 'confirm-csv-import': confirmCsvImport(); break;
     case 'add-sheet-journal': closeModal('modal-addsheet'); openJournalForm(null); break;
@@ -4986,6 +5687,20 @@ function handleAction(action, target){
       saveData(); renderDuplicates();
       break;
     }
+    case 'dismiss-address-suggestion': {
+      var akey=target.getAttribute('data-key');
+      data.dismissedAddressPairs=data.dismissedAddressPairs||[];
+      data.dismissedAddressPairs.push(akey);
+      saveData(); renderDuplicates();
+      break;
+    }
+    case 'add-relationship-for-pair': {
+      var pa=target.getAttribute('data-a'), pb=target.getAttribute('data-b');
+      openRelationshipForm(null, pa);
+      var wrapB2=document.getElementById('rf-personB-wrap');
+      if(wrapB2 && wrapB2._ssSetValue) wrapB2._ssSetValue(pb);
+      break;
+    }
     case 'save-sync-token': {
       var tokVal=document.getElementById('syncTokenInput').value.trim();
       if(!tokVal){ toast('Enter a token'); break; }
@@ -5010,9 +5725,18 @@ function handleAction(action, target){
       } else { toast('Nothing to copy'); }
       break;
     }
+    case 'copy-feed-url': {
+      var gidF=getSyncGistId(), ownerF=getSyncGistOwner();
+      if(!gidF || !ownerF){ toast('Push to Gist first'); break; }
+      var feedUrlCopy='https://gist.githubusercontent.com/'+ownerF+'/'+gidF+'/raw/kept_feed.ics';
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(feedUrlCopy).then(function(){ toast('Feed link copied'); }).catch(function(){ toast('Could not copy'); });
+      } else { toast('Could not copy'); }
+      break;
+    }
     case 'disconnect-sync':
       showConfirm('Disconnect sync?', 'This removes the token and Gist ID from this device only. Your Gist on GitHub will not be deleted.', function(){
-        clearSyncToken(); clearSyncGistId(); clearSyncLast(); renderSync(); toast('Disconnected');
+        clearSyncToken(); clearSyncGistId(); clearSyncGistOwner(); clearSyncLast(); renderSync(); toast('Disconnected');
       });
       break;
     case 'gist-push': gistPush(); break;
@@ -5036,6 +5760,7 @@ function deletePerson(id){
   data.timeline.forEach(function(e){ e.people=(e.people||[]).filter(function(pid){return pid!==id;}); });
   data.events.forEach(function(ev){ ev.invitees=(ev.invitees||[]).filter(function(pid){return pid!==id;}); });
   data.dismissedDuplicatePairs = (data.dismissedDuplicatePairs||[]).filter(function(k){ return k.indexOf(id)===-1; });
+  data.dismissedAddressPairs = (data.dismissedAddressPairs||[]).filter(function(k){ return k.indexOf(id)===-1; });
   saveData();
 }
 function closeAllModals(){
@@ -5086,12 +5811,16 @@ function wireGlobalEvents(){
       renderPeopleList();
     });
   });
+  document.getElementById('peopleContactFilter').addEventListener('change', function(){ renderPeopleList(); });
+  document.getElementById('mapFilterCloseness').addEventListener('change', function(){ renderMap(); });
+  document.getElementById('mapFilterTag').addEventListener('change', function(){ renderMap(); });
   document.getElementById('missingSearchInput').addEventListener('input', function(){ renderMissingInfo(); });
   document.getElementById('calBirthdaySearch').addEventListener('input', function(){ renderCalBirthdaySearch(); });
 
   document.getElementById('quickPersonForm').addEventListener('submit', submitQuickPersonForm);
   document.getElementById('cfieldForm').addEventListener('submit', submitCfieldForm);
   document.getElementById('closenessLevelForm').addEventListener('submit', submitClosenessLevelForm);
+  wireAddressSearch();
   document.getElementById('cf-type').addEventListener('change', function(){
     document.getElementById('cf-options-wrap').classList.toggle('hidden', this.value!=='select');
   });
